@@ -67,6 +67,16 @@ class ModelCommand(Command):
         # Define model categories and their models for easy reference
         # pylint: disable=invalid-name
         MODEL_CATEGORIES = {
+            "Gemini": [
+                {
+                    "name": "gemini-1.5-pro",
+                    "description": "Google Gemini 1.5 Pro (default, free)"
+                },
+                {
+                    "name": "gemini-pro",
+                    "description": "Google Gemini Pro (legacy, free)"
+                }
+            ],
             "Alias": [
                 {
                     "name": "alias0",
@@ -145,7 +155,8 @@ class ModelCommand(Command):
                 ALL_MODELS.append({
                     "name": model["name"],
                     "provider": (
-                        "Anthropic" if "claude" in model["name"]
+                        "Gemini" if "gemini" in model["name"]
+                        else "Anthropic" if "claude" in model["name"]
                         else "DeepSeek" if "deepseek" in model["name"]
                         else "OpenAI"
                     ),
@@ -164,7 +175,7 @@ class ModelCommand(Command):
 
         if not args:  # pylint: disable=too-many-nested-blocks
             # Display current model
-            model_info = os.getenv("CAI_MODEL", "Unknown")
+            model_info = os.getenv("CAI_MODEL", "gemini-1.5-pro")
             console.print(
                 Panel(
                     f"Current model: [bold green]{model_info}[/bold green]",
