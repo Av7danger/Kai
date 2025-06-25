@@ -1,0 +1,963 @@
+{
+  "report_id": "report_target_3_20250626_025013",
+  "target": "https://httpbin.org",
+  "target_info": {
+    "id": "target_3",
+    "url": "https://httpbin.org",
+    "scope": {
+      "in_scope": [
+        "https://httpbin.org"
+      ],
+      "out_of_scope": [],
+      "allow_subdomains": true,
+      "ports": "common",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    "status": "pending",
+    "added_at": "2025-06-26T02:50:13.826616",
+    "progress": {
+      "reconnaissance": "completed",
+      "vulnerability_discovery": "completed",
+      "exploitation": "completed",
+      "reporting": "running"
+    }
+  },
+  "generated_at": "2025-06-26T02:50:13.910405",
+  "executive_summary": "EXECUTIVE SUMMARY\n        \n        This security assessment identified 7 vulnerabilities across the target application.\n        Of these findings, 2 are rated as Critical severity and 0 as High severity,\n        representing significant security risks that require immediate attention.\n        \n        1 vulnerabilities were successfully exploited during testing, demonstrating\n        real-world attack scenarios that could be leveraged by malicious actors.\n        \n        Key Risk Areas:\n        - Web application security controls\n        - Input validation and sanitization  \n        - Authentication and authorization mechanisms\n        - Information disclosure vulnerabilities\n        \n        Immediate action is recommended to address Critical and High severity findings\n        to prevent potential data breaches and system compromise.",
+  "methodology": {
+    "approach": "Comprehensive black-box security testing",
+    "phases": [
+      "Reconnaissance and Asset Discovery",
+      "Vulnerability Identification",
+      "Exploitation and Validation",
+      "Impact Assessment",
+      "Documentation and Reporting"
+    ],
+    "tools_categories": {
+      "reconnaissance": [
+        "subfinder",
+        "amass",
+        "httpx",
+        "nmap"
+      ],
+      "discovery": [
+        "ffuf",
+        "gobuster",
+        "katana",
+        "gau"
+      ],
+      "vulnerability": [
+        "nuclei",
+        "sqlmap",
+        "xsstrike",
+        "dalfox"
+      ],
+      "exploitation": [
+        "metasploit",
+        "custom_exploits"
+      ]
+    },
+    "testing_duration": "Comprehensive automated and manual testing",
+    "coverage": "Full application security assessment including OWASP Top 10"
+  },
+  "scope": {
+    "in_scope": [
+      "https://httpbin.org"
+    ],
+    "out_of_scope": [],
+    "allow_subdomains": true,
+    "ports": "common",
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE"
+    ]
+  },
+  "findings": {
+    "critical": [
+      {
+        "id": "vuln_1",
+        "title": "Session Management Issues in file parameter",
+        "type": "session_management_issues",
+        "category": "broken_auth",
+        "severity": "Critical",
+        "confidence": 0.8,
+        "endpoint": "https://admin.httpbin.org/api/v2",
+        "parameter": "file",
+        "description": "A session management issues vulnerability was identified in the file parameter at https://admin.httpbin.org/api/v2",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.897462"
+      },
+      {
+        "id": "vuln_2",
+        "title": "Error Message Leakage in q parameter",
+        "type": "error_message_leakage",
+        "category": "sensitive_exposure",
+        "severity": "Critical",
+        "confidence": 0.61,
+        "endpoint": "https://www.httpbin.org/profile",
+        "parameter": "q",
+        "description": "A error message leakage vulnerability was identified in the q parameter at https://www.httpbin.org/profile",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A02:2021 \u2013 Cryptographic Failures",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.897480"
+      }
+    ],
+    "high": [],
+    "medium": [
+      {
+        "id": "vuln_6",
+        "title": "Outdated Components in q parameter",
+        "type": "outdated_components",
+        "category": "components",
+        "severity": "Medium",
+        "confidence": 0.93,
+        "endpoint": "https://admin.httpbin.org/dashboard",
+        "parameter": "q",
+        "description": "A outdated components vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "nuclei",
+        "discovered_at": "2025-06-26T02:50:13.897516"
+      },
+      {
+        "id": "vuln_3",
+        "title": "XML External Entity in password parameter",
+        "type": "xml_external_entity",
+        "category": "xxe",
+        "severity": "Medium",
+        "confidence": 0.71,
+        "endpoint": "https://admin.httpbin.org/api/v1",
+        "parameter": "password",
+        "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.httpbin.org/api/v1",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.897490"
+      },
+      {
+        "id": "vuln_5",
+        "title": "Stored XSS in q parameter",
+        "type": "stored_xss",
+        "category": "xss",
+        "severity": "Medium",
+        "confidence": 0.57,
+        "endpoint": "https://admin.httpbin.org/dashboard",
+        "parameter": "q",
+        "description": "A stored xss vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A03:2021 \u2013 Injection",
+        "discovery_method": "nuclei",
+        "discovered_at": "2025-06-26T02:50:13.897507"
+      },
+      {
+        "id": "vuln_7",
+        "title": "Known Vulnerabilities in q parameter",
+        "type": "known_vulnerabilities",
+        "category": "components",
+        "severity": "Medium",
+        "confidence": 0.55,
+        "endpoint": "https://httpbin.org/dashboard",
+        "parameter": "q",
+        "description": "A known vulnerabilities vulnerability was identified in the q parameter at https://httpbin.org/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.897531"
+      }
+    ],
+    "low": [
+      {
+        "id": "vuln_4",
+        "title": "Unnecessary Services in id parameter",
+        "type": "unnecessary_services",
+        "category": "security_misconfig",
+        "severity": "Low",
+        "confidence": 0.52,
+        "endpoint": "https://www.httpbin.org/api/v2",
+        "parameter": "id",
+        "description": "A unnecessary services vulnerability was identified in the id parameter at https://www.httpbin.org/api/v2",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "manual",
+        "discovered_at": "2025-06-26T02:50:13.897500"
+      }
+    ]
+  },
+  "exploitation_results": {
+    "validated": [
+      {
+        "id": "vuln_1",
+        "title": "Session Management Issues in file parameter",
+        "type": "session_management_issues",
+        "category": "broken_auth",
+        "severity": "Critical",
+        "confidence": 0.8,
+        "endpoint": "https://admin.httpbin.org/api/v2",
+        "parameter": "file",
+        "description": "A session management issues vulnerability was identified in the file parameter at https://admin.httpbin.org/api/v2",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.897462"
+      }
+    ],
+    "exploited": [
+      {
+        "vulnerability": {
+          "id": "vuln_1",
+          "title": "Session Management Issues in file parameter",
+          "type": "session_management_issues",
+          "category": "broken_auth",
+          "severity": "Critical",
+          "confidence": 0.8,
+          "endpoint": "https://admin.httpbin.org/api/v2",
+          "parameter": "file",
+          "description": "A session management issues vulnerability was identified in the file parameter at https://admin.httpbin.org/api/v2",
+          "cwe": "CWE-noinfo",
+          "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+          "discovery_method": "sqlmap",
+          "discovered_at": "2025-06-26T02:50:13.897462"
+        },
+        "exploit_details": {
+          "success": true,
+          "validated": true,
+          "false_positive": false,
+          "method": "Manual exploitation attempt",
+          "payload": "Custom payload",
+          "evidence": "Successfully exploited session_management_issues vulnerability"
+        },
+        "impact": "CRITICAL IMPACT: Potential security compromise. Immediate remediation required.",
+        "evidence": "Successfully exploited session_management_issues vulnerability",
+        "exploited_at": "2025-06-26T02:50:13.903605"
+      }
+    ],
+    "false_positives": [],
+    "requires_manual_testing": [
+      {
+        "id": "vuln_2",
+        "title": "Error Message Leakage in q parameter",
+        "type": "error_message_leakage",
+        "category": "sensitive_exposure",
+        "severity": "Critical",
+        "confidence": 0.61,
+        "endpoint": "https://www.httpbin.org/profile",
+        "parameter": "q",
+        "description": "A error message leakage vulnerability was identified in the q parameter at https://www.httpbin.org/profile",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A02:2021 \u2013 Cryptographic Failures",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.897480"
+      },
+      {
+        "id": "vuln_6",
+        "title": "Outdated Components in q parameter",
+        "type": "outdated_components",
+        "category": "components",
+        "severity": "Medium",
+        "confidence": 0.93,
+        "endpoint": "https://admin.httpbin.org/dashboard",
+        "parameter": "q",
+        "description": "A outdated components vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "nuclei",
+        "discovered_at": "2025-06-26T02:50:13.897516"
+      },
+      {
+        "id": "vuln_3",
+        "title": "XML External Entity in password parameter",
+        "type": "xml_external_entity",
+        "category": "xxe",
+        "severity": "Medium",
+        "confidence": 0.71,
+        "endpoint": "https://admin.httpbin.org/api/v1",
+        "parameter": "password",
+        "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.httpbin.org/api/v1",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.897490"
+      },
+      {
+        "id": "vuln_5",
+        "title": "Stored XSS in q parameter",
+        "type": "stored_xss",
+        "category": "xss",
+        "severity": "Medium",
+        "confidence": 0.57,
+        "endpoint": "https://admin.httpbin.org/dashboard",
+        "parameter": "q",
+        "description": "A stored xss vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A03:2021 \u2013 Injection",
+        "discovery_method": "nuclei",
+        "discovered_at": "2025-06-26T02:50:13.897507"
+      },
+      {
+        "id": "vuln_7",
+        "title": "Known Vulnerabilities in q parameter",
+        "type": "known_vulnerabilities",
+        "category": "components",
+        "severity": "Medium",
+        "confidence": 0.55,
+        "endpoint": "https://httpbin.org/dashboard",
+        "parameter": "q",
+        "description": "A known vulnerabilities vulnerability was identified in the q parameter at https://httpbin.org/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.897531"
+      }
+    ]
+  },
+  "detailed_findings": [
+    {
+      "id": "vuln_1",
+      "title": "Session Management Issues in file parameter",
+      "severity": "Critical",
+      "cvss_score": 9.5,
+      "cwe": "CWE-noinfo",
+      "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+      "description": "A session_management_issues vulnerability exists in the file parameter of https://admin.httpbin.org/api/v2.",
+      "proof_of_concept": "Successfully exploited session_management_issues vulnerability",
+      "impact": "CRITICAL IMPACT: Potential security compromise. Immediate remediation required.",
+      "remediation": "Implement proper security controls and follow secure coding practices.",
+      "references": [
+        "https://owasp.org/"
+      ],
+      "risk_rating": "EXTREME",
+      "exploit_details": {
+        "success": true,
+        "validated": true,
+        "false_positive": false,
+        "method": "Manual exploitation attempt",
+        "payload": "Custom payload",
+        "evidence": "Successfully exploited session_management_issues vulnerability"
+      }
+    }
+  ],
+  "recommendations": [
+    "Implement a comprehensive security testing program including regular penetration testing",
+    "Establish secure coding practices and mandatory code review processes",
+    "Deploy a Web Application Firewall (WAF) with appropriate rule sets",
+    "Implement comprehensive input validation and output encoding",
+    "Enable security headers (CSP, HSTS, X-Frame-Options, etc.)",
+    "Conduct security awareness training for development teams",
+    "Implement automated security scanning in CI/CD pipeline",
+    "Establish incident response procedures for security vulnerabilities",
+    "Regular security updates and patch management processes",
+    "Implement proper authentication and authorization mechanisms"
+  ],
+  "risk_assessment": {
+    "overall_risk_level": "HIGH",
+    "risk_score": 37,
+    "total_vulnerabilities": 7,
+    "exploitable_vulnerabilities": 1,
+    "severity_distribution": {
+      "Critical": 2,
+      "High": 0,
+      "Medium": 4,
+      "Low": 1
+    },
+    "exploitation_rate": "14.3%",
+    "key_risks": [
+      "User account compromise and malware distribution risk"
+    ],
+    "business_impact": "HIGH - Immediate risk of data breach, financial loss, and regulatory penalties"
+  },
+  "compliance_impact": {
+    "pci_dss": "FAIL",
+    "gdpr": "COMPLIANT",
+    "iso_27001": "REQUIRES_ATTENTION",
+    "nist_framework": "NEEDS_IMPROVEMENT"
+  },
+  "remediation_timeline": {
+    "Critical": "Immediate (0-24 hours)",
+    "Medium": "Short-term (2-4 weeks)",
+    "Low": "Medium-term (1-3 months)"
+  },
+  "appendix": {
+    "tools_used": [
+      [
+        "subfinder",
+        "amass",
+        "httpx",
+        "nmap"
+      ],
+      [
+        "ffuf",
+        "gobuster",
+        "katana",
+        "gau"
+      ],
+      [
+        "nuclei",
+        "sqlmap",
+        "xsstrike",
+        "dalfox"
+      ],
+      [
+        "metasploit",
+        "custom_exploits"
+      ]
+    ],
+    "references": [
+      "https://owasp.org/www-project-top-ten/",
+      "https://cheatsheetseries.owasp.org/",
+      "https://cwe.mitre.org/",
+      "https://nvd.nist.gov/",
+      "https://www.sans.org/top25-software-errors/",
+      "https://portswigger.net/web-security",
+      "https://www.nist.gov/cyberframework"
+    ],
+    "technical_details": {
+      "reconnaissance": {
+        "target": "https://httpbin.org",
+        "subdomains": [
+          "www.httpbin.org",
+          "api.httpbin.org",
+          "admin.httpbin.org",
+          "dev.httpbin.org",
+          "staging.httpbin.org"
+        ],
+        "live_hosts": [],
+        "open_ports": [
+          {
+            "port": 80,
+            "service": "http",
+            "state": "open"
+          },
+          {
+            "port": 443,
+            "service": "https",
+            "state": "open"
+          },
+          {
+            "port": 22,
+            "service": "ssh",
+            "state": "open"
+          },
+          {
+            "port": 8080,
+            "service": "http-alt",
+            "state": "open"
+          }
+        ],
+        "technologies": [
+          {
+            "name": "nginx",
+            "version": "1.18.0",
+            "category": "web_server"
+          },
+          {
+            "name": "php",
+            "version": "7.4.0",
+            "category": "programming_language"
+          },
+          {
+            "name": "mysql",
+            "version": "8.0",
+            "category": "database"
+          },
+          {
+            "name": "wordpress",
+            "version": "5.8",
+            "category": "cms"
+          }
+        ],
+        "certificates": []
+      },
+      "discovery": {
+        "urls": [
+          {
+            "url": "https://httpbin.org/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://httpbin.org/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.httpbin.org/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.httpbin.org/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.httpbin.org/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          }
+        ],
+        "endpoints": [],
+        "parameters": [
+          {
+            "name": "id",
+            "type": "GET",
+            "endpoint": "https://httpbin.org/user"
+          },
+          {
+            "name": "q",
+            "type": "GET",
+            "endpoint": "https://httpbin.org/search"
+          },
+          {
+            "name": "username",
+            "type": "POST",
+            "endpoint": "https://httpbin.org/login"
+          },
+          {
+            "name": "password",
+            "type": "POST",
+            "endpoint": "https://httpbin.org/login"
+          },
+          {
+            "name": "file",
+            "type": "POST",
+            "endpoint": "https://httpbin.org/upload"
+          }
+        ],
+        "forms": [],
+        "javascript_files": []
+      },
+      "vulnerabilities": {
+        "vulnerabilities": [
+          {
+            "id": "vuln_1",
+            "title": "Session Management Issues in file parameter",
+            "type": "session_management_issues",
+            "category": "broken_auth",
+            "severity": "Critical",
+            "confidence": 0.8,
+            "endpoint": "https://admin.httpbin.org/api/v2",
+            "parameter": "file",
+            "description": "A session management issues vulnerability was identified in the file parameter at https://admin.httpbin.org/api/v2",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.897462"
+          },
+          {
+            "id": "vuln_2",
+            "title": "Error Message Leakage in q parameter",
+            "type": "error_message_leakage",
+            "category": "sensitive_exposure",
+            "severity": "Critical",
+            "confidence": 0.61,
+            "endpoint": "https://www.httpbin.org/profile",
+            "parameter": "q",
+            "description": "A error message leakage vulnerability was identified in the q parameter at https://www.httpbin.org/profile",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A02:2021 \u2013 Cryptographic Failures",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.897480"
+          },
+          {
+            "id": "vuln_6",
+            "title": "Outdated Components in q parameter",
+            "type": "outdated_components",
+            "category": "components",
+            "severity": "Medium",
+            "confidence": 0.93,
+            "endpoint": "https://admin.httpbin.org/dashboard",
+            "parameter": "q",
+            "description": "A outdated components vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "nuclei",
+            "discovered_at": "2025-06-26T02:50:13.897516"
+          },
+          {
+            "id": "vuln_3",
+            "title": "XML External Entity in password parameter",
+            "type": "xml_external_entity",
+            "category": "xxe",
+            "severity": "Medium",
+            "confidence": 0.71,
+            "endpoint": "https://admin.httpbin.org/api/v1",
+            "parameter": "password",
+            "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.httpbin.org/api/v1",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.897490"
+          },
+          {
+            "id": "vuln_5",
+            "title": "Stored XSS in q parameter",
+            "type": "stored_xss",
+            "category": "xss",
+            "severity": "Medium",
+            "confidence": 0.57,
+            "endpoint": "https://admin.httpbin.org/dashboard",
+            "parameter": "q",
+            "description": "A stored xss vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A03:2021 \u2013 Injection",
+            "discovery_method": "nuclei",
+            "discovered_at": "2025-06-26T02:50:13.897507"
+          },
+          {
+            "id": "vuln_7",
+            "title": "Known Vulnerabilities in q parameter",
+            "type": "known_vulnerabilities",
+            "category": "components",
+            "severity": "Medium",
+            "confidence": 0.55,
+            "endpoint": "https://httpbin.org/dashboard",
+            "parameter": "q",
+            "description": "A known vulnerabilities vulnerability was identified in the q parameter at https://httpbin.org/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.897531"
+          },
+          {
+            "id": "vuln_4",
+            "title": "Unnecessary Services in id parameter",
+            "type": "unnecessary_services",
+            "category": "security_misconfig",
+            "severity": "Low",
+            "confidence": 0.52,
+            "endpoint": "https://www.httpbin.org/api/v2",
+            "parameter": "id",
+            "description": "A unnecessary services vulnerability was identified in the id parameter at https://www.httpbin.org/api/v2",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "manual",
+            "discovered_at": "2025-06-26T02:50:13.897500"
+          }
+        ],
+        "scan_summary": {
+          "total_vulnerabilities": 7,
+          "by_severity": {
+            "Critical": 2,
+            "High": 0,
+            "Medium": 4,
+            "Low": 1
+          },
+          "by_category": {
+            "broken_auth": 1,
+            "sensitive_exposure": 1,
+            "components": 2,
+            "xxe": 1,
+            "xss": 1,
+            "security_misconfig": 1
+          },
+          "high_confidence": 2,
+          "requires_manual_verification": 4
+        }
+      },
+      "exploitation": {
+        "validated": [
+          {
+            "id": "vuln_1",
+            "title": "Session Management Issues in file parameter",
+            "type": "session_management_issues",
+            "category": "broken_auth",
+            "severity": "Critical",
+            "confidence": 0.8,
+            "endpoint": "https://admin.httpbin.org/api/v2",
+            "parameter": "file",
+            "description": "A session management issues vulnerability was identified in the file parameter at https://admin.httpbin.org/api/v2",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.897462"
+          }
+        ],
+        "exploited": [
+          {
+            "vulnerability": {
+              "id": "vuln_1",
+              "title": "Session Management Issues in file parameter",
+              "type": "session_management_issues",
+              "category": "broken_auth",
+              "severity": "Critical",
+              "confidence": 0.8,
+              "endpoint": "https://admin.httpbin.org/api/v2",
+              "parameter": "file",
+              "description": "A session management issues vulnerability was identified in the file parameter at https://admin.httpbin.org/api/v2",
+              "cwe": "CWE-noinfo",
+              "owasp_category": "A07:2021 \u2013 Identification and Authentication Failures",
+              "discovery_method": "sqlmap",
+              "discovered_at": "2025-06-26T02:50:13.897462"
+            },
+            "exploit_details": {
+              "success": true,
+              "validated": true,
+              "false_positive": false,
+              "method": "Manual exploitation attempt",
+              "payload": "Custom payload",
+              "evidence": "Successfully exploited session_management_issues vulnerability"
+            },
+            "impact": "CRITICAL IMPACT: Potential security compromise. Immediate remediation required.",
+            "evidence": "Successfully exploited session_management_issues vulnerability",
+            "exploited_at": "2025-06-26T02:50:13.903605"
+          }
+        ],
+        "false_positives": [],
+        "requires_manual_testing": [
+          {
+            "id": "vuln_2",
+            "title": "Error Message Leakage in q parameter",
+            "type": "error_message_leakage",
+            "category": "sensitive_exposure",
+            "severity": "Critical",
+            "confidence": 0.61,
+            "endpoint": "https://www.httpbin.org/profile",
+            "parameter": "q",
+            "description": "A error message leakage vulnerability was identified in the q parameter at https://www.httpbin.org/profile",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A02:2021 \u2013 Cryptographic Failures",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.897480"
+          },
+          {
+            "id": "vuln_6",
+            "title": "Outdated Components in q parameter",
+            "type": "outdated_components",
+            "category": "components",
+            "severity": "Medium",
+            "confidence": 0.93,
+            "endpoint": "https://admin.httpbin.org/dashboard",
+            "parameter": "q",
+            "description": "A outdated components vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "nuclei",
+            "discovered_at": "2025-06-26T02:50:13.897516"
+          },
+          {
+            "id": "vuln_3",
+            "title": "XML External Entity in password parameter",
+            "type": "xml_external_entity",
+            "category": "xxe",
+            "severity": "Medium",
+            "confidence": 0.71,
+            "endpoint": "https://admin.httpbin.org/api/v1",
+            "parameter": "password",
+            "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.httpbin.org/api/v1",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.897490"
+          },
+          {
+            "id": "vuln_5",
+            "title": "Stored XSS in q parameter",
+            "type": "stored_xss",
+            "category": "xss",
+            "severity": "Medium",
+            "confidence": 0.57,
+            "endpoint": "https://admin.httpbin.org/dashboard",
+            "parameter": "q",
+            "description": "A stored xss vulnerability was identified in the q parameter at https://admin.httpbin.org/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A03:2021 \u2013 Injection",
+            "discovery_method": "nuclei",
+            "discovered_at": "2025-06-26T02:50:13.897507"
+          },
+          {
+            "id": "vuln_7",
+            "title": "Known Vulnerabilities in q parameter",
+            "type": "known_vulnerabilities",
+            "category": "components",
+            "severity": "Medium",
+            "confidence": 0.55,
+            "endpoint": "https://httpbin.org/dashboard",
+            "parameter": "q",
+            "description": "A known vulnerabilities vulnerability was identified in the q parameter at https://httpbin.org/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.897531"
+          }
+        ]
+      }
+    }
+  }
+}

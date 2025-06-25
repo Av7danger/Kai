@@ -1,0 +1,26 @@
+{
+  "target": "https://demo.testfire.net",
+  "generated_at": "2025-06-26T02:50:13.805355",
+  "total_vulnerabilities": 7,
+  "critical_findings": 0,
+  "high_findings": 3,
+  "exploited_vulnerabilities": 1,
+  "risk_assessment": {
+    "overall_risk_level": "MEDIUM",
+    "risk_score": 28,
+    "total_vulnerabilities": 7,
+    "exploitable_vulnerabilities": 1,
+    "severity_distribution": {
+      "Critical": 0,
+      "High": 3,
+      "Medium": 1,
+      "Low": 3
+    },
+    "exploitation_rate": "14.3%",
+    "key_risks": [
+      "Database compromise and data breach risk",
+      "User account compromise and malware distribution risk"
+    ],
+    "business_impact": "HIGH - Immediate risk of data breach, financial loss, and regulatory penalties"
+  }
+}

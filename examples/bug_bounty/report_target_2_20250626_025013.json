@@ -1,0 +1,847 @@
+{
+  "report_id": "report_target_2_20250626_025013",
+  "target": "https://example.com",
+  "target_info": {
+    "id": "target_2",
+    "url": "https://example.com",
+    "scope": {
+      "in_scope": [
+        "https://example.com"
+      ],
+      "out_of_scope": [],
+      "allow_subdomains": true,
+      "ports": "common",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    "status": "pending",
+    "added_at": "2025-06-26T02:50:13.823435",
+    "progress": {
+      "reconnaissance": "completed",
+      "vulnerability_discovery": "completed",
+      "exploitation": "completed",
+      "reporting": "running"
+    }
+  },
+  "generated_at": "2025-06-26T02:50:13.865751",
+  "executive_summary": "EXECUTIVE SUMMARY\n        \n        This security assessment identified 7 vulnerabilities across the target application.\n        Of these findings, 1 are rated as Critical severity and 0 as High severity,\n        representing significant security risks that require immediate attention.\n        \n        0 vulnerabilities were successfully exploited during testing, demonstrating\n        real-world attack scenarios that could be leveraged by malicious actors.\n        \n        Key Risk Areas:\n        - Web application security controls\n        - Input validation and sanitization  \n        - Authentication and authorization mechanisms\n        - Information disclosure vulnerabilities\n        \n        Immediate action is recommended to address Critical and High severity findings\n        to prevent potential data breaches and system compromise.",
+  "methodology": {
+    "approach": "Comprehensive black-box security testing",
+    "phases": [
+      "Reconnaissance and Asset Discovery",
+      "Vulnerability Identification",
+      "Exploitation and Validation",
+      "Impact Assessment",
+      "Documentation and Reporting"
+    ],
+    "tools_categories": {
+      "reconnaissance": [
+        "subfinder",
+        "amass",
+        "httpx",
+        "nmap"
+      ],
+      "discovery": [
+        "ffuf",
+        "gobuster",
+        "katana",
+        "gau"
+      ],
+      "vulnerability": [
+        "nuclei",
+        "sqlmap",
+        "xsstrike",
+        "dalfox"
+      ],
+      "exploitation": [
+        "metasploit",
+        "custom_exploits"
+      ]
+    },
+    "testing_duration": "Comprehensive automated and manual testing",
+    "coverage": "Full application security assessment including OWASP Top 10"
+  },
+  "scope": {
+    "in_scope": [
+      "https://example.com"
+    ],
+    "out_of_scope": [],
+    "allow_subdomains": true,
+    "ports": "common",
+    "methods": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE"
+    ]
+  },
+  "findings": {
+    "critical": [
+      {
+        "id": "vuln_4",
+        "title": "Default Credentials in username parameter",
+        "type": "default_credentials",
+        "category": "security_misconfig",
+        "severity": "Critical",
+        "confidence": 0.68,
+        "endpoint": "https://admin.example.com/settings",
+        "parameter": "username",
+        "description": "A default credentials vulnerability was identified in the username parameter at https://admin.example.com/settings",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.853638"
+      }
+    ],
+    "high": [],
+    "medium": [
+      {
+        "id": "vuln_2",
+        "title": "XML External Entity in password parameter",
+        "type": "xml_external_entity",
+        "category": "xxe",
+        "severity": "Medium",
+        "confidence": 0.93,
+        "endpoint": "https://admin.example.com/profile",
+        "parameter": "password",
+        "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.example.com/profile",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+        "discovery_method": "manual",
+        "discovered_at": "2025-06-26T02:50:13.853629"
+      },
+      {
+        "id": "vuln_3",
+        "title": "XML Injection in password parameter",
+        "type": "xml_injection",
+        "category": "xxe",
+        "severity": "Medium",
+        "confidence": 0.93,
+        "endpoint": "https://admin.example.com/api/v1",
+        "parameter": "password",
+        "description": "A xml injection vulnerability was identified in the password parameter at https://admin.example.com/api/v1",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.853634"
+      },
+      {
+        "id": "vuln_5",
+        "title": "Object Injection in file parameter",
+        "type": "object_injection",
+        "category": "insecure_deserialization",
+        "severity": "Medium",
+        "confidence": 0.82,
+        "endpoint": "https://example.com/api/v2",
+        "parameter": "file",
+        "description": "A object injection vulnerability was identified in the file parameter at https://example.com/api/v2",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.853643"
+      }
+    ],
+    "low": [
+      {
+        "id": "vuln_1",
+        "title": "NoSQL Injection in username parameter",
+        "type": "nosql_injection",
+        "category": "injection",
+        "severity": "Low",
+        "confidence": 0.72,
+        "endpoint": "https://api.example.com/login",
+        "parameter": "username",
+        "description": "A nosql injection vulnerability was identified in the username parameter at https://api.example.com/login",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A03:2021 \u2013 Injection",
+        "discovery_method": "nuclei",
+        "discovered_at": "2025-06-26T02:50:13.853617"
+      },
+      {
+        "id": "vuln_7",
+        "title": "Known Vulnerabilities in id parameter",
+        "type": "known_vulnerabilities",
+        "category": "components",
+        "severity": "Low",
+        "confidence": 0.67,
+        "endpoint": "https://example.com/dashboard",
+        "parameter": "id",
+        "description": "A known vulnerabilities vulnerability was identified in the id parameter at https://example.com/dashboard",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "manual",
+        "discovered_at": "2025-06-26T02:50:13.853654"
+      },
+      {
+        "id": "vuln_6",
+        "title": "Serialization Issues in password parameter",
+        "type": "serialization_issues",
+        "category": "insecure_deserialization",
+        "severity": "Low",
+        "confidence": 0.54,
+        "endpoint": "https://example.com/settings",
+        "parameter": "password",
+        "description": "A serialization issues vulnerability was identified in the password parameter at https://example.com/settings",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.853647"
+      }
+    ]
+  },
+  "exploitation_results": {
+    "validated": [],
+    "exploited": [],
+    "false_positives": [],
+    "requires_manual_testing": [
+      {
+        "id": "vuln_4",
+        "title": "Default Credentials in username parameter",
+        "type": "default_credentials",
+        "category": "security_misconfig",
+        "severity": "Critical",
+        "confidence": 0.68,
+        "endpoint": "https://admin.example.com/settings",
+        "parameter": "username",
+        "description": "A default credentials vulnerability was identified in the username parameter at https://admin.example.com/settings",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "custom_script",
+        "discovered_at": "2025-06-26T02:50:13.853638"
+      },
+      {
+        "id": "vuln_2",
+        "title": "XML External Entity in password parameter",
+        "type": "xml_external_entity",
+        "category": "xxe",
+        "severity": "Medium",
+        "confidence": 0.93,
+        "endpoint": "https://admin.example.com/profile",
+        "parameter": "password",
+        "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.example.com/profile",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+        "discovery_method": "manual",
+        "discovered_at": "2025-06-26T02:50:13.853629"
+      },
+      {
+        "id": "vuln_3",
+        "title": "XML Injection in password parameter",
+        "type": "xml_injection",
+        "category": "xxe",
+        "severity": "Medium",
+        "confidence": 0.93,
+        "endpoint": "https://admin.example.com/api/v1",
+        "parameter": "password",
+        "description": "A xml injection vulnerability was identified in the password parameter at https://admin.example.com/api/v1",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.853634"
+      },
+      {
+        "id": "vuln_5",
+        "title": "Object Injection in file parameter",
+        "type": "object_injection",
+        "category": "insecure_deserialization",
+        "severity": "Medium",
+        "confidence": 0.82,
+        "endpoint": "https://example.com/api/v2",
+        "parameter": "file",
+        "description": "A object injection vulnerability was identified in the file parameter at https://example.com/api/v2",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "Unknown",
+        "discovery_method": "sqlmap",
+        "discovered_at": "2025-06-26T02:50:13.853643"
+      },
+      {
+        "id": "vuln_1",
+        "title": "NoSQL Injection in username parameter",
+        "type": "nosql_injection",
+        "category": "injection",
+        "severity": "Low",
+        "confidence": 0.72,
+        "endpoint": "https://api.example.com/login",
+        "parameter": "username",
+        "description": "A nosql injection vulnerability was identified in the username parameter at https://api.example.com/login",
+        "cwe": "CWE-noinfo",
+        "owasp_category": "A03:2021 \u2013 Injection",
+        "discovery_method": "nuclei",
+        "discovered_at": "2025-06-26T02:50:13.853617"
+      }
+    ]
+  },
+  "detailed_findings": [],
+  "recommendations": [
+    "Implement a comprehensive security testing program including regular penetration testing",
+    "Establish secure coding practices and mandatory code review processes",
+    "Deploy a Web Application Firewall (WAF) with appropriate rule sets",
+    "Implement comprehensive input validation and output encoding",
+    "Enable security headers (CSP, HSTS, X-Frame-Options, etc.)",
+    "Conduct security awareness training for development teams",
+    "Implement automated security scanning in CI/CD pipeline",
+    "Establish incident response procedures for security vulnerabilities",
+    "Regular security updates and patch management processes",
+    "Implement proper authentication and authorization mechanisms"
+  ],
+  "risk_assessment": {
+    "overall_risk_level": "MEDIUM",
+    "risk_score": 25,
+    "total_vulnerabilities": 7,
+    "exploitable_vulnerabilities": 0,
+    "severity_distribution": {
+      "Critical": 1,
+      "High": 0,
+      "Medium": 3,
+      "Low": 3
+    },
+    "exploitation_rate": "0.0%",
+    "key_risks": [
+      "Database compromise and data breach risk"
+    ],
+    "business_impact": "HIGH - Immediate risk of data breach, financial loss, and regulatory penalties"
+  },
+  "compliance_impact": {
+    "pci_dss": "FAIL",
+    "gdpr": "COMPLIANT",
+    "iso_27001": "REQUIRES_ATTENTION",
+    "nist_framework": "NEEDS_IMPROVEMENT"
+  },
+  "remediation_timeline": {
+    "Critical": "Immediate (0-24 hours)",
+    "Medium": "Short-term (2-4 weeks)",
+    "Low": "Medium-term (1-3 months)"
+  },
+  "appendix": {
+    "tools_used": [
+      [
+        "subfinder",
+        "amass",
+        "httpx",
+        "nmap"
+      ],
+      [
+        "ffuf",
+        "gobuster",
+        "katana",
+        "gau"
+      ],
+      [
+        "nuclei",
+        "sqlmap",
+        "xsstrike",
+        "dalfox"
+      ],
+      [
+        "metasploit",
+        "custom_exploits"
+      ]
+    ],
+    "references": [
+      "https://owasp.org/www-project-top-ten/",
+      "https://cheatsheetseries.owasp.org/",
+      "https://cwe.mitre.org/",
+      "https://nvd.nist.gov/",
+      "https://www.sans.org/top25-software-errors/",
+      "https://portswigger.net/web-security",
+      "https://www.nist.gov/cyberframework"
+    ],
+    "technical_details": {
+      "reconnaissance": {
+        "target": "https://example.com",
+        "subdomains": [
+          "www.example.com",
+          "api.example.com",
+          "admin.example.com",
+          "dev.example.com",
+          "staging.example.com"
+        ],
+        "live_hosts": [],
+        "open_ports": [
+          {
+            "port": 80,
+            "service": "http",
+            "state": "open"
+          },
+          {
+            "port": 443,
+            "service": "https",
+            "state": "open"
+          },
+          {
+            "port": 22,
+            "service": "ssh",
+            "state": "open"
+          },
+          {
+            "port": 8080,
+            "service": "http-alt",
+            "state": "open"
+          }
+        ],
+        "technologies": [
+          {
+            "name": "nginx",
+            "version": "1.18.0",
+            "category": "web_server"
+          },
+          {
+            "name": "php",
+            "version": "7.4.0",
+            "category": "programming_language"
+          },
+          {
+            "name": "mysql",
+            "version": "8.0",
+            "category": "database"
+          },
+          {
+            "name": "wordpress",
+            "version": "5.8",
+            "category": "cms"
+          }
+        ],
+        "certificates": []
+      },
+      "discovery": {
+        "urls": [
+          {
+            "url": "https://example.com/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://example.com/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://www.example.com/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://api.example.com/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/admin",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/login",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/dashboard",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/api/v1",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/api/v2",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/user",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/profile",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          },
+          {
+            "url": "https://admin.example.com/settings",
+            "status_code": 200,
+            "content_length": 1024,
+            "content_type": "text/html"
+          }
+        ],
+        "endpoints": [],
+        "parameters": [
+          {
+            "name": "id",
+            "type": "GET",
+            "endpoint": "https://example.com/user"
+          },
+          {
+            "name": "q",
+            "type": "GET",
+            "endpoint": "https://example.com/search"
+          },
+          {
+            "name": "username",
+            "type": "POST",
+            "endpoint": "https://example.com/login"
+          },
+          {
+            "name": "password",
+            "type": "POST",
+            "endpoint": "https://example.com/login"
+          },
+          {
+            "name": "file",
+            "type": "POST",
+            "endpoint": "https://example.com/upload"
+          }
+        ],
+        "forms": [],
+        "javascript_files": []
+      },
+      "vulnerabilities": {
+        "vulnerabilities": [
+          {
+            "id": "vuln_4",
+            "title": "Default Credentials in username parameter",
+            "type": "default_credentials",
+            "category": "security_misconfig",
+            "severity": "Critical",
+            "confidence": 0.68,
+            "endpoint": "https://admin.example.com/settings",
+            "parameter": "username",
+            "description": "A default credentials vulnerability was identified in the username parameter at https://admin.example.com/settings",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.853638"
+          },
+          {
+            "id": "vuln_2",
+            "title": "XML External Entity in password parameter",
+            "type": "xml_external_entity",
+            "category": "xxe",
+            "severity": "Medium",
+            "confidence": 0.93,
+            "endpoint": "https://admin.example.com/profile",
+            "parameter": "password",
+            "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.example.com/profile",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+            "discovery_method": "manual",
+            "discovered_at": "2025-06-26T02:50:13.853629"
+          },
+          {
+            "id": "vuln_3",
+            "title": "XML Injection in password parameter",
+            "type": "xml_injection",
+            "category": "xxe",
+            "severity": "Medium",
+            "confidence": 0.93,
+            "endpoint": "https://admin.example.com/api/v1",
+            "parameter": "password",
+            "description": "A xml injection vulnerability was identified in the password parameter at https://admin.example.com/api/v1",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.853634"
+          },
+          {
+            "id": "vuln_5",
+            "title": "Object Injection in file parameter",
+            "type": "object_injection",
+            "category": "insecure_deserialization",
+            "severity": "Medium",
+            "confidence": 0.82,
+            "endpoint": "https://example.com/api/v2",
+            "parameter": "file",
+            "description": "A object injection vulnerability was identified in the file parameter at https://example.com/api/v2",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.853643"
+          },
+          {
+            "id": "vuln_1",
+            "title": "NoSQL Injection in username parameter",
+            "type": "nosql_injection",
+            "category": "injection",
+            "severity": "Low",
+            "confidence": 0.72,
+            "endpoint": "https://api.example.com/login",
+            "parameter": "username",
+            "description": "A nosql injection vulnerability was identified in the username parameter at https://api.example.com/login",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A03:2021 \u2013 Injection",
+            "discovery_method": "nuclei",
+            "discovered_at": "2025-06-26T02:50:13.853617"
+          },
+          {
+            "id": "vuln_7",
+            "title": "Known Vulnerabilities in id parameter",
+            "type": "known_vulnerabilities",
+            "category": "components",
+            "severity": "Low",
+            "confidence": 0.67,
+            "endpoint": "https://example.com/dashboard",
+            "parameter": "id",
+            "description": "A known vulnerabilities vulnerability was identified in the id parameter at https://example.com/dashboard",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "manual",
+            "discovered_at": "2025-06-26T02:50:13.853654"
+          },
+          {
+            "id": "vuln_6",
+            "title": "Serialization Issues in password parameter",
+            "type": "serialization_issues",
+            "category": "insecure_deserialization",
+            "severity": "Low",
+            "confidence": 0.54,
+            "endpoint": "https://example.com/settings",
+            "parameter": "password",
+            "description": "A serialization issues vulnerability was identified in the password parameter at https://example.com/settings",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.853647"
+          }
+        ],
+        "scan_summary": {
+          "total_vulnerabilities": 7,
+          "by_severity": {
+            "Critical": 1,
+            "High": 0,
+            "Medium": 3,
+            "Low": 3
+          },
+          "by_category": {
+            "security_misconfig": 1,
+            "xxe": 2,
+            "insecure_deserialization": 2,
+            "injection": 1,
+            "components": 1
+          },
+          "high_confidence": 3,
+          "requires_manual_verification": 3
+        }
+      },
+      "exploitation": {
+        "validated": [],
+        "exploited": [],
+        "false_positives": [],
+        "requires_manual_testing": [
+          {
+            "id": "vuln_4",
+            "title": "Default Credentials in username parameter",
+            "type": "default_credentials",
+            "category": "security_misconfig",
+            "severity": "Critical",
+            "confidence": 0.68,
+            "endpoint": "https://admin.example.com/settings",
+            "parameter": "username",
+            "description": "A default credentials vulnerability was identified in the username parameter at https://admin.example.com/settings",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "custom_script",
+            "discovered_at": "2025-06-26T02:50:13.853638"
+          },
+          {
+            "id": "vuln_2",
+            "title": "XML External Entity in password parameter",
+            "type": "xml_external_entity",
+            "category": "xxe",
+            "severity": "Medium",
+            "confidence": 0.93,
+            "endpoint": "https://admin.example.com/profile",
+            "parameter": "password",
+            "description": "A xml external entity vulnerability was identified in the password parameter at https://admin.example.com/profile",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+            "discovery_method": "manual",
+            "discovered_at": "2025-06-26T02:50:13.853629"
+          },
+          {
+            "id": "vuln_3",
+            "title": "XML Injection in password parameter",
+            "type": "xml_injection",
+            "category": "xxe",
+            "severity": "Medium",
+            "confidence": 0.93,
+            "endpoint": "https://admin.example.com/api/v1",
+            "parameter": "password",
+            "description": "A xml injection vulnerability was identified in the password parameter at https://admin.example.com/api/v1",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A05:2021 \u2013 Security Misconfiguration",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.853634"
+          },
+          {
+            "id": "vuln_5",
+            "title": "Object Injection in file parameter",
+            "type": "object_injection",
+            "category": "insecure_deserialization",
+            "severity": "Medium",
+            "confidence": 0.82,
+            "endpoint": "https://example.com/api/v2",
+            "parameter": "file",
+            "description": "A object injection vulnerability was identified in the file parameter at https://example.com/api/v2",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "Unknown",
+            "discovery_method": "sqlmap",
+            "discovered_at": "2025-06-26T02:50:13.853643"
+          },
+          {
+            "id": "vuln_1",
+            "title": "NoSQL Injection in username parameter",
+            "type": "nosql_injection",
+            "category": "injection",
+            "severity": "Low",
+            "confidence": 0.72,
+            "endpoint": "https://api.example.com/login",
+            "parameter": "username",
+            "description": "A nosql injection vulnerability was identified in the username parameter at https://api.example.com/login",
+            "cwe": "CWE-noinfo",
+            "owasp_category": "A03:2021 \u2013 Injection",
+            "discovery_method": "nuclei",
+            "discovered_at": "2025-06-26T02:50:13.853617"
+          }
+        ]
+      }
+    }
+  }
+}
