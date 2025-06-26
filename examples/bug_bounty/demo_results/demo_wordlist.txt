@@ -1,0 +1,16 @@
+admin
+login
+panel
+api
+test
+backup
+config
+uploads
+files
+data
+db
+sql
+phpmyadmin
+wp-admin
+dashboard
+control

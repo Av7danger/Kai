@@ -1,0 +1,35 @@
+# Simplified requirements for Phase 1
+# Core web framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.1
+
+# HTTP clients
+httpx==0.25.2
+aiohttp==3.9.1
+requests==2.31.0
+
+# File handling
+aiofiles==23.2.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Security tools (lighter versions)
+python-multipart==0.0.6
+jinja2==3.1.2
+
+# Basic data processing (compatible versions)
+numpy==1.24.3
+
+# Database
+sqlalchemy==2.0.23
+
+# System monitoring
+psutil==5.9.6
+
+# JSON handling and utilities
+pyyaml==6.0.1
+python-dotenv==1.0.0
+colorama==0.4.6
