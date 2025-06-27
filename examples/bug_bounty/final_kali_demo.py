@@ -227,7 +227,7 @@ class CompleteDemonstration:
                     
                     self.print_status("Gemini AI capabilities demonstration completed!", "SUCCESS")
                     print(f"   ✅ API Key: Configured")
-                    print(f"   ✅ Model: gemini-1.5-flash")
+                    print(f"   ✅ Model: gemini-2.5-flash")
                     print(f"   ✅ Analysis Response: {len(response.text)} characters")
                     print(f"   ✅ Quality: {'High' if len(response.text) > 100 else 'Limited'}")
                     
