@@ -165,3 +165,83 @@ pentestperf
 venv*
 
 .claude
+
+# Bug Bounty Hunting - Sensitive Data Protection
+# =============================================
+
+# API Keys and Secrets
+**/quick_start_config.py
+**/config_local.py
+**/*_api_key*
+**/*_secret*
+**/credentials.json
+**/auth_tokens.txt
+
+# Bug Bounty Workspaces and Results
+**/bb_pro_workspace/
+**/bug_bounty_workspace/
+**/batch_results/
+**/hunt_results/
+**/campaign_data/
+
+# Database Files
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/ultra_gemini_campaign.db
+**/bb_pro.db
+
+# Logs and Temporary Files
+**/logs/
+**/*.log
+**/temp/
+**/tmp/
+**/cache/
+**/.cache/
+
+# Target Lists and Sensitive Data
+**/targets.txt
+**/targets_*.txt
+**/wordlists/custom/
+**/payloads/custom/
+**/exploits/private/
+
+# Tool Output Files
+**/nuclei_*.json
+**/subfinder_*.txt
+**/httpx_*.txt
+**/nmap_*.xml
+**/gobuster_*.txt
+**/sqlmap_output/
+
+# Screenshots and Evidence
+**/screenshots/
+**/evidence/
+**/reports/private/
+**/poc_files/
+
+# Personal Hunter Data
+**/earnings_data.json
+**/hunter_stats.json
+**/personal_targets.txt
+**/private_programs.txt
+
+# Production Deployment
+**/ultra_gemini_production/
+**/production_config/
+**/deployment_keys/
+
+# Backup Files
+**/*.bak
+**/*.backup
+**/*_backup_*
+
+# Session and State Files
+**/session_*.json
+**/state_*.json
+**/checkpoint_*.json
+
+# Analysis Reports
+**/final_demonstration_report.json
+**/daily_report_*.md
+**/earnings_report_*.pdf
