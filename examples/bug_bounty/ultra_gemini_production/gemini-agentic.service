@@ -1,0 +1,30 @@
+[Unit]
+Description=Ultra Gemini Agentic Bug Bounty System
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=gemini
+Group=gemini
+WorkingDirectory=/opt/ultra-gemini-agentic
+ExecStart=/opt/ultra-gemini-agentic/venv/bin/python production_main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ultra-gemini-agentic
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/ultra-gemini-agentic/.env
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ultra-gemini-agentic/data
+
+[Install]
+WantedBy=multi-user.target

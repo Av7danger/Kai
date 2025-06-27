@@ -1,0 +1,218 @@
+{
+  "hunter_profile": {
+    "experience_level": "intermediate",
+    "specializations": [
+      "web_app",
+      "api",
+      "mobile",
+      "business_logic"
+    ],
+    "daily_hours": 10,
+    "monthly_target": 75000,
+    "risk_tolerance": "low"
+  },
+  "optimization_settings": {
+    "xai_confidence_threshold": 0.75,
+    "hitl_escalation_threshold": 0.85,
+    "compliance_strictness": "maximum",
+    "documentation_level": "forensic"
+  },
+  "daily_plan": {
+    "ai_bulk_enumeration": {
+      "hours": 3.0,
+      "targets": 20,
+      "expected_findings": 8,
+      "description": "AI-powered mass target scanning"
+    },
+    "human_analysis": {
+      "hours": 4.0,
+      "targets": 5,
+      "expected_findings": 3,
+      "description": "Deep analysis of high-confidence findings"
+    },
+    "premium_reporting": {
+      "hours": 2.0,
+      "reports": 5,
+      "expected_acceptance": 4,
+      "description": "Forensic-level report writing"
+    },
+    "program_research": {
+      "hours": 1.0,
+      "programs": 3,
+      "expected_new_targets": 10,
+      "description": "New program analysis and scope mapping"
+    },
+    "expected_daily_earnings": 8000.0,
+    "expected_monthly_earnings": 176000.0
+  },
+  "vulnerability_focus": {
+    "business_logic_flaws": {
+      "avg_payout": 8500,
+      "ai_advantage": "medium",
+      "competition": "low",
+      "time_investment": "high",
+      "success_rate": 0.6,
+      "priority": 1
+    },
+    "authentication_bypass": {
+      "avg_payout": 12000,
+      "ai_advantage": "high",
+      "competition": "medium",
+      "time_investment": "medium",
+      "success_rate": 0.7,
+      "priority": 2
+    },
+    "privilege_escalation": {
+      "avg_payout": 15000,
+      "ai_advantage": "medium",
+      "competition": "high",
+      "time_investment": "high",
+      "success_rate": 0.4,
+      "priority": 3
+    },
+    "sql_injection": {
+      "avg_payout": 5000,
+      "ai_advantage": "very_high",
+      "competition": "high",
+      "time_investment": "low",
+      "success_rate": 0.8,
+      "priority": 4
+    },
+    "xss_variants": {
+      "avg_payout": 2500,
+      "ai_advantage": "high",
+      "competition": "very_high",
+      "time_investment": "low",
+      "success_rate": 0.9,
+      "priority": 5
+    }
+  },
+  "earnings_projection": {
+    "monthly_projections": [
+      {
+        "month": 1,
+        "earnings": 176000,
+        "experience_factor": 1.0,
+        "reputation_factor": 1.0
+      },
+      {
+        "month": 2,
+        "earnings": 176000,
+        "experience_factor": 1.0,
+        "reputation_factor": 1.0
+      },
+      {
+        "month": 3,
+        "earnings": 184800,
+        "experience_factor": 1.0,
+        "reputation_factor": 1.05
+      },
+      {
+        "month": 4,
+        "earnings": 212960,
+        "experience_factor": 1.1,
+        "reputation_factor": 1.1
+      },
+      {
+        "month": 5,
+        "earnings": 242880,
+        "experience_factor": 1.2,
+        "reputation_factor": 1.15
+      },
+      {
+        "month": 6,
+        "earnings": 274560,
+        "experience_factor": 1.3,
+        "reputation_factor": 1.2
+      },
+      {
+        "month": 7,
+        "earnings": 356400,
+        "experience_factor": 1.5,
+        "reputation_factor": 1.35
+      },
+      {
+        "month": 8,
+        "earnings": 448800,
+        "experience_factor": 1.7,
+        "reputation_factor": 1.5
+      },
+      {
+        "month": 9,
+        "earnings": 551760,
+        "experience_factor": 1.9,
+        "reputation_factor": 1.65
+      },
+      {
+        "month": 10,
+        "earnings": 665280,
+        "experience_factor": 2.1,
+        "reputation_factor": 1.8
+      },
+      {
+        "month": 11,
+        "earnings": 789360,
+        "experience_factor": 2.3,
+        "reputation_factor": 1.95
+      },
+      {
+        "month": 12,
+        "earnings": 924000,
+        "experience_factor": 2.5,
+        "reputation_factor": 2.1
+      }
+    ],
+    "total_12_month_projection": 5002800,
+    "average_monthly": 416900,
+    "conservative_estimate": 3501960,
+    "optimistic_estimate": 7003920,
+    "assumptions": {
+      "daily_hours": 10,
+      "working_days_per_month": 22,
+      "acceptance_rate": 0.8,
+      "avg_payout": 2500,
+      "experience_growth": "10% improvement every 3 months",
+      "reputation_growth": "5% improvement every 2 months"
+    }
+  },
+  "competitive_analysis": {
+    "your_advantages": {
+      "ai_powered_efficiency": {
+        "advantage": "5x faster target validation",
+        "impact": "Cover 5x more ground than manual hunters",
+        "earnings_multiplier": 3.0
+      },
+      "quality_documentation": {
+        "advantage": "Forensic-level evidence integrity",
+        "impact": "95% acceptance rate vs 60% average",
+        "earnings_multiplier": 1.6
+      },
+      "risk_elimination": {
+        "advantage": "Zero scope violations",
+        "impact": "100% eligible submissions",
+        "earnings_multiplier": 1.3
+      },
+      "intelligent_prioritization": {
+        "advantage": "AI-guided target selection",
+        "impact": "Focus on high-payout opportunities",
+        "earnings_multiplier": 2.2
+      }
+    },
+    "typical_hunter_profile": {
+      "daily_targets": 5,
+      "validation_time": "3-4 hours per target",
+      "false_positive_rate": 0.4,
+      "acceptance_rate": 0.6,
+      "avg_monthly_earnings": 15000
+    },
+    "your_optimized_profile": {
+      "daily_targets": 25,
+      "validation_time": "20 minutes per target",
+      "false_positive_rate": 0.1,
+      "acceptance_rate": 0.8,
+      "projected_monthly_earnings": 45000
+    },
+    "competitive_edge_summary": "3x earnings potential through AI efficiency"
+  },
+  "generated_at": "2025-06-27T17:39:44.212021+00:00"
+}

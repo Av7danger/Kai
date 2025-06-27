@@ -1,0 +1,101 @@
+{
+  "report_timestamp": "2025-06-27T11:54:32.812051",
+  "system_overview": {
+    "total_campaigns": 1,
+    "active_campaigns": 0,
+    "completed_campaigns": 1,
+    "total_decisions": 6,
+    "avg_campaign_efficiency": 0
+  },
+  "campaigns": [
+    {
+      "id": "ultra_1751005263_testphp_vulnweb_com",
+      "target": "testphp.vulnweb.com",
+      "start_time": "2025-06-27 06:21:03",
+      "end_time": "2025-06-27 06:21:07",
+      "status": "completed",
+      "total_iterations": 6,
+      "total_decisions": 6,
+      "total_vulnerabilities": 0,
+      "efficiency_score": 0.0,
+      "resource_usage": null,
+      "ai_insights": null,
+      "decision_count": 6,
+      "avg_confidence": 0.9500000000000001,
+      "avg_execution_time": 1.75,
+      "success_rate": 100.0,
+      "duration_seconds": 4.0
+    }
+  ],
+  "decision_analytics": {
+    "total_decisions": 6,
+    "action_type_breakdown": {
+      "scan": {
+        "count": 3,
+        "avg_confidence": 0.9500000000000001,
+        "success_rate": 100.0,
+        "avg_execution_time": 2.0
+      },
+      "enumerate": {
+        "count": 3,
+        "avg_confidence": 0.9500000000000001,
+        "success_rate": 100.0,
+        "avg_execution_time": 1.5
+      }
+    },
+    "confidence_statistics": {
+      "mean": 0.9500000000000001,
+      "median": 0.9500000000000001,
+      "std_dev": 0.0,
+      "min": 0.9500000000000001,
+      "max": 0.9500000000000001
+    },
+    "overall_success_rate": 100.0,
+    "avg_execution_time": 1.75
+  },
+  "performance_trends": {
+    "daily_trends": [
+      {
+        "date": "2025-06-27",
+        "decisions_count": 6,
+        "avg_confidence": 0.9500000000000001,
+        "avg_execution_time": 1.75,
+        "success_rate": 100.0
+      }
+    ],
+    "weekly_trends": [],
+    "trend_analysis": {
+      "insufficient_data": true
+    }
+  },
+  "optimization_insights": {
+    "cache_efficiency": {
+      "campaigns_analyzed": 1,
+      "avg_cache_rate": 0.0
+    },
+    "action_performance": [
+      {
+        "action_type": "scan",
+        "avg_confidence": 0.9500000000000001,
+        "avg_execution_time": 2.0,
+        "frequency": 3
+      },
+      {
+        "action_type": "enumerate",
+        "avg_confidence": 0.9500000000000001,
+        "avg_execution_time": 1.5,
+        "frequency": 3
+      }
+    ],
+    "optimization_recommendations": [
+      "System is performing optimally - no immediate optimizations needed"
+    ]
+  },
+  "predictions": {
+    "error": "Insufficient data for predictions"
+  },
+  "recommendations": [
+    "Consider improving caching strategies to boost efficiency",
+    "Consider expanding action type diversity for better coverage"
+  ]
+}
