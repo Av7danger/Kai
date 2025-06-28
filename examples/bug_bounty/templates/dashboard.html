@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Bug Bounty Hunter Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+    <a href="{{ url_for('add_target') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Target
+    </a>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-crosshairs fa-2x mb-2"></i>
+                <h3>{{ total_targets }}</h3>
+                <p class="mb-0">Total Targets</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                <h3>{{ total_vulns }}</h3>
+                <p class="mb-0">Vulnerabilities</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <h3>${{ "%.0f"|format(total_earnings) }}</h3>
+                <p class="mb-0">Estimated Earnings</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-search fa-2x mb-2"></i>
+                <h3>{{ active_scans }}</h3>
+                <p class="mb-0">Active Scans</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-crosshairs"></i> Recent Targets</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_targets %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Domain</th>
+                                    <th>Status</th>
+                                    <th>Vulns</th>
+                                    <th>Payout</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for target in recent_targets %}
+                                <tr>
+                                    <td>{{ target[0] }}</td>
+                                    <td><span class="status-{{ target[1] }}">{{ target[1]|title }}</span></td>
+                                    <td>{{ target[2] }}</td>
+                                    <td>${{ "%.0f"|format(target[3]) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No targets yet. <a href="{{ url_for('add_target') }}">Add your first target</a>!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-shield-alt"></i> Recent Vulnerabilities</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_vulns %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Severity</th>
+                                    <th>Payout</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vuln in recent_vulns %}
+                                <tr>
+                                    <td>{{ vuln[0][:30] }}{% if vuln[0]|length > 30 %}...{% endif %}</td>
+                                    <td><span class="severity-{{ vuln[1]|lower }}">{{ vuln[1] }}</span></td>
+                                    <td>${{ "%.0f"|format(vuln[2]) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No vulnerabilities found yet. Start scanning targets!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('add_target') }}" class="btn btn-outline-primary btn-lg w-100 mb-2">
+                            <i class="fas fa-plus fa-2x d-block mb-2"></i>
+                            Add New Target
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('targets') }}" class="btn btn-outline-success btn-lg w-100 mb-2">
+                            <i class="fas fa-search fa-2x d-block mb-2"></i>
+                            Start Scanning
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('vulnerabilities') }}" class="btn btn-outline-warning btn-lg w-100 mb-2">
+                            <i class="fas fa-shield-alt fa-2x d-block mb-2"></i>
+                            View Vulnerabilities
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-info btn-lg w-100 mb-2">
+                            <i class="fas fa-chart-bar fa-2x d-block mb-2"></i>
+                            Generate Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh dashboard every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}
