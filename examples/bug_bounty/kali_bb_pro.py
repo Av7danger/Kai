@@ -37,6 +37,7 @@ try:
     from ultra_optimized_gemini_system import UltraOrchestrator
     from personal_bug_bounty_optimizer import PersonalBugBountyOptimizer
     import google.generativeai as genai
+    from program_scope_manager import ProgramScopeManager
 except ImportError as e:
     print(f"❌ Import error: {e}")
     print("Run: pip install google-generativeai aiohttp aiofiles psutil")
@@ -704,7 +705,7 @@ class KaliProCLI:
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="🐉 Kali Linux Pro Bug Bounty CLI - Gemini Powered",
+        description="🐉 Kali Linux Pro Bug Bounty CLI - GEMINI POWERED",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

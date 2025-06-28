@@ -10,9 +10,11 @@
 _git clone https://github.com/Av7danger/Kai.git
 cd Kai/examples/bug_bounty_
 
-# Install dependencies
-sudo apt update && sudo apt install -y python3 python3-pip subfinder httpx nuclei nmap gobuster ffuf nikto
-pip install google-generativeai aiohttp psutil colorama rich click tqdm requests beautifulsoup4
+# Install dependencies and ensure Python 3
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv subfinder httpx nuclei nmap gobuster ffuf nikto
+
+# IMPORTANT: Use pip3 (not pip) to install Python 3 packages
+pip3 install google-generativeai aiohttp psutil colorama rich click tqdm requests beautifulsoup4 aiofiles asyncio-throttle lxml pyyaml
 
 # Set up Go tools
 export GOPATH=$HOME/go && export PATH=$PATH:$GOPATH/bin
@@ -272,6 +274,18 @@ source ~/bug_bounty_venv/bin/activate
 
 # Reinstall packages
 pip install --force-reinstall google-generativeai aiohttp psutil
+```
+
+**5. Dependency conflicts (mitmproxy warnings):**
+```bash
+# These warnings are normal on Kali and won't affect bug bounty hunting
+# If you want to avoid root warnings, use a virtual environment:
+python3 -m venv ~/bb_venv
+source ~/bb_venv/bin/activate
+pip3 install google-generativeai aiohttp psutil colorama rich click
+
+# Test that core packages work despite warnings
+python3 -c "import google.generativeai; print('✅ Google AI works!')"
 ```
 
 ---
