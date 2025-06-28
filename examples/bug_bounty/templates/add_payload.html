@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Add Payload - Bug Bounty Hunter Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-plus"></i> Add New Payload</h1>
+    <a href="{{ url_for('payloads_manager') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Payloads
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-code"></i> Payload Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Payload Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="e.g., XSS Alert Basic, SQL Union Select">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category *</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="xss">Cross-Site Scripting (XSS)</option>
+                            <option value="sqli">SQL Injection</option>
+                            <option value="lfi">Local File Inclusion</option>
+                            <option value="rfi">Remote File Inclusion</option>
+                            <option value="xxe">XML External Entity</option>
+                            <option value="ssti">Server-Side Template Injection</option>
+                            <option value="nosqli">NoSQL Injection</option>
+                            <option value="ldapi">LDAP Injection</option>
+                            <option value="cmdi">Command Injection</option>
+                            <option value="csrf">Cross-Site Request Forgery</option>
+                            <option value="directory_traversal">Directory Traversal</option>
+                            <option value="deserialization">Deserialization</option>
+                            <option value="bypass">Security Bypass</option>
+                            <option value="enumeration">Enumeration</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payload_code" class="form-label">Payload Code *</label>
+                        <textarea class="form-control bg-dark text-light" id="payload_code" name="payload_code" 
+                                  rows="8" required placeholder="Enter your payload code here..."></textarea>
+                        <div class="form-text">
+                            Use variables like {URL}, {PARAM}, {DOMAIN} for dynamic replacement
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  placeholder="Describe what this payload does, when to use it, and expected results..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="tags" name="tags" 
+                               placeholder="e.g., basic, advanced, waf-bypass, reflected">
+                        <div class="form-text">
+                            Separate tags with commas
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-primary" onclick="testPayload()">
+                            <i class="fas fa-play"></i> Test Payload
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Payload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Payload Templates -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-template"></i> Quick Templates</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-info btn-sm" onclick="loadTemplate('xss_basic')">
+                        XSS - Basic Alert
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="loadTemplate('xss_advanced')">
+                        XSS - Advanced
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="loadTemplate('sqli_union')">
+                        SQL - Union Select
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="loadTemplate('sqli_boolean')">
+                        SQL - Boolean Based
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="loadTemplate('lfi_basic')">
+                        LFI - Basic
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="loadTemplate('lfi_wrapper')">
+                        LFI - PHP Wrapper
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payload Guidelines -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <h6>Best Practices:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Use descriptive names</li>
+                    <li><i class="fas fa-check text-success"></i> Include clear descriptions</li>
+                    <li><i class="fas fa-check text-success"></i> Test before saving</li>
+                    <li><i class="fas fa-check text-success"></i> Tag appropriately</li>
+                </ul>
+                
+                <h6 class="mt-3">Variables:</h6>
+                <ul class="list-unstyled">
+                    <li><code>{URL}</code> - Target URL</li>
+                    <li><code>{PARAM}</code> - Parameter name</li>
+                    <li><code>{DOMAIN}</code> - Domain name</li>
+                    <li><code>{PORT}</code> - Port number</li>
+                </ul>
+                
+                <h6 class="mt-3">Categories:</h6>
+                <small class="text-muted">
+                    Choose the most specific category for better organization and filtering.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test Payload</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Test URL</label>
+                    <input type="url" class="form-control" id="testUrl" placeholder="https://example.com/test">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Parameter</label>
+                    <input type="text" class="form-control" id="testParam" placeholder="id">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Rendered Payload</label>
+                    <textarea class="form-control bg-dark text-light" id="renderedPayload" rows="4" readonly></textarea>
+                </div>
+                <div id="testResults" class="mt-3" style="display: none;">
+                    <h6>Results:</h6>
+                    <div class="alert alert-info" id="testOutput"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="runTest()">
+                    <i class="fas fa-play"></i> Run Test
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Payload templates
+const templates = {
+    'xss_basic': {
+        name: 'XSS Basic Alert',
+        category: 'xss',
+        code: '<script>alert("XSS")</script>',
+        description: 'Basic XSS payload that triggers an alert dialog',
+        tags: 'basic, alert, reflected'
+    },
+    'xss_advanced': {
+        name: 'XSS Advanced Payload',
+        category: 'xss',
+        code: '<img src=x onerror=alert(String.fromCharCode(88,83,83))>',
+        description: 'Advanced XSS payload using image error event and char codes',
+        tags: 'advanced, img, onerror, bypass'
+    },
+    'sqli_union': {
+        name: 'SQL Union Select',
+        category: 'sqli',
+        code: "' UNION SELECT NULL,NULL,NULL--",
+        description: 'Basic union-based SQL injection payload',
+        tags: 'union, basic, null'
+    },
+    'sqli_boolean': {
+        name: 'SQL Boolean Based',
+        category: 'sqli',
+        code: "' AND 1=1--",
+        description: 'Boolean-based blind SQL injection payload',
+        tags: 'boolean, blind, basic'
+    },
+    'lfi_basic': {
+        name: 'LFI Basic',
+        category: 'lfi',
+        code: '../../../etc/passwd',
+        description: 'Basic local file inclusion payload for Unix systems',
+        tags: 'basic, unix, passwd'
+    },
+    'lfi_wrapper': {
+        name: 'LFI PHP Wrapper',
+        category: 'lfi',
+        code: 'php://filter/convert.base64-encode/resource=index.php',
+        description: 'PHP wrapper for base64 encoding files',
+        tags: 'php, wrapper, base64'
+    }
+};
+
+function loadTemplate(templateName) {
+    const template = templates[templateName];
+    if (template) {
+        document.getElementById('name').value = template.name;
+        document.getElementById('category').value = template.category;
+        document.getElementById('payload_code').value = template.code;
+        document.getElementById('description').value = template.description;
+        document.getElementById('tags').value = template.tags;
+    }
+}
+
+function testPayload() {
+    const payloadCode = document.getElementById('payload_code').value;
+    if (!payloadCode.trim()) {
+        alert('Please enter a payload first');
+        return;
+    }
+    
+    document.getElementById('renderedPayload').value = payloadCode;
+    document.getElementById('testResults').style.display = 'none';
+    
+    new bootstrap.Modal(document.getElementById('testModal')).show();
+}
+
+function runTest() {
+    const url = document.getElementById('testUrl').value;
+    const param = document.getElementById('testParam').value;
+    const payload = document.getElementById('payload_code').value;
+    
+    // Simulate payload rendering with variables
+    let renderedPayload = payload;
+    if (url) {
+        renderedPayload = renderedPayload.replace(/{URL}/g, url);
+        renderedPayload = renderedPayload.replace(/{DOMAIN}/g, new URL(url).hostname);
+    }
+    if (param) {
+        renderedPayload = renderedPayload.replace(/{PARAM}/g, param);
+    }
+    
+    document.getElementById('renderedPayload').value = renderedPayload;
+    
+    // Show test results (simulated)
+    const results = document.getElementById('testResults');
+    const output = document.getElementById('testOutput');
+    
+    output.innerHTML = `
+        <strong>Test completed:</strong><br>
+        • Payload length: ${renderedPayload.length} characters<br>
+        • Contains special chars: ${/[<>"'&]/.test(renderedPayload) ? 'Yes' : 'No'}<br>
+        • URL encoded length: ${encodeURIComponent(renderedPayload).length} characters<br>
+        • Potential bypasses: ${payload.includes('onerror') || payload.includes('String.fromCharCode') ? 'Advanced' : 'Basic'}
+    `;
+    
+    results.style.display = 'block';
+}
+
+// Auto-resize textarea
+document.getElementById('payload_code').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.max(this.scrollHeight, 200) + 'px';
+});
+</script>
+{% endblock %}

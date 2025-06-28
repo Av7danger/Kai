@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Intelligence Dashboard - Bug Bounty Hunter Pro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-brain"></i> Intelligence Dashboard</h1>
+    <div>
+        <button class="btn btn-primary" onclick="gatherIntelligence({{ target[0] }})">
+            <i class="fas fa-sync"></i> Gather Intelligence
+        </button>
+        <a href="{{ url_for('targets') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Targets
+        </a>
+    </div>
+</div>
+
+<!-- Target Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-crosshairs"></i> Target: {{ target[1] }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-card card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ target[13] or 0 }}</h3>
+                                <p class="mb-0">Subdomains</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ target[16] or 0 }}</h3>
+                                <p class="mb-0">Risk Score</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ target[5] or 0 }}</h3>
+                                <p class="mb-0">Vulnerabilities</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h3>${{ "%.0f"|format(target[6] or 0) }}</h3>
+                                <p class="mb-0">Est. Payout</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Intelligence Data -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-sitemap"></i> Subdomains & Infrastructure</h5>
+            </div>
+            <div class="card-body">
+                <div id="subdomains-data">
+                    {% if intel_data %}
+                        {% for intel in intel_data %}
+                            {% if intel[2] == 'subdomains' %}
+                                <div class="mb-3">
+                                    <h6>Discovered Subdomains:</h6>
+                                    <div class="bg-dark text-light p-2 rounded">
+                                        <code>{{ intel[3] | safe }}</code>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No subdomain data available. Click "Gather Intelligence" to start discovery.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-code"></i> Technology Stack</h5>
+            </div>
+            <div class="card-body">
+                <div id="technology-data">
+                    {% if intel_data %}
+                        {% for intel in intel_data %}
+                            {% if intel[2] == 'technologies' %}
+                                <div class="mb-3">
+                                    <h6>Detected Technologies:</h6>
+                                    <div class="bg-dark text-light p-2 rounded">
+                                        <code>{{ intel[3] | safe }}</code>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No technology data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Intelligence -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-shield-alt"></i> Security Analysis</h5>
+            </div>
+            <div class="card-body">
+                {% if intel_data %}
+                    {% for intel in intel_data %}
+                        {% if intel[2] == 'ssl_info' %}
+                            <div class="mb-2">
+                                <strong>SSL Status:</strong>
+                                <span class="badge bg-success">Configured</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                <div class="mb-2">
+                    <strong>Security Headers:</strong>
+                    <span class="badge bg-warning">Partial</span>
+                </div>
+                <div class="mb-2">
+                    <strong>WAF Detection:</strong>
+                    <span class="badge bg-info">Unknown</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-users"></i> Social Intelligence</h5>
+            </div>
+            <div class="card-body">
+                {% if intel_data %}
+                    {% for intel in intel_data %}
+                        {% if intel[2] == 'social_media' %}
+                            <div class="mb-3">
+                                <h6>Social Media Presence:</h6>
+                                <div class="bg-dark text-light p-2 rounded">
+                                    <code>{{ intel[3] | safe }}</code>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No social intelligence data available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle"></i> Risk Assessment</h5>
+            </div>
+            <div class="card-body">
+                {% if target[16] %}
+                    <div class="text-center">
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar 
+                                {% if target[16] > 70 %}bg-danger
+                                {% elif target[16] > 40 %}bg-warning
+                                {% else %}bg-success{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ target[16] }}%">
+                                {{ target[16] }}%
+                            </div>
+                        </div>
+                        <h5>
+                            {% if target[16] > 70 %}High Risk
+                            {% elif target[16] > 40 %}Medium Risk
+                            {% else %}Low Risk{% endif %}
+                        </h5>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Risk assessment not available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scan History -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Scan History</h5>
+            </div>
+            <div class="card-body">
+                {% if scan_history %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Scan Type</th>
+                                    <th>Start Time</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Findings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for scan in scan_history %}
+                                <tr>
+                                    <td><span class="badge bg-primary">{{ scan[2] }}</span></td>
+                                    <td>{{ scan[3] }}</td>
+                                    <td>{{ scan[4] or 'In Progress' }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if scan[5] == 'completed' %}bg-success
+                                            {% elif scan[5] == 'failed' %}bg-danger
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ scan[5] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ scan[7] or 0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No scan history available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function gatherIntelligence(targetId) {
+    // Show loading state
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gathering...';
+    btn.disabled = true;
+    
+    fetch(`/api/gather_intelligence/${targetId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status) {
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show';
+                alert.innerHTML = `
+                    <strong>Success!</strong> Intelligence gathering started. Page will refresh in 10 seconds.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container-fluid').insertBefore(alert, document.querySelector('.d-flex'));
+                
+                // Refresh page after delay
+                setTimeout(() => {
+                    location.reload();
+                }, 10000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+</script>
+{% endblock %}

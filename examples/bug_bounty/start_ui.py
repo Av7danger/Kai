@@ -48,7 +48,13 @@ def main():
     
     try:
         # Import and run the web UI
-        from web_ui import app
+        from web_ui import app, BugBountyUI
+        
+        # Initialize database
+        print("🗄️ Initializing database...")
+        bug_bounty_ui = BugBountyUI()
+        print("✅ Database ready!")
+        
         app.run(debug=False, host='0.0.0.0', port=5000)
     except ImportError:
         print("❌ web_ui.py not found in current directory")
