@@ -2,7 +2,40 @@
 
 ## 🚀 QUICK START (5 MINUTES TO HUNTING)
 
-### METHOD 1: ONE-COMMAND DEPLOYMENT (EASIEST)
+### METHOD 1: GIT CLONE (FASTEST & EASIEST)
+
+**Step 1:** Clone and set up on Kali Linux:
+```bash
+# Clone the repository
+_git clone https://github.com/Av7danger/Kai.git
+cd Kai/examples/bug_bounty_
+
+# Install dependencies
+sudo apt update && sudo apt install -y python3 python3-pip subfinder httpx nuclei nmap gobuster ffuf nikto
+pip install google-generativeai aiohttp psutil colorama rich click tqdm requests beautifulsoup4
+
+# Set up Go tools
+export GOPATH=$HOME/go && export PATH=$PATH:$GOPATH/bin
+go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+go install github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+```
+
+**Step 2:** Configure and start hunting:
+```bash
+# Add your Gemini API key
+nano quick_start_config.py  # Set GEMINI_API_KEY = "your_actual_key"
+
+# Test the complete system
+python3 kali_bb_pro.py status
+python3 kali_bb_pro.py quick-hunt testphp.vulnweb.com
+
+# Start earning!
+echo "target1.com\ntarget2.com" > targets.txt
+python3 kali_bb_pro.py batch-hunt --targets targets.txt
+```
+
+### METHOD 2: ONE-COMMAND DEPLOYMENT (ALTERNATIVE)
 
 **Step 1:** Copy the deployment script to your Kali Linux system:
 ```bash
