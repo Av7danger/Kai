@@ -123,6 +123,217 @@ def init_db():
 # Initialize database
 init_db()
 
+class AIReasoningEngine:
+    """Simulates Gemini AI reasoning and decision making"""
+    
+    def __init__(self):
+        self.reasoning_queue = queue.Queue()
+        self.decision_history = []
+        self.current_context = {}
+        self.recent_user_msgs = []
+        self.recent_ai_msgs = []
+        
+    def add_reasoning_log(self, log_type, message, context=None):
+        """Add a reasoning log entry"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        log_entry = {
+            'timestamp': timestamp,
+            'type': log_type,
+            'message': message,
+            'context': context or {}
+        }
+        reasoning_logs.append(log_entry)
+        
+        # Keep only last 100 entries
+        if len(reasoning_logs) > 100:
+            reasoning_logs.pop(0)
+            
+        return log_entry
+    
+    def make_decision(self, decision_type, reasoning, options=None):
+        """Simulate AI decision making"""
+        decision = {
+            'timestamp': datetime.now().strftime("%H:%M:%S"),
+            'type': decision_type,
+            'reasoning': reasoning,
+            'options': options or [],
+            'selected': None
+        }
+        
+        # Simulate decision logic
+        if decision_type == 'workflow_selection':
+            decision['selected'] = 'reconnaissance_first'
+            decision['reasoning'] += ' - Chose reconnaissance-first due to unknown attack surface'
+        elif decision_type == 'tool_selection':
+            decision['selected'] = 'nuclei'
+            decision['reasoning'] += ' - Selected nuclei for comprehensive vulnerability scanning'
+        elif decision_type == 'priority_assignment':
+            decision['selected'] = 'critical'
+            decision['reasoning'] += ' - Prioritized critical vulnerabilities for immediate attention'
+            
+        self.decision_history.append(decision)
+        ai_state['decisions_made'] += 1
+        
+        return decision
+    
+    def update_context(self, new_context):
+        """Update AI reasoning context"""
+        self.current_context.update(new_context)
+        ai_state['reasoning_context'] = self.current_context.copy()
+    
+    def add_chat_history(self, sender, message):
+        if sender == 'user':
+            self.recent_user_msgs.append(message)
+            if len(self.recent_user_msgs) > 10:
+                self.recent_user_msgs.pop(0)
+        else:
+            self.recent_ai_msgs.append(message)
+            if len(self.recent_ai_msgs) > 10:
+                self.recent_ai_msgs.pop(0)
+    
+    def parse_command(self, user_message):
+        msg = user_message.lower().strip()
+        if msg.startswith('pause workflow'):
+            return 'pause'
+        if msg.startswith('resume workflow'):
+            return 'resume'
+        if msg.startswith('skip to '):
+            step = msg.replace('skip to ', '').strip().title()
+            return ('skip', step)
+        if msg.startswith('rerun '):
+            step = msg.replace('rerun ', '').strip().title()
+            return ('rerun', step)
+        if msg.startswith('change tool to '):
+            tool = msg.replace('change tool to ', '').strip()
+            return ('change_tool', tool)
+        if msg in ['what step', 'current step', 'what\'s the current step?', 'show me the workflow']:
+            return 'show_workflow'
+        if msg.startswith('summarize') or 'summary' in msg:
+            return 'summarize'
+        return None
+    
+    def handle_command(self, command):
+        global global_workflow_state
+        if command == 'pause':
+            global_workflow_state['paused'] = True
+            return 'Workflow paused. No further steps will be executed until resumed.'
+        if command == 'resume':
+            global_workflow_state['paused'] = False
+            return 'Workflow resumed. Continuing from current step.'
+        if isinstance(command, tuple) and command[0] == 'skip':
+            step = command[1]
+            if step in global_workflow_state['steps']:
+                global_workflow_state['current_step'] = step
+                global_workflow_state['step_index'] = global_workflow_state['steps'].index(step)
+                return f'Skipped to step: {step}. Workflow updated.'
+            else:
+                return f'Unknown step: {step}. Valid steps: {", ".join(global_workflow_state["steps"])}'
+        if isinstance(command, tuple) and command[0] == 'rerun':
+            step = command[1]
+            if step in global_workflow_state['steps']:
+                return f'Re-running step: {step}. (Simulation only: actual rerun logic not implemented)'
+            else:
+                return f'Unknown step: {step}. Valid steps: {", ".join(global_workflow_state["steps"])}'
+        if isinstance(command, tuple) and command[0] == 'change_tool':
+            tool = command[1]
+            global_workflow_state['last_tool'] = tool
+            return f'Changed tool to: {tool}. All subsequent actions will use this tool where applicable.'
+        if command == 'show_workflow':
+            idx = global_workflow_state['step_index']
+            step = global_workflow_state['current_step']
+            paused = global_workflow_state['paused']
+            return f'Current step: {step} (Step {idx+1}/{len(global_workflow_state["steps"])}). Workflow is {"paused" if paused else "active"}.'
+        if command == 'summarize':
+            hist = global_workflow_state['history'][-5:]
+            if not hist:
+                return 'No recent workflow actions to summarize.'
+            summary = '\n'.join([f"[{h['timestamp']}] {h['step']}: {h['action']}" for h in hist])
+            return f'Recent workflow summary:\n{summary}'
+        return None
+    
+    def generate_response(self, user_message):
+        """Generate AI response to user questions"""
+        lower_message = user_message.lower()
+        
+        # Predefined responses based on keywords
+        responses = {
+            'why': {
+                'message': 'I chose this approach because it maximizes efficiency while minimizing false positives. The reconnaissance-first strategy allows me to understand the attack surface before launching targeted attacks.',
+                'reasoning': 'User asked about decision reasoning - provided strategic explanation'
+            },
+            'how': {
+                'message': 'I use a combination of static analysis, dynamic testing, and machine learning to identify vulnerabilities. Each decision is based on the current context and historical success patterns.',
+                'reasoning': 'User asked about methodology - explained technical approach'
+            },
+            'what': {
+                'message': 'I\'m currently analyzing the target domain, mapping the attack surface, and selecting the most effective testing tools based on the discovered technologies.',
+                'reasoning': 'User asked about current status - provided activity update'
+            },
+            'change': {
+                'message': 'I can adapt my strategy based on your input. What specific changes would you like me to make to the current workflow?',
+                'reasoning': 'User requested strategy change - offered flexibility'
+            },
+            'status': {
+                'message': f'Current status: {ai_state["current_phase"]}. I\'ve made {ai_state["decisions_made"]} decisions with {ai_state["confidence"]}% confidence.',
+                'reasoning': 'User asked for status - provided current state summary'
+            },
+            'tools': {
+                'message': f'I\'m currently using {", ".join(ai_state["tools_active"]) if ai_state["tools_active"] else "standard toolset"}. These tools were selected based on the target\'s technology stack.',
+                'reasoning': 'User asked about tools - listed current toolset'
+            },
+            'confidence': {
+                'message': f'My confidence level is currently {ai_state["confidence"]}%. This is based on the quality of reconnaissance data and the success rate of similar targets.',
+                'reasoning': 'User asked about confidence - provided confidence metrics'
+            },
+            'time': {
+                'message': 'Estimated completion time: 15-20 minutes. This includes vulnerability discovery, exploitation verification, and report generation.',
+                'reasoning': 'User asked about timing - provided time estimates'
+            }
+        }
+        
+        # Find matching response
+        for key, response in responses.items():
+            if key in lower_message:
+                self.add_reasoning_log('chat', response['reasoning'])
+                return response['message']
+        
+        # Context-aware follow-up
+        if user_message.lower().strip() in ['why did you do that?', 'why?', 'what was the reason?']:
+            if global_workflow_state['history']:
+                last = global_workflow_state['history'][-1]
+                reason = last.get('details', 'No details available.')
+                resp = f"The last action was: {last['action']} in step {last['step']}. Reason: {reason}"
+            else:
+                resp = 'No recent actions to explain.'
+            self.add_chat_history('ai', resp)
+            return resp
+        if user_message.lower().strip() in ['what\'s next?', 'next step?', 'what now?']:
+            idx = global_workflow_state['step_index']
+            if idx+1 < len(global_workflow_state['steps']):
+                next_step = global_workflow_state['steps'][idx+1]
+                resp = f"The next step is: {next_step}."
+            else:
+                resp = 'Workflow is at the final step.'
+            self.add_chat_history('ai', resp)
+            return resp
+        # Clarification for ambiguous queries
+        if len(user_message.split()) < 3:
+            resp = 'Could you clarify your question or provide more details?'
+            self.add_chat_history('ai', resp)
+            return resp
+        # Fallback to default
+        resp = 'I am here to help with workflow and reasoning. Please ask a specific question or command.'
+        self.add_chat_history('ai', resp)
+        return resp
+
+# Initialize AI reasoning engine
+ai_engine = AIReasoningEngine()
+
+# Add some initial reasoning logs
+ai_engine.add_reasoning_log('initialization', 'Behind the Scenes dashboard initialized')
+ai_engine.add_reasoning_log('analysis', 'System ready for interactive AI debugging')
+ai_engine.add_reasoning_log('decision', 'Ready to respond to user questions and provide insights')
+
 @app.route('/')
 def index():
     """Main dashboard"""
@@ -284,291 +495,6 @@ def get_system_status():
     """Get current system status"""
     return jsonify(system_status)
 
-def execute_program(program_id, target_domain, scope, workflow_type):
-    """Execute bug bounty program in background"""
-    try:
-        # Update status
-        conn = sqlite3.connect('bug_bounty.db')
-        cursor = conn.cursor()
-        cursor.execute('UPDATE programs SET status = ? WHERE id = ?', ('running', program_id))
-        conn.commit()
-        conn.close()
-        
-        # Add log entry
-        add_log_entry(program_id, 'INFO', f'Starting {workflow_type} workflow for {target_domain}')
-        
-        # Execute based on workflow type
-        if workflow_type == 'autonomous':
-            results = bug_hunter.run_autonomous_workflow(target_domain, scope, program_id)
-        else:
-            results = bug_hunter.run_basic_workflow(target_domain, scope, program_id)
-        
-        # Update program with results
-        conn = sqlite3.connect('bug_bounty.db')
-        cursor = conn.cursor()
-        cursor.execute('''
-            UPDATE programs 
-            SET status = ?, results = ?, updated_at = CURRENT_TIMESTAMP 
-            WHERE id = ?
-        ''', ('completed', json.dumps(results), program_id))
-        conn.commit()
-        conn.close()
-        
-        add_log_entry(program_id, 'INFO', f'Program completed successfully for {target_domain}')
-        
-    except Exception as e:
-        # Update status on error
-        conn = sqlite3.connect('bug_bounty.db')
-        cursor = conn.cursor()
-        cursor.execute('UPDATE programs SET status = ? WHERE id = ?', ('error', program_id))
-        conn.commit()
-        conn.close()
-        
-        add_log_entry(program_id, 'ERROR', f'Program failed: {str(e)}')
-
-def add_log_entry(program_id, level, message):
-    """Add log entry to database"""
-    conn = sqlite3.connect('bug_bounty.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO execution_logs (program_id, level, message)
-        VALUES (?, ?, ?)
-    ''', (program_id, level, message))
-    conn.commit()
-    conn.close()
-
-@app.route('/api/optimize')
-def optimize_system():
-    """Run system optimization"""
-    try:
-        optimization_results = kali_optimizer.optimize_system()
-        return jsonify({
-            'status': 'success',
-            'results': optimization_results
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/health')
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0'
-    })
-
-class AIReasoningEngine:
-    """Simulates Gemini AI reasoning and decision making"""
-    
-    def __init__(self):
-        self.reasoning_queue = queue.Queue()
-        self.decision_history = []
-        self.current_context = {}
-        self.recent_user_msgs = []
-        self.recent_ai_msgs = []
-        
-    def add_reasoning_log(self, log_type, message, context=None):
-        """Add a reasoning log entry"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        log_entry = {
-            'timestamp': timestamp,
-            'type': log_type,
-            'message': message,
-            'context': context or {}
-        }
-        reasoning_logs.append(log_entry)
-        
-        # Keep only last 100 entries
-        if len(reasoning_logs) > 100:
-            reasoning_logs.pop(0)
-            
-        return log_entry
-    
-    def make_decision(self, decision_type, reasoning, options=None):
-        """Simulate AI decision making"""
-        decision = {
-            'timestamp': datetime.now().strftime("%H:%M:%S"),
-            'type': decision_type,
-            'reasoning': reasoning,
-            'options': options or [],
-            'selected': None
-        }
-        
-        # Simulate decision logic
-        if decision_type == 'workflow_selection':
-            decision['selected'] = 'reconnaissance_first'
-            decision['reasoning'] += ' - Chose reconnaissance-first due to unknown attack surface'
-        elif decision_type == 'tool_selection':
-            decision['selected'] = 'nuclei'
-            decision['reasoning'] += ' - Selected nuclei for comprehensive vulnerability scanning'
-        elif decision_type == 'priority_assignment':
-            decision['selected'] = 'critical'
-            decision['reasoning'] += ' - Prioritized critical vulnerabilities for immediate attention'
-            
-        self.decision_history.append(decision)
-        ai_state['decisions_made'] += 1
-        
-        return decision
-    
-    def update_context(self, new_context):
-        """Update AI reasoning context"""
-        self.current_context.update(new_context)
-        ai_state['reasoning_context'] = self.current_context.copy()
-    
-    def add_chat_history(self, sender, message):
-        if sender == 'user':
-            self.recent_user_msgs.append(message)
-            if len(self.recent_user_msgs) > 10:
-                self.recent_user_msgs.pop(0)
-        else:
-            self.recent_ai_msgs.append(message)
-            if len(self.recent_ai_msgs) > 10:
-                self.recent_ai_msgs.pop(0)
-    
-    def parse_command(self, user_message):
-        msg = user_message.lower().strip()
-        if msg.startswith('pause workflow'):
-            return 'pause'
-        if msg.startswith('resume workflow'):
-            return 'resume'
-        if msg.startswith('skip to '):
-            step = msg.replace('skip to ', '').strip().title()
-            return ('skip', step)
-        if msg.startswith('rerun '):
-            step = msg.replace('rerun ', '').strip().title()
-            return ('rerun', step)
-        if msg.startswith('change tool to '):
-            tool = msg.replace('change tool to ', '').strip()
-            return ('change_tool', tool)
-        if msg in ['what step', 'current step', 'what\'s the current step?', 'show me the workflow']:
-            return 'show_workflow'
-        if msg.startswith('summarize') or 'summary' in msg:
-            return 'summarize'
-        return None
-    
-    def handle_command(self, command):
-        global global_workflow_state
-        if command == 'pause':
-            global_workflow_state['paused'] = True
-            return 'Workflow paused. No further steps will be executed until resumed.'
-        if command == 'resume':
-            global_workflow_state['paused'] = False
-            return 'Workflow resumed. Continuing from current step.'
-        if isinstance(command, tuple) and command[0] == 'skip':
-            step = command[1]
-            if step in global_workflow_state['steps']:
-                global_workflow_state['current_step'] = step
-                global_workflow_state['step_index'] = global_workflow_state['steps'].index(step)
-                return f'Skipped to step: {step}. Workflow updated.'
-            else:
-                return f'Unknown step: {step}. Valid steps: {', '.join(global_workflow_state['steps'])}'
-        if isinstance(command, tuple) and command[0] == 'rerun':
-            step = command[1]
-            if step in global_workflow_state['steps']:
-                return f'Re-running step: {step}. (Simulation only: actual rerun logic not implemented)'
-            else:
-                return f'Unknown step: {step}. Valid steps: {', '.join(global_workflow_state['steps'])}'
-        if isinstance(command, tuple) and command[0] == 'change_tool':
-            tool = command[1]
-            global_workflow_state['last_tool'] = tool
-            return f'Changed tool to: {tool}. All subsequent actions will use this tool where applicable.'
-        if command == 'show_workflow':
-            idx = global_workflow_state['step_index']
-            step = global_workflow_state['current_step']
-            paused = global_workflow_state['paused']
-            return f'Current step: {step} (Step {idx+1}/{len(global_workflow_state["steps"])}). Workflow is {"paused" if paused else "active"}.'
-        if command == 'summarize':
-            hist = global_workflow_state['history'][-5:]
-            if not hist:
-                return 'No recent workflow actions to summarize.'
-            summary = '\n'.join([f"[{h['timestamp']}] {h['step']}: {h['action']}" for h in hist])
-            return f'Recent workflow summary:\n{summary}'
-        return None
-    
-    def generate_response(self, user_message):
-        """Generate AI response to user questions"""
-        lower_message = user_message.lower()
-        
-        # Predefined responses based on keywords
-        responses = {
-            'why': {
-                'message': 'I chose this approach because it maximizes efficiency while minimizing false positives. The reconnaissance-first strategy allows me to understand the attack surface before launching targeted attacks.',
-                'reasoning': 'User asked about decision reasoning - provided strategic explanation'
-            },
-            'how': {
-                'message': 'I use a combination of static analysis, dynamic testing, and machine learning to identify vulnerabilities. Each decision is based on the current context and historical success patterns.',
-                'reasoning': 'User asked about methodology - explained technical approach'
-            },
-            'what': {
-                'message': 'I\'m currently analyzing the target domain, mapping the attack surface, and selecting the most effective testing tools based on the discovered technologies.',
-                'reasoning': 'User asked about current status - provided activity update'
-            },
-            'change': {
-                'message': 'I can adapt my strategy based on your input. What specific changes would you like me to make to the current workflow?',
-                'reasoning': 'User requested strategy change - offered flexibility'
-            },
-            'status': {
-                'message': f'Current status: {ai_state["current_phase"]}. I\'ve made {ai_state["decisions_made"]} decisions with {ai_state["confidence"]}% confidence.',
-                'reasoning': 'User asked for status - provided current state summary'
-            },
-            'tools': {
-                'message': f'I\'m currently using {", ".join(ai_state["tools_active"]) if ai_state["tools_active"] else "standard toolset"}. These tools were selected based on the target\'s technology stack.',
-                'reasoning': 'User asked about tools - listed current toolset'
-            },
-            'confidence': {
-                'message': f'My confidence level is currently {ai_state["confidence"]}%. This is based on the quality of reconnaissance data and the success rate of similar targets.',
-                'reasoning': 'User asked about confidence - provided confidence metrics'
-            },
-            'time': {
-                'message': 'Estimated completion time: 15-20 minutes. This includes vulnerability discovery, exploitation verification, and report generation.',
-                'reasoning': 'User asked about timing - provided time estimates'
-            }
-        }
-        
-        # Find matching response
-        for key, response in responses.items():
-            if key in lower_message:
-                self.add_reasoning_log('chat', response['reasoning'])
-                return response['message']
-        
-        # Context-aware follow-up
-        if user_message.lower().strip() in ['why did you do that?', 'why?', 'what was the reason?']:
-            if global_workflow_state['history']:
-                last = global_workflow_state['history'][-1]
-                reason = last.get('details', 'No details available.')
-                resp = f"The last action was: {last['action']} in step {last['step']}. Reason: {reason}"
-            else:
-                resp = 'No recent actions to explain.'
-            self.add_chat_history('ai', resp)
-            return resp
-        if user_message.lower().strip() in ['what\'s next?', 'next step?', 'what now?']:
-            idx = global_workflow_state['step_index']
-            if idx+1 < len(global_workflow_state['steps']):
-                next_step = global_workflow_state['steps'][idx+1]
-                resp = f"The next step is: {next_step}."
-            else:
-                resp = 'Workflow is at the final step.'
-            self.add_chat_history('ai', resp)
-            return resp
-        # Clarification for ambiguous queries
-        if len(user_message.split()) < 3:
-            resp = 'Could you clarify your question or provide more details?'
-            self.add_chat_history('ai', resp)
-            return resp
-        # Fallback to default
-        resp = super().generate_response(user_message) if hasattr(super(), 'generate_response') else 'I am here to help with workflow and reasoning. Please ask a specific question or command.'
-        self.add_chat_history('ai', resp)
-        return resp
-
-# Initialize AI reasoning engine
-ai_engine = AIReasoningEngine()
-
-# Add some initial reasoning logs
-ai_engine.add_reasoning_log('initialization', 'Behind the Scenes dashboard initialized')
-ai_engine.add_reasoning_log('analysis', 'System ready for interactive AI debugging')
-ai_engine.add_reasoning_log('decision', 'Ready to respond to user questions and provide insights')
-
 @app.route('/api/reasoning-logs')
 def get_reasoning_logs():
     """Get current reasoning logs"""
@@ -729,6 +655,80 @@ def reset_ai_state():
     return jsonify({
         'status': 'AI state reset successfully',
         'ai_state': ai_state
+    })
+
+def execute_program(program_id, target_domain, scope, workflow_type):
+    """Execute bug bounty program in background"""
+    try:
+        # Update status
+        conn = sqlite3.connect('bug_bounty.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE programs SET status = ? WHERE id = ?', ('running', program_id))
+        conn.commit()
+        conn.close()
+        
+        # Add log entry
+        add_log_entry(program_id, 'INFO', f'Starting {workflow_type} workflow for {target_domain}')
+        
+        # Execute based on workflow type
+        if workflow_type == 'autonomous':
+            results = bug_hunter.run_autonomous_workflow(target_domain, scope, program_id)
+        else:
+            results = bug_hunter.run_basic_workflow(target_domain, scope, program_id)
+        
+        # Update program with results
+        conn = sqlite3.connect('bug_bounty.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE programs 
+            SET status = ?, results = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        ''', ('completed', json.dumps(results), program_id))
+        conn.commit()
+        conn.close()
+        
+        add_log_entry(program_id, 'INFO', f'Program completed successfully for {target_domain}')
+        
+    except Exception as e:
+        # Update status on error
+        conn = sqlite3.connect('bug_bounty.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE programs SET status = ? WHERE id = ?', ('error', program_id))
+        conn.commit()
+        conn.close()
+        
+        add_log_entry(program_id, 'ERROR', f'Program failed: {str(e)}')
+
+def add_log_entry(program_id, level, message):
+    """Add log entry to database"""
+    conn = sqlite3.connect('bug_bounty.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO execution_logs (program_id, level, message)
+        VALUES (?, ?, ?)
+    ''', (program_id, level, message))
+    conn.commit()
+    conn.close()
+
+@app.route('/api/optimize')
+def optimize_system():
+    """Run system optimization"""
+    try:
+        optimization_results = kali_optimizer.optimize_system()
+        return jsonify({
+            'status': 'success',
+            'results': optimization_results
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'version': '1.0.0'
     })
 
 if __name__ == '__main__':

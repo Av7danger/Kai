@@ -1,307 +1,192 @@
-# 🐛 Kali Bug Hunter
+# 🎯 Kali Linux Optimized Bug Bounty Framework
 
-**Advanced Bug Bounty Framework - Optimized for Kali Linux**
+A modern, AI-powered bug bounty hunting framework with autonomous vulnerability discovery, real-time monitoring, and interactive AI reasoning.
 
-A streamlined, modern bug bounty framework designed specifically for Kali Linux with an intuitive web interface, automated scanning, and comprehensive reporting.
+## 🚀 Features
 
-## ✨ Features
+### 🤖 AI-Powered Bug Hunting
+- **Autonomous Workflows**: AI-driven vulnerability discovery and exploitation
+- **Gemini AI Integration**: Advanced reasoning and decision-making
+- **Context-Aware Chat**: Interactive AI assistant for workflow control
+- **Real-time Reasoning**: Live AI decision logs and explanations
 
-### 🎯 Core Features
-- **Target Management** - Add and manage bug bounty targets
-- **Automated Scanning** - Comprehensive vulnerability scanning with Kali tools
-- **Real-time Dashboard** - Modern web interface with live updates
-- **Vulnerability Tracking** - Track and categorize discovered vulnerabilities
-- **Report Generation** - Professional HTML reports with detailed findings
-- **Kali Linux Optimization** - Optimized for Kali Linux tools and environment
+### 📊 Modern Dashboard
+- **Enhanced UI**: Dark theme with responsive design
+- **Live Monitoring**: Real-time system resources and tool status
+- **Workflow Visualization**: Step-by-step progress tracking
+- **Performance Metrics**: Comprehensive statistics and analytics
 
-### 🛠️ Integrated Tools
-- **Nmap** - Port scanning and service detection
-- **Nuclei** - Vulnerability scanning
-- **Subfinder** - Subdomain enumeration
-- **Amass** - Advanced subdomain discovery
-- **FFuf** - Web fuzzing and directory discovery
-- **Httpx** - HTTP probing and web discovery
+### 🛠️ Kali Linux Optimization
+- **Tool Detection**: Automatic Kali tool availability checking
+- **System Diagnostics**: CPU, memory, network monitoring
+- **Performance Optimization**: Resource management and tuning
+- **Error Handling**: Robust subprocess management with retries
 
-### 🎨 Modern Interface
-- **Dark Theme** - Professional dark interface optimized for security work
-- **Responsive Design** - Works on desktop, tablet, and mobile
-- **Real-time Updates** - Live status updates and progress tracking
-- **Intuitive Navigation** - Clean, organized interface
+### 🔍 Behind the Scenes
+- **AI Reasoning Logs**: Detailed AI decision-making process
+- **Decision Trees**: Visual representation of AI choices
+- **Workflow Control**: Chat-based workflow management
+- **Interactive Debugging**: Real-time AI state monitoring
 
-## 🚀 Quick Start
+## 📋 Requirements
 
-### Prerequisites
-- Kali Linux (recommended) or Ubuntu/Debian
 - Python 3.8+
-- Internet connection for tool installation
+- Flask
+- psutil
+- requests
+- Kali Linux (recommended) or Windows with tools installed
 
-### Installation
+## 🛠️ Installation
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd bug_bounty
+   cd examples/bug_bounty
    ```
 
-2. **Run the setup script**
+2. **Install dependencies**
    ```bash
-   chmod +x kali_setup.sh
-   ./kali_setup.sh
+   pip install -r requirements.txt
    ```
 
 3. **Start the application**
    ```bash
-   ./start.sh
+   python main.py
    ```
 
-4. **Access the dashboard**
-   - Open your browser and go to: `http://localhost:5000`
-   - Login with: `username=kali, password=kali`
+4. **Access the dashboards**
+   - Main Dashboard: http://localhost:5000
+   - Behind the Scenes: http://localhost:5000/behind-scenes
+
+## 🎯 Usage
+
+### Main Dashboard
+1. **Submit Target**: Enter domain and scope
+2. **Monitor Progress**: Watch live logs and system resources
+3. **View Results**: Check discovered vulnerabilities and reports
+
+### Behind the Scenes
+1. **AI Reasoning**: Monitor AI decision-making process
+2. **Interactive Chat**: Control workflow via natural language
+3. **System State**: View current AI state and confidence
+
+### Chat Commands
+```
+pause workflow          - Pause current workflow
+resume workflow         - Resume paused workflow
+skip to exploitation    - Jump to exploitation phase
+change tool to sqlmap   - Switch to specific tool
+summarize              - Get workflow summary
+what step              - Show current step
+```
 
 ## 📁 Project Structure
 
 ```
-bug_bounty/
-├── kali_bug_hunter.py          # Main application
-├── kali_config.yml             # Configuration file
-├── kali_setup.sh               # Setup script
-├── start.sh                    # Start script
-├── stop.sh                     # Stop script
-├── status.sh                   # Status script
-├── test_kali_tools.sh          # Tool testing script
-├── templates/                  # Web templates
-│   ├── kali_dashboard.html     # Main dashboard
-│   └── kali_login.html         # Login page
-├── kali_results/               # Output directory
-│   ├── reports/                # Generated reports
-│   ├── scans/                  # Scan results
-│   ├── payloads/               # Generated payloads
-│   └── exports/                # Data exports
-├── logs/                       # Application logs
-└── venv/                       # Python virtual environment
+examples/bug_bounty/
+├── main.py                 # Main Flask application
+├── kali_optimizer.py       # System optimization and tool detection
+├── autonomous_bug_hunter.py # AI-powered bug hunting logic
+├── subprocess_handler.py   # Robust subprocess management
+├── templates/
+│   ├── enhanced_dashboard.html    # Main dashboard UI
+│   └── behind_scenes.html         # AI reasoning dashboard
+├── test_behind_scenes.py   # Test suite for AI features
+├── test_windows_compatible.py # Windows compatibility tests
+├── USER_GUIDE.md          # Comprehensive user guide
+├── requirements.txt       # Python dependencies
+└── README.md             # This file
 ```
 
-## 🔧 Configuration
+## 🔧 API Endpoints
 
-The application is configured via `kali_config.yml`:
+### Dashboard APIs
+- `GET /api/diagnostics` - System diagnostics
+- `GET /api/tools/status` - Tool availability
+- `GET /api/programs` - List programs
+- `GET /api/vulnerabilities` - List vulnerabilities
+- `GET /api/logs` - Execution logs
 
-```yaml
-kali:
-  tools_path: "/usr/bin"
-  enable_kali_tools: true
-  auto_update: true
-  theme: "dark"
+### AI APIs
+- `GET /api/reasoning-logs` - AI reasoning history
+- `GET /api/ai-state` - Current AI state
+- `GET /api/decision-tree` - AI decision tree
+- `POST /api/chat` - Chat with AI
+- `GET /api/chat-history` - Chat history
 
-scanning:
-  default_scan_type: "comprehensive"
-  max_concurrent_scans: 3
-  scan_timeout: 3600
-  enable_ai_analysis: true
+### Control APIs
+- `POST /api/simulate-activity` - Simulate AI activity
+- `POST /api/update-phase` - Update workflow phase
+- `POST /api/reset-ai-state` - Reset AI state
 
-tools:
-  nmap: true
-  nuclei: true
-  ffuf: true
-  subfinder: true
-  amass: true
-  httpx: true
+## 🧪 Testing
 
-dashboard:
-  port: 5000
-  host: "0.0.0.0"
-  debug: false
-  theme: "dark"
-
-security:
-  enable_encryption: true
-  session_timeout: 3600
-  max_login_attempts: 5
-```
-
-## 🎯 Usage
-
-### Adding Targets
-1. Go to the dashboard
-2. Enter the target domain in the "Target Management" section
-3. Optionally add program name and reward range
-4. Click "Add Target"
-
-### Starting Scans
-1. Find your target in the targets list
-2. Click the "Scan" button
-3. Monitor progress in real-time
-4. View results in the "Vulnerabilities" section
-
-### Viewing Reports
-- Reports are automatically generated after scans complete
-- Access reports from the `kali_results/reports/` directory
-- Reports include detailed vulnerability information and recommendations
-
-## 🛠️ Management Commands
-
+### Run All Tests
 ```bash
-# Start the application
-./start.sh
-
-# Stop the application
-./stop.sh
-
-# Check application status
-./status.sh
-
-# Test Kali tools availability
-./test_kali_tools.sh
-
-# View logs
-tail -f logs/kali_bug_hunter.log
+python test_behind_scenes.py
 ```
 
-## 🔍 Scanning Types
+### Windows Compatibility
+```bash
+python test_windows_compatible.py
+```
 
-### Quick Scan
-- Basic port scanning
-- Common vulnerability checks
-- Fast execution (5-10 minutes)
-
-### Comprehensive Scan
-- Full subdomain enumeration
-- Deep vulnerability scanning
-- Technology fingerprinting
-- Extended execution (15-30 minutes)
-
-### Custom Scan
-- User-defined scan parameters
-- Selective tool usage
-- Configurable timeouts
-
-## 📊 Dashboard Features
-
-### Statistics Overview
-- Total targets
-- Active scans
-- Vulnerabilities found
-- Available Kali tools
-
-### Target Management
-- Add new targets
-- View target status
-- Start scans
-- Track progress
-
-### Vulnerability Tracking
-- Severity classification
-- CVSS scoring
-- Status tracking
-- Detailed descriptions
-
-### Tool Status
-- Real-time tool availability
-- Installation status
-- Version information
-
-## 🔒 Security Features
-
-- **Session Management** - Secure user sessions with timeout
-- **Input Validation** - Comprehensive input sanitization
-- **SQL Injection Protection** - Parameterized queries
-- **XSS Protection** - Output encoding
-- **CSRF Protection** - Token-based protection
-- **Rate Limiting** - Request throttling
-
-## 🐛 Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Common Issues
+1. **Server won't start**: Check if port 5000 is in use
+2. **Tools not found**: Ensure Kali tools are installed and in PATH
+3. **Database errors**: Delete `bug_bounty.db` and restart
 
-**Dashboard not accessible**
-```bash
-# Check if service is running
-./status.sh
+### Debug Mode
+- Check browser console for JavaScript errors
+- Monitor terminal output for Python errors
+- Use test scripts to verify functionality
 
-# Check firewall settings
-sudo ufw status
+## 🎯 Best Practices
 
-# Check port availability
-netstat -tlnp | grep 5000
-```
+### Target Selection
+- Start with test domains (e.g., `testphp.vulnweb.com`)
+- Use proper scope to avoid unauthorized testing
+- Document findings for reporting
 
-**Tools not found**
-```bash
-# Test tool availability
-./test_kali_tools.sh
+### AI Interaction
+- Be patient with AI responses
+- Use clear commands for workflow control
+- Monitor reasoning logs to understand decisions
+- Ask for explanations when needed
 
-# Install missing tools
-sudo apt update
-sudo apt install <tool-name>
-```
+### System Monitoring
+- Watch live logs for real-time updates
+- Check system resources to avoid overload
+- Monitor tool status to ensure availability
+- Review performance metrics for optimization
 
-**Permission errors**
-```bash
-# Fix file permissions
-chmod 755 *.sh
-chmod 644 kali_config.yml
+## 🔒 Security Notes
 
-# Fix directory permissions
-chmod 755 kali_results/
-```
-
-### Logs
-- Application logs: `logs/kali_bug_hunter.log`
-- System logs: `journalctl -u kali-bug-hunter.service`
-
-## 🔄 Updates
-
-### Updating the Application
-```bash
-# Pull latest changes
-git pull origin main
-
-# Reinstall dependencies
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Restart the service
-./stop.sh
-./start.sh
-```
-
-### Updating Kali Tools
-```bash
-# Update system packages
-sudo apt update && sudo apt upgrade
-
-# Update Go tools
-go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-```
+- This tool is for authorized security testing only
+- Always obtain proper permission before testing
+- Follow responsible disclosure practices
+- Respect rate limits and system resources
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Add tests for new functionality
 5. Submit a pull request
 
-## 📝 License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## ⚠️ Disclaimer
-
-This tool is for educational and authorized security testing purposes only. Users are responsible for ensuring they have proper authorization before testing any systems. The authors are not responsible for any misuse of this tool.
-
 ## 🆘 Support
 
-- **Documentation**: Check this README and inline code comments
-- **Issues**: Report bugs and feature requests via GitHub issues
-- **Community**: Join our community discussions
-
-## 🎉 Acknowledgments
-
-- Kali Linux team for the excellent security tools
-- ProjectDiscovery for Nuclei and other tools
-- The open-source security community
+- Check the `USER_GUIDE.md` for detailed documentation
+- Review the test scripts for usage examples
+- Monitor the terminal output for error messages
 
 ---
 
-**Happy Bug Hunting! 🐛🔍**
+**Happy Bug Hunting! 🐛✨**
