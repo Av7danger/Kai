@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Streamlined Bug Hunter - Complete Workflow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Error Banner Styles */
+        .error-banner {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ff0000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideInDown 0.5s ease;
+        }
+
+        .error-banner.hidden {
+            display: none;
+        }
+
+        .error-banner .error-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-banner .error-icon {
+            font-size: 1.5rem;
+        }
+
+        .error-banner .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Success Banner Styles */
+        .success-banner {
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+            color: #000;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #00ff88;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideInDown 0.5s ease;
+        }
+
+        .success-banner.hidden {
+            display: none;
+        }
+
+        /* Live Logs Styles */
+        .live-logs {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .live-logs h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .log-entry {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+        }
+
+        .log-entry.info {
+            background: rgba(0, 255, 136, 0.1);
+            border-left-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .log-entry.warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+            color: #ffc107;
+        }
+
+        .log-entry.error {
+            background: rgba(255, 68, 68, 0.1);
+            border-left-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .log-entry.success {
+            background: rgba(0, 255, 136, 0.1);
+            border-left-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .log-timestamp {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        /* System Status Styles */
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .status-card.healthy {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .status-card.warning {
+            border-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .status-card.error {
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .status-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .status-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ff88, #00ccff, #ff0088);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #b8b8b8;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px 20px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            font-weight: 600;
+            color: #00ff88;
+            position: relative;
+        }
+
+        .step.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            animation: pulse 2s infinite;
+        }
+
+        .step.completed {
+            background: rgba(0, 255, 136, 0.3);
+            border-color: #00ff88;
+            color: #fff;
+        }
+
+        .step.error {
+            background: rgba(255, 68, 68, 0.2);
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #00ff88;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .program-form {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b8b8b8;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .program-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .program-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .program-item:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+        }
+
+        .program-item h3 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .program-item p {
+            color: #b8b8b8;
+            margin-bottom: 5px;
+        }
+
+        .program-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-analyzing {
+            background: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+        }
+
+        .status-hunting {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-completed {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .status-error {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+
+        .vulnerability-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .vulnerability-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00ff88;
+        }
+
+        .vulnerability-item.critical {
+            border-left-color: #ff4444;
+        }
+
+        .vulnerability-item.high {
+            border-left-color: #ff8800;
+        }
+
+        .vulnerability-item.medium {
+            border-left-color: #ffc107;
+        }
+
+        .vulnerability-item.low {
+            border-left-color: #00ff88;
+        }
+
+        .vulnerability-item h4 {
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .vulnerability-item p {
+            color: #b8b8b8;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .severity-critical {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+
+        .severity-high {
+            background: rgba(255, 136, 0, 0.2);
+            color: #ff8800;
+        }
+
+        .severity-medium {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .severity-low {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #b8b8b8;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .workflow-steps {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .step {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Error Banner -->
+        <div id="errorBanner" class="error-banner hidden">
+            <div class="error-content">
+                <span class="error-icon">⚠️</span>
+                <span id="errorMessage">Error message will appear here</span>
+            </div>
+            <button class="close-btn" onclick="hideErrorBanner()">×</button>
+        </div>
+
+        <!-- Success Banner -->
+        <div id="successBanner" class="success-banner hidden">
+            <div class="error-content">
+                <span class="error-icon">✅</span>
+                <span id="successMessage">Success message will appear here</span>
+            </div>
+            <button class="close-btn" onclick="hideSuccessBanner()">×</button>
+        </div>
+
+        <!-- System Status -->
+        <div class="system-status">
+            <div id="cpuStatus" class="status-card">
+                <div class="status-icon">🖥️</div>
+                <div class="status-title">CPU Usage</div>
+                <div class="status-value" id="cpuValue">--</div>
+            </div>
+            <div id="memoryStatus" class="status-card">
+                <div class="status-icon">💾</div>
+                <div class="status-title">Memory Usage</div>
+                <div class="status-value" id="memoryValue">--</div>
+            </div>
+            <div id="networkStatus" class="status-card">
+                <div class="status-icon">🌐</div>
+                <div class="status-title">Network</div>
+                <div class="status-value" id="networkValue">--</div>
+            </div>
+            <div id="toolsStatus" class="status-card">
+                <div class="status-icon">🛠️</div>
+                <div class="status-title">Tools Status</div>
+                <div class="status-value" id="toolsValue">--</div>
+            </div>
+        </div>
+
+        <!-- Live Logs -->
+        <div class="live-logs">
+            <h3>📋 Live System Logs</h3>
+            <div id="logContainer">
+                <div class="log-entry info">
+                    <span class="log-timestamp">[{{ moment().format('HH:mm:ss') }}]</span>
+                    System initialized and ready for bug hunting
+                </div>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>🎯 Streamlined Bug Hunter</h1>
+            <p>Complete Autonomous Workflow: Target → Gemini Analysis → Workflow → Vulns → Logs → POC → Explanation</p>
+            
+            <div class="workflow-steps">
+                <div id="step1" class="step active">
+                    <span>🎯</span> Submit Target
+                </div>
+                <div id="step2" class="step">
+                    <span>🧠</span> Gemini Analysis
+                </div>
+                <div id="step3" class="step">
+                    <span>⚙️</span> Choose Workflow
+                </div>
+                <div id="step4" class="step">
+                    <span>🔍</span> Find Vulns
+                </div>
+                <div id="step5" class="step">
+                    <span>📝</span> Generate Logs
+                </div>
+                <div id="step6" class="step">
+                    <span>💣</span> Create POCs
+                </div>
+                <div id="step7" class="step">
+                    <span>📚</span> Explain Everything
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2>🎯 Submit Bug Bounty Program</h2>
+                
+                <div class="program-form">
+                    <div class="form-group">
+                        <label for="programName">Program Name</label>
+                        <input type="text" id="programName" placeholder="Enter program name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="targetDomain">Target Domain</label>
+                        <input type="text" id="targetDomain" placeholder="example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scope">Scope (one per line)</label>
+                        <textarea id="scope" placeholder="*.example.com&#10;api.example.com&#10;admin.example.com"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rewardRange">Reward Range</label>
+                        <select id="rewardRange">
+                            <option value="low">$100 - $500</option>
+                            <option value="medium">$500 - $2000</option>
+                            <option value="high">$2000 - $10000</option>
+                            <option value="critical">$10000+</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="platform">Platform</label>
+                        <select id="platform">
+                            <option value="hackerone">HackerOne</option>
+                            <option value="bugcrowd">Bugcrowd</option>
+                            <option value="intigriti">Intigriti</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" onclick="submitProgram()">
+                        <span id="submitBtnText">🚀 Start Autonomous Hunt</span>
+                        <span id="submitBtnLoading" class="loading hidden"></span>
+                    </button>
+                </div>
+                
+                <h2>📊 Active Programs</h2>
+                <div id="programList" class="program-list">
+                    <!-- Programs will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🔍 Discovered Vulnerabilities</h2>
+                <div id="vulnerabilityList" class="vulnerability-list">
+                    <!-- Vulnerabilities will be loaded here -->
+                </div>
+                
+                <h2>📈 Progress & Analytics</h2>
+                <div class="progress-section">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText">Ready to start hunting</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🎯 Streamlined Bug Hunter - Extreme Kali Linux Optimization</p>
+            <p>Powered by Gemini AI & Advanced Tool Integration</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentProgramId = null;
+        let logUpdateInterval = null;
+        let statusUpdateInterval = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPrograms();
+            loadVulnerabilities();
+            startLiveUpdates();
+            addLog('info', 'Dashboard loaded successfully');
+        });
+
+        // Banner management
+        function showErrorBanner(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorBanner').classList.remove('hidden');
+        }
+
+        function hideErrorBanner() {
+            document.getElementById('errorBanner').classList.add('hidden');
+        }
+
+        function showSuccessBanner(message) {
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successBanner').classList.remove('hidden');
+        }
+
+        function hideSuccessBanner() {
+            document.getElementById('successBanner').classList.add('hidden');
+        }
+
+        // Live logging system
+        function addLog(type, message) {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                ${message}
+            `;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 50 log entries
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        // System status updates
+        async function updateSystemStatus() {
+            try {
+                const response = await fetch('/api/diagnostics');
+                const data = await response.json();
+                
+                // Update CPU status
+                const cpuValue = document.getElementById('cpuValue');
+                const cpuStatus = document.getElementById('cpuStatus');
+                cpuValue.textContent = `${data.system?.cpu_usage || 0}%`;
+                cpuStatus.className = `status-card ${data.system?.cpu_usage > 80 ? 'warning' : 'healthy'}`;
+                
+                // Update memory status
+                const memoryValue = document.getElementById('memoryValue');
+                const memoryStatus = document.getElementById('memoryStatus');
+                memoryValue.textContent = `${data.system?.memory_usage || 0}%`;
+                memoryStatus.className = `status-card ${data.system?.memory_usage > 85 ? 'warning' : 'healthy'}`;
+                
+                // Update network status
+                const networkValue = document.getElementById('networkValue');
+                const networkStatus = document.getElementById('networkStatus');
+                networkValue.textContent = data.system?.network_status || 'Unknown';
+                networkStatus.className = `status-card ${data.system?.network_status === 'connected' ? 'healthy' : 'error'}`;
+                
+                // Update tools status
+                const toolsValue = document.getElementById('toolsValue');
+                const toolsStatus = document.getElementById('toolsStatus');
+                const availableTools = Object.values(data.tools || {}).filter(tool => tool.status === 'available').length;
+                const totalTools = Object.keys(data.tools || {}).length;
+                toolsValue.textContent = `${availableTools}/${totalTools}`;
+                toolsStatus.className = `status-card ${availableTools === totalTools ? 'healthy' : 'warning'}`;
+                
+            } catch (error) {
+                addLog('error', `Failed to update system status: ${error.message}`);
+            }
+        }
+
+        // Start live updates
+        function startLiveUpdates() {
+            // Update system status every 5 seconds
+            statusUpdateInterval = setInterval(updateSystemStatus, 5000);
+            
+            // Initial update
+            updateSystemStatus();
+        }
+
+        // Program submission
+        async function submitProgram() {
+            const submitBtn = document.querySelector('.btn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const submitBtnLoading = document.getElementById('submitBtnLoading');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtnText.classList.add('hidden');
+            submitBtnLoading.classList.remove('hidden');
+            
+            try {
+                const programData = {
+                    name: document.getElementById('programName').value,
+                    target_domain: document.getElementById('targetDomain').value,
+                    scope: document.getElementById('scope').value.split('\n').filter(line => line.trim()),
+                    reward_range: document.getElementById('rewardRange').value,
+                    platform: document.getElementById('platform').value
+                };
+                
+                addLog('info', `Submitting program: ${programData.name}`);
+                
+                const response = await fetch('/api/submit_program', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(programData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentProgramId = result.program_id;
+                    showSuccessBanner(`Program submitted successfully! ID: ${result.program_id}`);
+                    addLog('success', `Program submitted: ${result.program_id}`);
+                    
+                    // Start the complete workflow
+                    await runCompleteWorkflow(result.program_id);
+                } else {
+                    showErrorBanner(`Failed to submit program: ${result.error}`);
+                    addLog('error', `Program submission failed: ${result.error}`);
+                }
+                
+            } catch (error) {
+                showErrorBanner(`Network error: ${error.message}`);
+                addLog('error', `Network error: ${error.message}`);
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtnText.classList.remove('hidden');
+                submitBtnLoading.classList.add('hidden');
+            }
+        }
+
+        // Complete workflow execution
+        async function runCompleteWorkflow(programId) {
+            try {
+                addLog('info', 'Starting complete autonomous workflow...');
+                updateWorkflowStep(2, 'active');
+                
+                // Step 2: Gemini Analysis
+                addLog('info', 'Performing Gemini AI analysis...');
+                const analysisResult = await fetch(`/api/program/${programId}/analyze`, {
+                    method: 'POST'
+                });
+                
+                if (analysisResult.ok) {
+                    updateWorkflowStep(2, 'completed');
+                    updateWorkflowStep(3, 'active');
+                    addLog('success', 'Gemini analysis completed');
+                    
+                    // Step 3: Execute Workflow
+                    addLog('info', 'Executing optimized workflow...');
+                    const workflowResult = await fetch(`/api/program/${programId}/execute`, {
+                        method: 'POST'
+                    });
+                    
+                    if (workflowResult.ok) {
+                        updateWorkflowStep(3, 'completed');
+                        updateWorkflowStep(4, 'active');
+                        addLog('success', 'Workflow execution completed');
+                        
+                        // Step 4: Discover Vulnerabilities
+                        addLog('info', 'Analyzing for vulnerabilities...');
+                        const vulnResult = await fetch(`/api/program/${programId}/discover`, {
+                            method: 'POST'
+                        });
+                        
+                        if (vulnResult.ok) {
+                            updateWorkflowStep(4, 'completed');
+                            updateWorkflowStep(5, 'active');
+                            addLog('success', 'Vulnerability discovery completed');
+                            
+                            // Step 5: Generate Logs
+                            addLog('info', 'Generating detailed logs...');
+                            const logsResult = await fetch(`/api/program/${programId}/logs`, {
+                                method: 'POST'
+                            });
+                            
+                            if (logsResult.ok) {
+                                updateWorkflowStep(5, 'completed');
+                                updateWorkflowStep(6, 'active');
+                                addLog('success', 'Log generation completed');
+                                
+                                // Step 6: Generate POCs
+                                addLog('info', 'Creating proof-of-concepts...');
+                                const pocResult = await fetch(`/api/program/${programId}/pocs`, {
+                                    method: 'POST'
+                                });
+                                
+                                if (pocResult.ok) {
+                                    updateWorkflowStep(6, 'completed');
+                                    updateWorkflowStep(7, 'active');
+                                    addLog('success', 'POC generation completed');
+                                    
+                                    // Step 7: Explain Everything
+                                    addLog('info', 'Generating comprehensive explanation...');
+                                    const explainResult = await fetch(`/api/program/${programId}/explain`, {
+                                        method: 'POST'
+                                    });
+                                    
+                                    if (explainResult.ok) {
+                                        updateWorkflowStep(7, 'completed');
+                                        addLog('success', 'Complete workflow finished successfully!');
+                                        showSuccessBanner('Autonomous bug hunting completed!');
+                                        
+                                        // Reload data
+                                        loadPrograms();
+                                        loadVulnerabilities();
+                                    } else {
+                                        updateWorkflowStep(7, 'error');
+                                        addLog('error', 'Explanation generation failed');
+                                    }
+                                } else {
+                                    updateWorkflowStep(6, 'error');
+                                    addLog('error', 'POC generation failed');
+                                }
+                            } else {
+                                updateWorkflowStep(5, 'error');
+                                addLog('error', 'Log generation failed');
+                            }
+                        } else {
+                            updateWorkflowStep(4, 'error');
+                            addLog('error', 'Vulnerability discovery failed');
+                        }
+                    } else {
+                        updateWorkflowStep(3, 'error');
+                        addLog('error', 'Workflow execution failed');
+                    }
+                } else {
+                    updateWorkflowStep(2, 'error');
+                    addLog('error', 'Gemini analysis failed');
+                }
+                
+            } catch (error) {
+                addLog('error', `Workflow execution error: ${error.message}`);
+                showErrorBanner(`Workflow failed: ${error.message}`);
+            }
+        }
+
+        // Update workflow step status
+        function updateWorkflowStep(stepNumber, status) {
+            const step = document.getElementById(`step${stepNumber}`);
+            step.className = `step ${status}`;
+            
+            // Update progress bar
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (status === 'completed') {
+                const progress = (stepNumber / 7) * 100;
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = `Step ${stepNumber} completed`;
+            } else if (status === 'active') {
+                progressText.textContent = `Executing step ${stepNumber}...`;
+            } else if (status === 'error') {
+                progressText.textContent = `Error in step ${stepNumber}`;
+            }
+        }
+
+        // Load programs
+        async function loadPrograms() {
+            try {
+                const response = await fetch('/api/programs');
+                const programs = await response.json();
+                
+                const programList = document.getElementById('programList');
+                programList.innerHTML = '';
+                
+                programs.forEach(program => {
+                    const programItem = document.createElement('div');
+                    programItem.className = 'program-item';
+                    programItem.innerHTML = `
+                        <h3>${program.name}</h3>
+                        <p><strong>Target:</strong> ${program.target_domain}</p>
+                        <p><strong>Platform:</strong> ${program.platform}</p>
+                        <p><strong>Reward:</strong> ${program.reward_range}</p>
+                        <span class="program-status status-${program.status}">${program.status}</span>
+                    `;
+                    programList.appendChild(programItem);
+                });
+                
+            } catch (error) {
+                addLog('error', `Failed to load programs: ${error.message}`);
+            }
+        }
+
+        // Load vulnerabilities
+        async function loadVulnerabilities() {
+            try {
+                const response = await fetch('/api/vulnerabilities');
+                const vulnerabilities = await response.json();
+                
+                const vulnList = document.getElementById('vulnerabilityList');
+                vulnList.innerHTML = '';
+                
+                vulnerabilities.forEach(vuln => {
+                    const vulnItem = document.createElement('div');
+                    vulnItem.className = `vulnerability-item ${vuln.severity}`;
+                    vulnItem.innerHTML = `
+                        <h4>${vuln.title} <span class="severity-badge severity-${vuln.severity}">${vuln.severity}</span></h4>
+                        <p>${vuln.description}</p>
+                        <p><strong>CVSS:</strong> ${vuln.cvss_score}</p>
+                        <p><strong>Status:</strong> ${vuln.status}</p>
+                    `;
+                    vulnList.appendChild(vulnItem);
+                });
+                
+            } catch (error) {
+                addLog('error', `Failed to load vulnerabilities: ${error.message}`);
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (statusUpdateInterval) {
+                clearInterval(statusUpdateInterval);
+            }
+            if (logUpdateInterval) {
+                clearInterval(logUpdateInterval);
+            }
+        });
+    </script>
+</body>
+</html> 
