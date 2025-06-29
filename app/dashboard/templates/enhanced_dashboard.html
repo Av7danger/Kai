@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Kai Bug Hunter Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --secondary: #00ccff;
+            --danger: #ff4444;
+            --warning: #ffc107;
+            --success: #28a745;
+            --bg-dark: #0a0a0a;
+            --card-dark: #1a1a1a;
+            --text-dark: #ffffff;
+            --border-dark: #333333;
+            --shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+        
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .theme-toggle {
+            background: var(--card-dark);
+            border: 2px solid var(--border-dark);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 1.2rem;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .card {
+            background: var(--card-dark);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            border: 1px solid var(--border-dark);
+            transition: all 0.3s ease;
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-dark);
+            border-radius: 10px;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #000;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: inherit;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            background: var(--bg-dark);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-dark);
+        }
+        
+        .status-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-dark);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .log-timestamp {
+            color: #888;
+            margin-right: 8px;
+        }
+        
+        .log-entry.info { color: var(--primary); }
+        .log-entry.success { color: var(--success); }
+        .log-entry.warning { color: var(--warning); }
+        .log-entry.error { color: var(--danger); }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background: rgba(0, 204, 255, 0.1);
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+        
+        .alert-danger {
+            background: rgba(255, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-dark);
+            color: var(--text-dark);
+            padding: 16px 24px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-dark);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 400px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.info { border-left: 4px solid var(--secondary); }
+        
+        .mt-3 { margin-top: 16px; }
+        
+        @media (max-width: 768px) {
+            .main-grid, .row {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="header-title">🎯 Kai Bug Hunter</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- System Status -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-server"></i>
+                    System Status
+                </div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">CPU Usage</div>
+                        <div class="status-value" id="cpuValue">--</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="cpuBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Memory Usage</div>
+                        <div class="status-value" id="memoryValue">--</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="memoryBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Network</div>
+                        <div class="status-value" id="networkValue">--</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="networkBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Tools Available</div>
+                        <div class="status-value" id="toolsValue">--</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="toolsBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="refreshSystemStatus()">
+                    <i class="fas fa-sync-alt"></i> Refresh Status
+                </button>
+            </div>
+
+            <!-- Live Logs -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-terminal"></i>
+                    Live Logs
+                </div>
+                <div class="log-container" id="logContainer"></div>
+                <button class="btn" onclick="clearLogs()">
+                    <i class="fas fa-trash"></i> Clear Logs
+                </button>
+            </div>
+        </div>
+
+        <!-- Bug Hunting Section -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-bug"></i>
+                Bug Hunting
+            </div>
+            <form id="huntForm">
+                <div class="row">
+                    <div class="form-group">
+                        <label for="target">Target Domain *</label>
+                        <input type="text" class="form-control" id="target" placeholder="example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scope">Scope</label>
+                        <input type="text" class="form-control" id="scope" placeholder="*.example.com">
+                    </div>
+                </div>
+                <button type="submit" class="btn">
+                    <i class="fas fa-search"></i> Start Hunt
+                </button>
+            </form>
+            <div id="huntStatus" style="display: none;" class="mt-3"></div>
+        </div>
+
+        <!-- AI-Powered Bug Hunting -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-robot"></i>
+                AI-Powered Bug Hunting
+            </div>
+            <form id="aiHuntForm">
+                <div class="row">
+                    <div class="form-group">
+                        <label for="aiTarget">Target Domain *</label>
+                        <input type="text" class="form-control" id="aiTarget" placeholder="example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="aiProvider">AI Provider</label>
+                        <select class="form-control" id="aiProvider">
+                            <option value="gemini">Gemini</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="programOverview">Program Overview *</label>
+                    <textarea class="form-control" id="programOverview" rows="4" 
+                        placeholder="Describe the bug bounty program, business context, technology stack, and what makes it valuable..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="aiScope">Scope *</label>
+                    <textarea class="form-control" id="aiScope" rows="2" 
+                        placeholder="*.example.com, api.example.com, admin.example.com" required></textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label for="bountyRanges">Bounty Ranges</label>
+                        <input type="text" class="form-control" id="bountyRanges" 
+                            placeholder="Critical: $5000-10000, High: $1000-5000">
+                    </div>
+                    <div class="form-group">
+                        <label for="focusAreas">Focus Areas</label>
+                        <input type="text" class="form-control" id="focusAreas" 
+                            placeholder="Authentication, payment processing, API security">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn">
+                    <i class="fas fa-robot"></i> Start AI-Powered Hunt
+                </button>
+            </form>
+            <div id="aiHuntStatus" style="display: none;" class="mt-3"></div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+
+        function initializeDashboard() {
+            // Theme toggle
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Form submissions
+            document.getElementById('huntForm').addEventListener('submit', startHunt);
+            document.getElementById('aiHuntForm').addEventListener('submit', startAIHunt);
+
+            // Initial loads
+            refreshSystemStatus();
+
+            // Start periodic updates
+            setInterval(refreshSystemStatus, 10000);
+
+            addLog('info', 'Dashboard initialized successfully');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            
+            if (html.getAttribute('data-theme') === 'light') {
+                html.removeAttribute('data-theme');
+                themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            } else {
+                html.setAttribute('data-theme', 'light');
+                themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            }
+        }
+
+        async function refreshSystemStatus() {
+            try {
+                const response = await fetch('/api/system-status');
+                if (!response.ok) throw new Error('Failed to fetch system status');
+                
+                const data = await response.json();
+                
+                // Update CPU
+                const cpu = data.system_resources?.cpu_usage || 0;
+                document.getElementById('cpuValue').textContent = cpu + '%';
+                document.getElementById('cpuBar').style.width = cpu + '%';
+                
+                // Update Memory
+                const memory = data.system_resources?.memory_usage || 0;
+                document.getElementById('memoryValue').textContent = memory + '%';
+                document.getElementById('memoryBar').style.width = memory + '%';
+                
+                // Update Network
+                const network = data.system_resources?.network_status || 'Unknown';
+                document.getElementById('networkValue').textContent = network;
+                document.getElementById('networkBar').style.width = network === 'connected' ? '100%' : '10%';
+                
+                // Update Tools
+                const tools = data.tools || {};
+                const available = Object.values(tools).filter(t => t.status === 'available').length;
+                const total = Object.keys(tools).length;
+                const percent = total ? Math.round((available/total)*100) : 0;
+                
+                document.getElementById('toolsValue').textContent = `${available}/${total}`;
+                document.getElementById('toolsBar').style.width = percent + '%';
+                
+            } catch (error) {
+                addLog('error', `System status update failed: ${error.message}`);
+            }
+        }
+
+        async function startHunt(e) {
+            e.preventDefault();
+            
+            const target = document.getElementById('target').value.trim();
+            const scope = document.getElementById('scope').value.trim();
+            
+            if (!target) {
+                showToast('Please enter a target domain', 'error');
+                return;
+            }
+            
+            const huntStatus = document.getElementById('huntStatus');
+            huntStatus.style.display = 'block';
+            huntStatus.innerHTML = `
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-cog fa-spin"></i> Starting Bug Hunt...</h6>
+                    <p>Target: ${target}</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/start-hunt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target, scope, ai_provider: 'gemini' })
+                });
+                
+                if (!response.ok) throw new Error('Hunt request failed');
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Bug hunt started successfully!', 'success');
+                    monitorWorkflow(data.workflow_id, huntStatus);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                huntStatus.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Hunt Failed</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                showToast(`Hunt failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function startAIHunt(e) {
+            e.preventDefault();
+            
+            const target = document.getElementById('aiTarget').value.trim();
+            const programOverview = document.getElementById('programOverview').value.trim();
+            const scope = document.getElementById('aiScope').value.trim();
+            const bountyRanges = document.getElementById('bountyRanges').value.trim();
+            const focusAreas = document.getElementById('focusAreas').value.trim();
+            const aiProvider = document.getElementById('aiProvider').value;
+            
+            if (!target || !programOverview || !scope) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            const aiHuntStatus = document.getElementById('aiHuntStatus');
+            aiHuntStatus.style.display = 'block';
+            aiHuntStatus.innerHTML = `
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-robot fa-spin"></i> Starting AI-Powered Analysis...</h6>
+                    <p>Target: ${target}</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/ai-hunt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target,
+                        program_overview: programOverview,
+                        scope,
+                        bounty_ranges: bountyRanges,
+                        focus_areas: focusAreas,
+                        ai_provider: aiProvider
+                    })
+                });
+                
+                if (!response.ok) throw new Error('AI hunt request failed');
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('AI-powered hunt started successfully!', 'success');
+                    monitorAIWorkflow(data.workflow_id, aiHuntStatus);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+                
+            } catch (error) {
+                aiHuntStatus.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle"></i> AI Hunt Failed</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                showToast(`AI hunt failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function monitorWorkflow(workflowId, statusElement) {
+            const checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/workflow/${workflowId}`);
+                    if (!response.ok) throw new Error('Workflow status check failed');
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const workflow = data.workflow;
+                        const status = workflow.status;
+                        const results = workflow.results || [];
+                        
+                        if (results.length > 0) {
+                            const latestResult = results[results.length - 1];
+                            statusElement.innerHTML = `
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-cog fa-spin"></i> Bug Hunt in Progress</h6>
+                                    <p><strong>Status:</strong> ${status}</p>
+                                    <p><strong>Latest:</strong> ${latestResult.message}</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${(results.length / 6) * 100}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        if (status === 'completed') {
+                            clearInterval(checkInterval);
+                            statusElement.innerHTML = `
+                                <div class="alert alert-success">
+                                    <h6><i class="fas fa-check-circle"></i> Bug Hunt Completed!</h6>
+                                    <p><strong>Target:</strong> ${workflow.target}</p>
+                                    <p><strong>Vulnerabilities Found:</strong> ${workflow.vulnerabilities ? workflow.vulnerabilities.length : 0}</p>
+                                </div>
+                            `;
+                        } else if (status === 'failed') {
+                            clearInterval(checkInterval);
+                            statusElement.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Hunt Failed</h6>
+                                    <p>${workflow.error || 'Unknown error'}</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        throw new Error(data.error || 'Unknown error');
+                    }
+                } catch (error) {
+                    clearInterval(checkInterval);
+                    statusElement.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Status Check Failed</h6>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            }, 2000);
+        }
+
+        async function monitorAIWorkflow(workflowId, statusElement) {
+            const checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/workflow/${workflowId}`);
+                    if (!response.ok) throw new Error('AI workflow status check failed');
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const workflow = data.workflow;
+                        const status = workflow.status;
+                        const results = workflow.results || [];
+                        
+                        if (results.length > 0) {
+                            const latestResult = results[results.length - 1];
+                            statusElement.innerHTML = `
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-robot fa-spin"></i> AI Analysis in Progress</h6>
+                                    <p><strong>Status:</strong> ${status}</p>
+                                    <p><strong>Latest:</strong> ${latestResult.message}</p>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${(results.length / 9) * 100}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        if (status === 'completed') {
+                            clearInterval(checkInterval);
+                            const aiReport = workflow.ai_report || {};
+                            const potentialBounty = aiReport.potential_bounty || 0;
+                            
+                            statusElement.innerHTML = `
+                                <div class="alert alert-success">
+                                    <h6><i class="fas fa-check-circle"></i> AI-Powered Hunt Completed!</h6>
+                                    <p><strong>Target:</strong> ${workflow.target}</p>
+                                    <p><strong>Vulnerabilities Found:</strong> ${workflow.vulnerabilities ? workflow.vulnerabilities.length : 0}</p>
+                                    <p><strong>AI-Guided Findings:</strong> ${workflow.vulnerabilities ? workflow.vulnerabilities.filter(v => v.ai_guided).length : 0}</p>
+                                    <p><strong>Potential Bounty:</strong> $${potentialBounty.toLocaleString()}</p>
+                                </div>
+                            `;
+                        } else if (status === 'failed') {
+                            clearInterval(checkInterval);
+                            statusElement.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> AI Hunt Failed</h6>
+                                    <p>${workflow.error || 'Unknown error'}</p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        throw new Error(data.error || 'Unknown error');
+                    }
+                } catch (error) {
+                    clearInterval(checkInterval);
+                    statusElement.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Status Check Failed</h6>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            }, 2000);
+        }
+
+        function addLog(type, message) {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 100 entries
+            while (logContainer.children.length > 100) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+            addLog('info', 'Logs cleared');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 
