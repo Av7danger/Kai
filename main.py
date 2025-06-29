@@ -203,12 +203,17 @@ async def background_maintenance():
 
 @app.get("/", response_class=HTMLResponse)
 async def get_dashboard():
-    """Serve the main dashboard"""
+    """Serve the modern dashboard"""
     try:
-        with open("app/dashboard/templates/enhanced_dashboard.html", "r", encoding="utf-8") as f:
+        with open("app/dashboard/templates/modern_dashboard.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     except FileNotFoundError:
-        return HTMLResponse(content="<h1>Dashboard not found</h1>", status_code=404)
+        # Fallback to enhanced dashboard if modern doesn't exist
+        try:
+            with open("app/dashboard/templates/enhanced_dashboard.html", "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        except FileNotFoundError:
+            return HTMLResponse(content="<h1>Dashboard not found</h1>", status_code=404)
 
 @app.get("/enhanced", response_class=HTMLResponse)
 async def get_enhanced_dashboard():

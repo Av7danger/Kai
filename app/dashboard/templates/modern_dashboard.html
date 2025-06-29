@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kai - Modern Bug Hunter</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --border: #334155;
+            --card: #1e293b;
+            --card-hover: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--success);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--darker);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--card-hover);
+            color: var(--light);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success { background: var(--success); color: white; }
+        .badge-warning { background: var(--warning); color: white; }
+        .badge-danger { background: var(--danger); color: white; }
+        .badge-info { background: var(--secondary); color: white; }
+
+        /* Tool Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tool-item {
+            background: var(--darker);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .tool-item:hover {
+            border-color: var(--primary);
+            background: var(--card);
+        }
+
+        .tool-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--darker);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        /* Logs */
+        .logs-container {
+            background: var(--darker);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .log-entry.info { color: var(--secondary); }
+        .log-entry.success { color: var(--success); }
+        .log-entry.warning { color: var(--warning); }
+        .log-entry.error { color: var(--danger); }
+
+        .log-timestamp {
+            color: var(--gray);
+            margin-right: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gray);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-bug"></i>
+                    Kai Bug Hunter
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    System Online
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="main-content">
+            <!-- Target Configuration -->
+            <div class="card fade-in">
+                <div class="card-title">
+                    <i class="fas fa-crosshairs"></i>
+                    Target Configuration
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Target Domain</label>
+                    <input type="text" id="targetDomain" class="form-input" placeholder="example.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Scope</label>
+                    <textarea id="scope" class="form-textarea" placeholder="*.example.com&#10;api.example.com&#10;admin.example.com"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">AI Provider</label>
+                    <select id="aiProvider" class="form-select">
+                        <option value="gemini">Gemini AI</option>
+                        <option value="openai">OpenAI GPT</option>
+                        <option value="anthropic">Claude</option>
+                    </select>
+                </div>
+
+                <button id="startHunt" class="btn btn-primary" onclick="startHunting()">
+                    <i class="fas fa-rocket"></i>
+                    Start Hunting
+                </button>
+            </div>
+
+            <!-- System Status -->
+            <div class="card fade-in">
+                <div class="card-title">
+                    <i class="fas fa-chart-line"></i>
+                    System Status
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>CPU Usage</span>
+                        <span id="cpuValue">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpuBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Memory Usage</span>
+                        <span id="memoryValue">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="memoryBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Available Tools</span>
+                        <span id="toolsValue">0/0</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="toolsBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="refreshStatus()" style="margin-top: 1rem;">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh Status
+                </button>
+            </div>
+
+            <!-- Tools Status -->
+            <div class="card fade-in">
+                <div class="card-title">
+                    <i class="fas fa-tools"></i>
+                    Tools Status
+                </div>
+                <div id="toolsGrid" class="tools-grid">
+                    <div class="tool-item">
+                        <span class="tool-name">Loading...</span>
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Logs -->
+            <div class="card fade-in">
+                <div class="card-title">
+                    <i class="fas fa-terminal"></i>
+                    Live Logs
+                </div>
+                <div id="logsContainer" class="logs-container">
+                    <div class="log-entry info">
+                        <span class="log-timestamp">[System]</span>
+                        Kai Bug Hunter initialized successfully
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Global state
+        let isHunting = false;
+        let statusInterval;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+            loadToolsStatus();
+            startStatusUpdates();
+            addLog('info', 'Dashboard loaded successfully');
+        });
+
+        // Status updates
+        function startStatusUpdates() {
+            statusInterval = setInterval(() => {
+                refreshStatus();
+                loadToolsStatus();
+            }, 5000);
+        }
+
+        // Refresh system status
+        async function refreshStatus() {
+            try {
+                const response = await fetch('/api/system-status');
+                const data = await response.json();
+                
+                // Update CPU
+                const cpu = data.system_resources?.cpu_usage || 0;
+                document.getElementById('cpuBar').style.width = cpu + '%';
+                document.getElementById('cpuValue').textContent = cpu.toFixed(1) + '%';
+                
+                // Update Memory
+                const mem = data.system_resources?.memory_usage || 0;
+                document.getElementById('memoryBar').style.width = mem + '%';
+                document.getElementById('memoryValue').textContent = mem.toFixed(1) + '%';
+                
+                // Update Tools
+                const tools = data.kali_tools || {};
+                const available = Object.values(tools).filter(t => t.status === 'available').length;
+                const total = Object.keys(tools).length;
+                const percent = total ? Math.round((available/total)*100) : 0;
+                
+                document.getElementById('toolsBar').style.width = percent + '%';
+                document.getElementById('toolsValue').textContent = `${available}/${total}`;
+                
+            } catch (error) {
+                addLog('error', `Status update failed: ${error.message}`);
+            }
+        }
+
+        // Load tools status
+        async function loadToolsStatus() {
+            try {
+                const response = await fetch('/api/tools/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const toolsGrid = document.getElementById('toolsGrid');
+                    toolsGrid.innerHTML = '';
+                    
+                    Object.entries(data.tools).forEach(([name, tool]) => {
+                        const toolItem = document.createElement('div');
+                        toolItem.className = 'tool-item';
+                        
+                        const statusClass = tool.status === 'available' ? 'badge-success' : 
+                                          tool.status === 'missing' ? 'badge-warning' : 'badge-danger';
+                        
+                        toolItem.innerHTML = `
+                            <span class="tool-name">${name}</span>
+                            <span class="badge ${statusClass}">${tool.status}</span>
+                        `;
+                        
+                        toolsGrid.appendChild(toolItem);
+                    });
+                }
+            } catch (error) {
+                addLog('error', `Failed to load tools status: ${error.message}`);
+            }
+        }
+
+        // Start hunting
+        async function startHunting() {
+            if (isHunting) return;
+            
+            const targetDomain = document.getElementById('targetDomain').value.trim();
+            const scope = document.getElementById('scope').value.trim();
+            const aiProvider = document.getElementById('aiProvider').value;
+            
+            if (!targetDomain) {
+                showToast('Please enter a target domain', 'error');
+                return;
+            }
+            
+            isHunting = true;
+            const btn = document.getElementById('startHunt');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Starting...';
+            
+            addLog('info', `Starting hunt for: ${targetDomain}`);
+            
+            try {
+                const response = await fetch('/api/start-hunt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target: targetDomain,
+                        scope: scope.split('\n').filter(line => line.trim()),
+                        ai_provider: aiProvider
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Hunt started successfully!', 'success');
+                    addLog('success', `Hunt initiated with ID: ${result.workflow_id}`);
+                    monitorWorkflow(result.workflow_id);
+                } else {
+                    showToast(`Failed to start hunt: ${result.error}`, 'error');
+                    addLog('error', `Hunt failed: ${result.error}`);
+                }
+                
+            } catch (error) {
+                showToast(`Network error: ${error.message}`, 'error');
+                addLog('error', `Network error: ${error.message}`);
+            } finally {
+                isHunting = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rocket"></i> Start Hunting';
+            }
+        }
+
+        // Monitor workflow
+        async function monitorWorkflow(workflowId) {
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`/api/workflow/${workflowId}`);
+                    const workflow = await response.json();
+                    
+                    addLog('info', `Workflow status: ${workflow.status}`);
+                    
+                    if (workflow.status === 'completed') {
+                        showToast('Bug hunting completed!', 'success');
+                        addLog('success', 'Workflow completed successfully');
+                        return;
+                    } else if (workflow.status === 'failed') {
+                        showToast('Workflow failed', 'error');
+                        addLog('error', 'Workflow failed');
+                        return;
+                    }
+                    
+                    // Continue monitoring
+                    setTimeout(checkStatus, 2000);
+                    
+                } catch (error) {
+                    addLog('error', `Status check failed: ${error.message}`);
+                }
+            };
+            
+            checkStatus();
+        }
+
+        // Add log entry
+        function addLog(type, message) {
+            const logsContainer = document.getElementById('logsContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                ${message}
+            `;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            
+            // Keep only last 50 entries
+            while (logsContainer.children.length > 50) {
+                logsContainer.removeChild(logsContainer.firstChild);
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+        });
+    </script>
+</body>
+</html> 
