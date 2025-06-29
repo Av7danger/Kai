@@ -13,7 +13,6 @@ import json
 import time
 import threading
 import logging
-import resource
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
@@ -22,6 +21,15 @@ import requests
 
 # Import our robust subprocess handler
 from subprocess_handler import subprocess_handler, SubprocessResult
+
+# Only import resource on Unix
+if os.name != 'nt':
+    try:
+        pass
+    except ImportError:
+        pass
+else:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -519,18 +527,14 @@ class KaliOptimizer:
         """Get current resource limits"""
         try:
             limits = {}
-            
             # Only get resource limits on Unix systems
             if hasattr(resource, 'getrlimit'):
                 # CPU time limit
                 limits['cpu_time'] = resource.getrlimit(resource.RLIMIT_CPU)
-                
                 # Memory limit
                 limits['memory'] = resource.getrlimit(resource.RLIMIT_AS)
-                
                 # File descriptor limit
                 limits['file_descriptors'] = resource.getrlimit(resource.RLIMIT_NOFILE)
-                
                 # Process limit
                 limits['processes'] = resource.getrlimit(resource.RLIMIT_NPROC)
             else:
@@ -541,9 +545,7 @@ class KaliOptimizer:
                     'file_descriptors': (0, 0),
                     'processes': (0, 0)
                 }
-            
             return limits
-            
         except Exception as e:
             logger.error(f"Error getting resource limits: {e}")
             return {}
