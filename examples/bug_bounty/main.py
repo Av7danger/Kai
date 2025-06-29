@@ -51,6 +51,24 @@ ai_state = {
     'reasoning_context': {}
 }
 
+# Add after ai_state global
+global_workflow_state = {
+    'paused': False,
+    'current_step': 'Initialization',
+    'steps': [
+        'Initialization',
+        'Target Analysis',
+        'Reconnaissance',
+        'Vulnerability Discovery',
+        'Exploitation Testing',
+        'Report Generation',
+        'Completed'
+    ],
+    'step_index': 0,
+    'last_tool': None,
+    'history': []  # List of dicts: {step, action, timestamp, details}
+}
+
 # Database setup
 def init_db():
     """Initialize SQLite database"""
@@ -347,6 +365,8 @@ class AIReasoningEngine:
         self.reasoning_queue = queue.Queue()
         self.decision_history = []
         self.current_context = {}
+        self.recent_user_msgs = []
+        self.recent_ai_msgs = []
         
     def add_reasoning_log(self, log_type, message, context=None):
         """Add a reasoning log entry"""
@@ -396,6 +416,76 @@ class AIReasoningEngine:
         self.current_context.update(new_context)
         ai_state['reasoning_context'] = self.current_context.copy()
     
+    def add_chat_history(self, sender, message):
+        if sender == 'user':
+            self.recent_user_msgs.append(message)
+            if len(self.recent_user_msgs) > 10:
+                self.recent_user_msgs.pop(0)
+        else:
+            self.recent_ai_msgs.append(message)
+            if len(self.recent_ai_msgs) > 10:
+                self.recent_ai_msgs.pop(0)
+    
+    def parse_command(self, user_message):
+        msg = user_message.lower().strip()
+        if msg.startswith('pause workflow'):
+            return 'pause'
+        if msg.startswith('resume workflow'):
+            return 'resume'
+        if msg.startswith('skip to '):
+            step = msg.replace('skip to ', '').strip().title()
+            return ('skip', step)
+        if msg.startswith('rerun '):
+            step = msg.replace('rerun ', '').strip().title()
+            return ('rerun', step)
+        if msg.startswith('change tool to '):
+            tool = msg.replace('change tool to ', '').strip()
+            return ('change_tool', tool)
+        if msg in ['what step', 'current step', 'what\'s the current step?', 'show me the workflow']:
+            return 'show_workflow'
+        if msg.startswith('summarize') or 'summary' in msg:
+            return 'summarize'
+        return None
+    
+    def handle_command(self, command):
+        global global_workflow_state
+        if command == 'pause':
+            global_workflow_state['paused'] = True
+            return 'Workflow paused. No further steps will be executed until resumed.'
+        if command == 'resume':
+            global_workflow_state['paused'] = False
+            return 'Workflow resumed. Continuing from current step.'
+        if isinstance(command, tuple) and command[0] == 'skip':
+            step = command[1]
+            if step in global_workflow_state['steps']:
+                global_workflow_state['current_step'] = step
+                global_workflow_state['step_index'] = global_workflow_state['steps'].index(step)
+                return f'Skipped to step: {step}. Workflow updated.'
+            else:
+                return f'Unknown step: {step}. Valid steps: {', '.join(global_workflow_state['steps'])}'
+        if isinstance(command, tuple) and command[0] == 'rerun':
+            step = command[1]
+            if step in global_workflow_state['steps']:
+                return f'Re-running step: {step}. (Simulation only: actual rerun logic not implemented)'
+            else:
+                return f'Unknown step: {step}. Valid steps: {', '.join(global_workflow_state['steps'])}'
+        if isinstance(command, tuple) and command[0] == 'change_tool':
+            tool = command[1]
+            global_workflow_state['last_tool'] = tool
+            return f'Changed tool to: {tool}. All subsequent actions will use this tool where applicable.'
+        if command == 'show_workflow':
+            idx = global_workflow_state['step_index']
+            step = global_workflow_state['current_step']
+            paused = global_workflow_state['paused']
+            return f'Current step: {step} (Step {idx+1}/{len(global_workflow_state["steps"])}). Workflow is {"paused" if paused else "active"}.'
+        if command == 'summarize':
+            hist = global_workflow_state['history'][-5:]
+            if not hist:
+                return 'No recent workflow actions to summarize.'
+            summary = '\n'.join([f"[{h['timestamp']}] {h['step']}: {h['action']}" for h in hist])
+            return f'Recent workflow summary:\n{summary}'
+        return None
+    
     def generate_response(self, user_message):
         """Generate AI response to user questions"""
         lower_message = user_message.lower()
@@ -442,13 +532,34 @@ class AIReasoningEngine:
                 self.add_reasoning_log('chat', response['reasoning'])
                 return response['message']
         
-        # Default response
-        default_response = {
-            'message': 'I understand your question. I\'m currently focused on optimizing the testing strategy for maximum vulnerability discovery. Is there something specific about my current approach you\'d like me to explain or modify?',
-            'reasoning': 'User asked general question - provided helpful default response'
-        }
-        self.add_reasoning_log('chat', default_response['reasoning'])
-        return default_response['message']
+        # Context-aware follow-up
+        if user_message.lower().strip() in ['why did you do that?', 'why?', 'what was the reason?']:
+            if global_workflow_state['history']:
+                last = global_workflow_state['history'][-1]
+                reason = last.get('details', 'No details available.')
+                resp = f"The last action was: {last['action']} in step {last['step']}. Reason: {reason}"
+            else:
+                resp = 'No recent actions to explain.'
+            self.add_chat_history('ai', resp)
+            return resp
+        if user_message.lower().strip() in ['what\'s next?', 'next step?', 'what now?']:
+            idx = global_workflow_state['step_index']
+            if idx+1 < len(global_workflow_state['steps']):
+                next_step = global_workflow_state['steps'][idx+1]
+                resp = f"The next step is: {next_step}."
+            else:
+                resp = 'Workflow is at the final step.'
+            self.add_chat_history('ai', resp)
+            return resp
+        # Clarification for ambiguous queries
+        if len(user_message.split()) < 3:
+            resp = 'Could you clarify your question or provide more details?'
+            self.add_chat_history('ai', resp)
+            return resp
+        # Fallback to default
+        resp = super().generate_response(user_message) if hasattr(super(), 'generate_response') else 'I am here to help with workflow and reasoning. Please ask a specific question or command.'
+        self.add_chat_history('ai', resp)
+        return resp
 
 # Initialize AI reasoning engine
 ai_engine = AIReasoningEngine()
@@ -498,6 +609,7 @@ def chat_with_ai():
     chat_history.append(chat_entry)
     
     # Generate AI response
+    ai_engine.add_chat_history('user', user_message)
     ai_response = ai_engine.generate_response(user_message)
     
     # Add AI response to chat history
@@ -511,6 +623,8 @@ def chat_with_ai():
     # Keep only last 100 chat messages
     if len(chat_history) > 100:
         chat_history[:] = chat_history[-100:]
+    
+    ai_engine.add_chat_history('ai', ai_response)
     
     return jsonify({
         'user_message': user_message,

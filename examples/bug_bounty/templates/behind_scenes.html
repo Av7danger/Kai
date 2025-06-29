@@ -458,22 +458,19 @@
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
                     <div class="chat-message ai">
-                        <strong>Gemini AI:</strong> Hello! I'm currently analyzing the target domain and selecting the optimal testing strategy. You can ask me about my reasoning, current decisions, or request changes to the workflow.
-                    </div>
-                    <div class="chat-message user">
-                        <strong>You:</strong> Why did you choose reconnaissance-first approach?
-                    </div>
-                    <div class="chat-message ai">
-                        <strong>Gemini AI:</strong> I chose reconnaissance-first because the target domain is new to our database. This approach allows me to map the attack surface, identify technologies, and discover endpoints before launching targeted attacks. It's more efficient than blind testing.
+                        <strong>Gemini AI:</strong> Hello! I'm currently analyzing the target domain and selecting the optimal testing strategy. You can ask me about my reasoning, current decisions, or request changes to the workflow.<br>
+                        <span class="chat-system-tip">Type <code>pause workflow</code>, <code>resume workflow</code>, <code>skip to exploitation</code>, <code>summarize</code>, or ask context-aware questions like <code>Why did you do that?</code></span>
                     </div>
                 </div>
                 <div class="chat-input-container">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask Gemini about its reasoning, decisions, or request changes..." onkeypress="handleChatKeyPress(event)">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask Gemini or type a command..." oninput="showSuggestions()" onkeypress="handleChatKeyPress(event)">
                     <button class="btn" onclick="sendChatMessage()">
                         <i class="fa-solid fa-paper-plane"></i>
                         Send
                     </button>
+                    <button class="btn btn-secondary" style="padding: 0 12px;" onclick="showChatHelp()" title="Show chat commands"><i class="fa-solid fa-question"></i></button>
                 </div>
+                <div id="chatSuggestions" style="display:none; position:absolute; background:var(--card-dark); color:var(--text-dark); border:1px solid var(--border-dark); border-radius:8px; margin-top:4px; z-index:10; max-width:400px;"></div>
             </div>
         </div>
 
@@ -659,54 +656,81 @@
             }
         }
 
+        const chatCommands = [
+            'pause workflow',
+            'resume workflow',
+            'skip to exploitation',
+            'skip to reconnaissance',
+            'rerun vulnerability discovery',
+            'change tool to sqlmap',
+            'summarize',
+            'what step',
+            'show me the workflow',
+            'why did you do that?',
+            "what's next?"
+        ];
+        function showSuggestions() {
+            const input = document.getElementById('chatInput');
+            const val = input.value.toLowerCase();
+            const sugg = document.getElementById('chatSuggestions');
+            if (!val) { sugg.style.display = 'none'; return; }
+            const matches = chatCommands.filter(cmd => cmd.startsWith(val));
+            if (matches.length === 0) { sugg.style.display = 'none'; return; }
+            sugg.innerHTML = matches.map(cmd => `<div style='padding:6px;cursor:pointer;' onclick='selectSuggestion("${cmd}")'>${cmd}</div>`).join('');
+            sugg.style.display = 'block';
+            sugg.style.left = input.offsetLeft + 'px';
+            sugg.style.top = (input.offsetTop + input.offsetHeight + 2) + 'px';
+        }
+        function selectSuggestion(cmd) {
+            document.getElementById('chatInput').value = cmd;
+            document.getElementById('chatSuggestions').style.display = 'none';
+            document.getElementById('chatInput').focus();
+        }
+        function showChatHelp() {
+            addChatMessage('system', 'You can control the workflow with commands like: <ul>' + chatCommands.map(c=>`<li><code>${c}</code></li>`).join('') + '</ul>');
+        }
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
-            
             if (!message) return;
-            
-            // Add user message
             addChatMessage('user', message);
             input.value = '';
-            
-            // Simulate AI response
-            const response = await generateAIResponse(message);
-            addChatMessage('ai', response);
-            
-            // Add to reasoning log
-            addReasoningLog('reasoning', `User asked: "${message}" - AI responded with analysis`);
+            document.getElementById('chatSuggestions').style.display = 'none';
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+                if (data.ai_response) {
+                    // Distinguish workflow/system messages
+                    if (data.ai_response.toLowerCase().includes('workflow') || data.ai_response.toLowerCase().includes('step') || data.ai_response.toLowerCase().includes('paused') || data.ai_response.toLowerCase().includes('resumed') || data.ai_response.toLowerCase().includes('summary')) {
+                        addChatMessage('system', data.ai_response);
+                    } else {
+                        addChatMessage('ai', data.ai_response);
+                    }
+                } else if (data.error) {
+                    addChatMessage('system', `<span style='color:var(--danger)'>${data.error}</span>`);
+                }
+            } catch (e) {
+                addChatMessage('system', `<span style='color:var(--danger)'>Error: ${e}</span>`);
+            }
         }
-
         function addChatMessage(sender, message) {
             const chatMessages = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${sender}`;
-            messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You' : 'Gemini AI'}:</strong> ${message}`;
+            if (sender === 'system') {
+                messageDiv.style.background = 'var(--info)';
+                messageDiv.style.color = '#000';
+                messageDiv.style.fontStyle = 'italic';
+                messageDiv.innerHTML = `<strong>System:</strong> ${message}`;
+            } else {
+                messageDiv.innerHTML = `<strong>${sender === 'user' ? 'You' : 'Gemini AI'}:</strong> ${message}`;
+            }
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        async function generateAIResponse(userMessage) {
-            // Simulate AI response based on user message
-            const responses = {
-                'why': 'I chose this approach because it maximizes efficiency while minimizing false positives. The reconnaissance-first strategy allows me to understand the attack surface before launching targeted attacks.',
-                'how': 'I use a combination of static analysis, dynamic testing, and machine learning to identify vulnerabilities. Each decision is based on the current context and historical success patterns.',
-                'what': 'I\'m currently analyzing the target domain, mapping the attack surface, and selecting the most effective testing tools based on the discovered technologies.',
-                'change': 'I can adapt my strategy based on your input. What specific changes would you like me to make to the current workflow?',
-                'status': 'Current status: Phase 2 of 7 - AI Analysis. I\'ve completed target reconnaissance and am now performing vulnerability assessment.',
-                'tools': 'I\'m currently using nuclei for vulnerability scanning, ffuf for directory enumeration, and sqlmap for SQL injection testing. These tools were selected based on the target\'s technology stack.',
-                'confidence': 'My confidence level is currently 87%. This is based on the quality of reconnaissance data and the success rate of similar targets.',
-                'time': 'Estimated completion time: 15-20 minutes. This includes vulnerability discovery, exploitation verification, and report generation.'
-            };
-            
-            const lowerMessage = userMessage.toLowerCase();
-            for (const [key, response] of Object.entries(responses)) {
-                if (lowerMessage.includes(key)) {
-                    return response;
-                }
-            }
-            
-            return 'I understand your question. I\'m currently focused on optimizing the testing strategy for maximum vulnerability discovery. Is there something specific about my current approach you\'d like me to explain or modify?';
         }
 
         // Refresh all data
