@@ -34,11 +34,15 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('data/bug_hunter.log'),
+        logging.FileHandler('logs/bug_hunter.log'),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Create necessary directories
+os.makedirs('logs', exist_ok=True)
+os.makedirs('data', exist_ok=True)
 
 # Pydantic models
 class TargetRequest(BaseModel):
@@ -2557,9 +2561,6 @@ async def run_deep_vuln_workflow(workflow_id: str, target: str):
         background_tasks.discard(workflow_id)
 
 if __name__ == "__main__":
-    # Create data directory if it doesn't exist
-    os.makedirs("data", exist_ok=True)
-    
     # Run the application
     uvicorn.run(
         "simple_main:app",
