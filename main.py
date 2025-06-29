@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import threading
 import psutil
+from dataclasses import asdict
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
@@ -91,7 +92,7 @@ performance_monitor = PerformanceMonitor()
 subprocess_handler = SubprocessHandler(default_timeout=60, max_memory_mb=1024)
 cache_manager = CacheManager(backend=CacheBackend.MEMORY, max_size=2000)
 db_manager = DatabaseManager()
-kali_optimizer = KaliOptimizer()
+kali_optimizer = KaliOptimizer(run_initial_diagnostics=False)  # Don't run diagnostics on init
 ai_agent = AIAgent()
 
 # Mount static files
@@ -130,11 +131,9 @@ async def startup_event():
     # Initialize database
     await db_manager.initialize()
     
-    # Run system diagnostics
-    await run_system_diagnostics()
-    
     # Start background tasks
     asyncio.create_task(background_maintenance())
+    asyncio.create_task(run_system_diagnostics())  # Run diagnostics in background
     
     logger.info("Kali Bug Hunter started successfully!")
 
@@ -145,22 +144,39 @@ async def shutdown_event():
     await db_manager.close()
 
 async def run_system_diagnostics():
-    """Run comprehensive system diagnostics"""
-    logger.info("Running system diagnostics...")
+    """Run comprehensive system diagnostics in background"""
+    logger.info("Starting background system diagnostics...")
     
-    # Check Kali tools
-    system_status['kali_tools'] = kali_optimizer.check_all_tools()
-    
-    # Get system resources
-    system_status['system_resources'] = kali_optimizer.run_system_diagnostics()
-    
-    # Get cache stats
-    system_status['cache_stats'] = cache_manager.get_stats()
-    
-    # Get performance stats
-    system_status['performance_stats'] = performance_monitor.get_stats()
-    
-    logger.info("System diagnostics completed")
+    try:
+        # Check Kali tools (this will be empty on Windows)
+        system_status['kali_tools'] = kali_optimizer.check_all_tools()
+        
+        # Get system resources
+        system_status['system_resources'] = asdict(kali_optimizer.run_system_diagnostics())
+        
+        # Get cache stats
+        system_status['cache_stats'] = cache_manager.get_stats()
+        
+        # Get performance stats
+        system_status['performance_stats'] = performance_monitor.get_stats()
+        
+        logger.info("Background system diagnostics completed")
+    except Exception as e:
+        logger.error(f"Error in background diagnostics: {e}")
+        # Set default values for Windows
+        system_status['kali_tools'] = {}
+        system_status['system_resources'] = {
+            'cpu_usage': 0.0,
+            'memory_usage': 0.0,
+            'disk_usage': 0.0,
+            'network_status': 'unknown',
+            'python_version': 'unknown',
+            'os_info': 'Windows',
+            'kali_version': 'N/A',
+            'permissions': {},
+            'resource_limits': {},
+            'optimization_recommendations': []
+        }
 
 async def background_maintenance():
     """Background maintenance tasks"""
@@ -441,7 +457,7 @@ async def get_performance_metrics():
         'cache': cache_manager.get_stats(),
         'database': await db_manager.get_stats(),
         'active_workflows': len(active_workflows),
-        'system_resources': kali_optimizer.run_system_diagnostics()
+        'system_resources': asdict(kali_optimizer.run_system_diagnostics())
     }
 
 @app.websocket("/ws/logs")
@@ -465,6 +481,84 @@ async def websocket_logs(websocket: WebSocket):
             
     except WebSocketDisconnect:
         logger.info("WebSocket client disconnected")
+
+@app.get("/api/tools/status")
+async def get_tools_status():
+    """Get status of all tools"""
+    try:
+        tools_status = kali_optimizer.check_all_tools()
+        return {
+            'success': True,
+            'tools': tools_status,
+            'summary': {
+                'total': len(tools_status),
+                'available': len([t for t in tools_status.values() if t.status == 'available']),
+                'missing': len([t for t in tools_status.values() if t.status == 'missing']),
+                'error': len([t for t in tools_status.values() if t.status == 'error'])
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting tools status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tools/install/{tool_name}")
+async def install_tool(tool_name: str):
+    """Install a specific tool"""
+    try:
+        result = kali_optimizer.install_missing_tool(tool_name)
+        return result
+    except Exception as e:
+        logger.error(f"Error installing tool {tool_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tools/auto-install")
+async def auto_install_tools(required_only: bool = True):
+    """Auto-install all missing tools"""
+    try:
+        result = kali_optimizer.auto_install_missing_tools(required_only=required_only)
+        return result
+    except Exception as e:
+        logger.error(f"Error in auto-installation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tools/ensure/{tool_name}")
+async def ensure_tool_available(tool_name: str, auto_install: bool = True):
+    """Ensure a specific tool is available"""
+    try:
+        available = kali_optimizer.ensure_tool_available(tool_name, auto_install)
+        return {
+            'success': available,
+            'tool_name': tool_name,
+            'available': available,
+            'message': f"Tool {tool_name} is {'available' if available else 'not available'}"
+        }
+    except Exception as e:
+        logger.error(f"Error ensuring tool {tool_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tools/missing")
+async def get_missing_tools():
+    """Get list of missing tools"""
+    try:
+        tools_status = kali_optimizer.check_all_tools()
+        missing_tools = [
+            {
+                'name': tool_name,
+                'status': tool_info.status,
+                'required': kali_optimizer.tools_config[tool_name]['required'],
+                'install_command': kali_optimizer.tools_config[tool_name].get('install_command', '')
+            }
+            for tool_name, tool_info in tools_status.items()
+            if tool_info.status == 'missing'
+        ]
+        return {
+            'success': True,
+            'missing_tools': missing_tools,
+            'count': len(missing_tools)
+        }
+    except Exception as e:
+        logger.error(f"Error getting missing tools: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     # Run the application

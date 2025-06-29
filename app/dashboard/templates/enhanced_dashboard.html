@@ -410,6 +410,30 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Tools Management Section -->
+        <div class="card">
+            <div class="card-title">🛠️ Tools Management</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Tool Status</h3>
+                    <div id="toolsStatusList" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border-dark); padding: 10px; border-radius: 8px;"></div>
+                    <div style="margin-top: 15px;">
+                        <button class="btn" onclick="refreshToolsStatus()" style="margin-right: 10px;">
+                            <i class="fa-solid fa-refresh"></i> Refresh Status
+                        </button>
+                        <button class="btn" onclick="autoInstallMissingTools()" style="background: linear-gradient(45deg, var(--warning), #ff8c00);">
+                            <i class="fa-solid fa-download"></i> Auto-Install Missing
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <h3>Installation Log</h3>
+                    <div id="installationLog" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border-dark); padding: 10px; border-radius: 8px; background: var(--bg-dark); font-family: monospace; font-size: 0.9em;"></div>
+                </div>
+            </div>
+        </div>
+        
         <div class="toast" id="toast"></div>
     </div>
     <script>
@@ -573,6 +597,110 @@
         updateSystemStatus();
         loadVulnerabilities();
         addLog('info', 'Enhanced dashboard loaded successfully');
+        
+        // Tools Management Functions
+        async function refreshToolsStatus() {
+            try {
+                addLog('info', 'Refreshing tools status...');
+                const response = await fetch('/api/tools/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const toolsStatusList = document.getElementById('toolsStatusList');
+                    toolsStatusList.innerHTML = '';
+                    
+                    Object.entries(data.tools).forEach(([name, tool]) => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '8px';
+                        div.style.padding = '8px';
+                        div.style.borderRadius = '4px';
+                        div.style.backgroundColor = tool.status === 'available' ? 'rgba(40, 167, 69, 0.1)' : 
+                                                   tool.status === 'missing' ? 'rgba(255, 193, 7, 0.1)' : 
+                                                   'rgba(220, 53, 69, 0.1)';
+                        
+                        const statusColor = tool.status === 'available' ? '#28a745' : 
+                                           tool.status === 'missing' ? '#ffc107' : '#dc3545';
+                        
+                        div.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${name}</strong>
+                                    <span style="color: ${statusColor}; margin-left: 10px; font-size: 0.9em;">${tool.status}</span>
+                                </div>
+                                <div style="font-size: 0.8em; color: #888;">
+                                    ${tool.version || 'N/A'}
+                                </div>
+                            </div>
+                            ${tool.error_message ? `<div style="font-size: 0.8em; color: #dc3545; margin-top: 4px;">${tool.error_message}</div>` : ''}
+                        `;
+                        
+                        toolsStatusList.appendChild(div);
+                    });
+                    
+                    addLog('success', `Tools status refreshed. Available: ${data.summary.available}, Missing: ${data.summary.missing}`);
+                } else {
+                    addLog('error', 'Failed to refresh tools status');
+                }
+            } catch (error) {
+                addLog('error', `Error refreshing tools status: ${error.message}`);
+            }
+        }
+        
+        async function autoInstallMissingTools() {
+            try {
+                addLog('info', 'Starting auto-installation of missing tools...');
+                addInstallationLog('Starting auto-installation...');
+                
+                const response = await fetch('/api/tools/auto-install', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ required_only: true })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addLog('success', `Auto-installation completed: ${result.message}`);
+                    addInstallationLog(`✅ Installation completed: ${result.message}`);
+                    
+                    // Show detailed results
+                    Object.entries(result.results).forEach(([tool, toolResult]) => {
+                        if (toolResult.success) {
+                            addInstallationLog(`✅ ${tool}: Successfully installed`);
+                        } else {
+                            addInstallationLog(`❌ ${tool}: ${toolResult.error}`);
+                        }
+                    });
+                } else {
+                    addLog('error', `Auto-installation failed: ${result.error || result.message}`);
+                    addInstallationLog(`❌ Installation failed: ${result.error || result.message}`);
+                }
+                
+                // Refresh tools status after installation
+                setTimeout(refreshToolsStatus, 2000);
+                
+            } catch (error) {
+                addLog('error', `Error during auto-installation: ${error.message}`);
+                addInstallationLog(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        function addInstallationLog(message) {
+            const log = document.getElementById('installationLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #888;">[${timestamp}]</span> ${message}`;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+            
+            // Keep only last 50 entries
+            while (log.children.length > 50) {
+                log.removeChild(log.firstChild);
+            }
+        }
+        
+        // Initialize tools status on page load
+        refreshToolsStatus();
     </script>
 </body>
 </html> 

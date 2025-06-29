@@ -62,7 +62,7 @@ class SystemDiagnostics:
 class KaliOptimizer:
     """Extreme Kali Linux optimization and diagnostics"""
     
-    def __init__(self, subprocess_handler: Optional[SubprocessHandler] = None):
+    def __init__(self, subprocess_handler: Optional[SubprocessHandler] = None, run_initial_diagnostics: bool = False):
         self.subprocess_handler = subprocess_handler or SubprocessHandler()
         self.tools_config = self._load_tools_config()
         self.tools_status: Dict[str, ToolInfo] = {}
@@ -79,8 +79,9 @@ class KaliOptimizer:
         # Initialize logging
         self._setup_logging()
         
-        # Run initial diagnostics
-        self._run_initial_diagnostics()
+        # Only run initial diagnostics if explicitly requested
+        if run_initial_diagnostics:
+            self._run_initial_diagnostics()
     
     def _load_tools_config(self) -> Dict[str, Dict[str, Any]]:
         """Load tools configuration"""
@@ -256,6 +257,11 @@ class KaliOptimizer:
     
     def check_all_tools(self) -> Dict[str, ToolInfo]:
         """Check all required tools"""
+        # Skip tool checking on Windows - these are Kali Linux tools
+        if platform.system() != "Linux":
+            logger.info(f"Skipping Kali Linux tool checks on {platform.system()}")
+            return {}
+            
         logger.info("Checking all Kali Linux tools...")
         
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -372,8 +378,11 @@ class KaliOptimizer:
             memory = psutil.virtual_memory()
             memory_usage = memory.percent
             
-            # Disk usage
-            disk = psutil.disk_usage('/')
+            # Disk usage - handle Windows vs Linux paths
+            if platform.system() == "Windows":
+                disk = psutil.disk_usage('C:\\')
+            else:
+                disk = psutil.disk_usage('/')
             disk_usage = (disk.used / disk.total) * 100
             
             # Network status
@@ -385,14 +394,14 @@ class KaliOptimizer:
             # OS info
             os_info = f"{platform.system()} {platform.release()}"
             
-            # Kali version
-            kali_version = self._get_kali_version()
+            # Kali version - only on Linux
+            kali_version = self._get_kali_version() if platform.system() == "Linux" else "N/A"
             
-            # Permissions
-            permissions = self._check_permissions()
+            # Permissions - only on Linux
+            permissions = self._check_permissions() if platform.system() == "Linux" else {}
             
-            # Resource limits
-            resource_limits = self._get_resource_limits()
+            # Resource limits - only on Linux
+            resource_limits = self._get_resource_limits() if platform.system() == "Linux" else {}
             
             self.system_diagnostics = SystemDiagnostics(
                 cpu_usage=cpu_usage,
@@ -615,7 +624,7 @@ class KaliOptimizer:
             # Run install command
             result = self.subprocess_handler.run_command(
                 install_command.split(),
-                capture_output=True
+                timeout=300  # 5 minutes timeout for installation
             )
             
             if result['success']:
@@ -632,7 +641,7 @@ class KaliOptimizer:
                 return {
                     'success': False,
                     'error': f'Installation failed: {result["error"]}',
-                    'output': result['stderr']
+                    'output': result['error']
                 }
                 
         except Exception as e:
@@ -641,6 +650,88 @@ class KaliOptimizer:
                 'success': False,
                 'error': f'Installation error: {str(e)}'
             }
+    
+    def auto_install_missing_tools(self, required_only: bool = True) -> Dict[str, Any]:
+        """Automatically install missing tools"""
+        results = {}
+        installed_count = 0
+        failed_count = 0
+        
+        try:
+            # Check which tools are missing
+            missing_tools = []
+            for tool_name, tool_info in self.tools_status.items():
+                if tool_info.status == "missing":
+                    if required_only and not self.tools_config[tool_name]['required']:
+                        continue
+                    missing_tools.append(tool_name)
+            
+            if not missing_tools:
+                return {
+                    'success': True,
+                    'message': 'No missing tools to install',
+                    'installed': 0,
+                    'failed': 0,
+                    'results': {}
+                }
+            
+            logger.info(f"Auto-installing {len(missing_tools)} missing tools: {', '.join(missing_tools)}")
+            
+            # Install each missing tool
+            for tool_name in missing_tools:
+                logger.info(f"Installing {tool_name}...")
+                result = self.install_missing_tool(tool_name)
+                results[tool_name] = result
+                
+                if result['success']:
+                    installed_count += 1
+                    logger.info(f"✅ Successfully installed {tool_name}")
+                else:
+                    failed_count += 1
+                    logger.error(f"❌ Failed to install {tool_name}: {result['error']}")
+            
+            # Re-check all tools after installation
+            self.check_all_tools()
+            
+            return {
+                'success': failed_count == 0,
+                'message': f'Installed {installed_count} tools, {failed_count} failed',
+                'installed': installed_count,
+                'failed': failed_count,
+                'results': results
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in auto-installation: {e}")
+            return {
+                'success': False,
+                'error': f'Auto-installation error: {str(e)}',
+                'installed': installed_count,
+                'failed': failed_count,
+                'results': results
+            }
+    
+    def ensure_tool_available(self, tool_name: str, auto_install: bool = True) -> bool:
+        """Ensure a specific tool is available, optionally auto-installing if missing"""
+        if tool_name not in self.tools_status:
+            logger.error(f"Tool {tool_name} not found in configuration")
+            return False
+        
+        tool_info = self.tools_status[tool_name]
+        
+        if tool_info.status == "available":
+            return True
+        
+        if tool_info.status == "missing" and auto_install:
+            logger.info(f"Tool {tool_name} is missing, attempting auto-installation...")
+            result = self.install_missing_tool(tool_name)
+            if result['success']:
+                return True
+            else:
+                logger.error(f"Failed to install {tool_name}: {result['error']}")
+                return False
+        
+        return False
     
     def get_diagnostics_summary(self) -> Dict[str, Any]:
         """Get comprehensive diagnostics summary"""
