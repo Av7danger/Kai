@@ -1,0 +1,89 @@
+# Streamlined Autonomous Bug Hunter Configuration
+# Follows exact workflow: Target → Gemini Analysis → Workflow → Vulns → Logs → POC → Explanation
+
+gemini:
+  api_key: ""
+  model: "gemini-pro"
+  max_tokens: 2000
+  temperature: 0.7
+
+workflow:
+  max_concurrent_programs: 3
+  timeout_per_program: 7200
+  auto_exploitation: true
+  detailed_logging: true
+  step_by_step_execution: true
+
+execution:
+  # Step 1: Program Submission
+  enable_program_submission: true
+  
+  # Step 2: Gemini Intelligence Analysis
+  enable_gemini_analysis: true
+  analysis_timeout: 300
+  
+  # Step 3: Workflow Execution
+  enable_workflow_execution: true
+  workflow_timeout: 3600
+  
+  # Step 4: Vulnerability Discovery
+  enable_vulnerability_discovery: true
+  discovery_timeout: 1800
+  
+  # Step 5: Logs and Reproduction
+  enable_logs_generation: true
+  logs_timeout: 600
+  
+  # Step 6: POC Generation
+  enable_poc_generation: true
+  poc_timeout: 900
+  
+  # Step 7: Comprehensive Explanation
+  enable_explanation: true
+  explanation_timeout: 600
+
+vulnerability_discovery:
+  reconnaissance: true
+  scanning: true
+  manual_testing: true
+  exploitation: true
+  business_logic_testing: true
+  novel_attack_vectors: true
+
+tools:
+  # Reconnaissance
+  subfinder: true
+  amass: true
+  httpx: true
+  nuclei: true
+  nmap: true
+  
+  # Exploitation
+  sqlmap: true
+  xsser: true
+  dalfox: true
+  ffuf: true
+  gobuster: true
+
+dashboard:
+  port: 5002
+  host: "0.0.0.0"
+  debug: false
+  theme: "dark"
+  real_time_updates: true
+
+output:
+  base_dir: "streamlined_results"
+  programs_dir: "programs"
+  vulnerabilities_dir: "vulnerabilities"
+  logs_dir: "logs"
+  pocs_dir: "pocs"
+  reports_dir: "reports"
+  auto_cleanup_days: 30
+
+logging:
+  detailed_logs: true
+  vulnerability_logs: true
+  reproduction_steps: true
+  poc_generation: true
+  explanation_generation: true 

@@ -1,5 +1,5 @@
 # Kali Bug Hunter Configuration
-# Optimized for Kali Linux
+# Optimized for Kali Linux - Simplified for Personal Bug Bounty Hunting
 
 kali:
   tools_path: "/usr/bin"
@@ -16,20 +16,66 @@ scanning:
   comprehensive_scan_timeout: 1800
 
 tools:
-  # Core reconnaissance tools
+  # Reconnaissance
   nmap: true
-  nuclei: true
-  ffuf: true
+  masscan: true
   subfinder: true
   amass: true
+  theharvester: true
+  dnsrecon: true
+  whatweb: true
+  wafw00f: true
+  shodan: false  # Needs API key
+  gobuster: true
+  dirb: true
+  assetfinder: true
+  eyewitness: true
+  spiderfoot: true
+
+  # Vulnerability Scanning
+  nuclei: true
   httpx: true
-  
-  # Additional tools (optional)
-  gobuster: false
-  dirb: false
-  nikto: false
-  sqlmap: false
-  xsser: false
+  nikto: true
+  wpscan: true
+  joomscan: true
+  sqlmap: true
+  xsser: true
+  arachni: true
+  ffuf: true
+  dalfox: true
+
+  # Exploitation
+  metasploit: true
+  hydra: true
+  medusa: true
+  patator: true
+  crackmapexec: true
+  responder: true
+  impacket: true
+
+  # Post-Exploitation/Analysis
+  hashcat: true
+  john: true
+  binwalk: true
+  strings: true
+  exiftool: true
+  steghide: true
+  foremost: true
+  volatility: true
+  radare2: true
+  gdb: true
+
+  # Wireless/Network
+  aircrack-ng: true
+  reaver: true
+  bettercap: true
+  kismet: true
+
+  # OSINT/Other
+  maltego: false  # GUI, optional
+  recon-ng: true
+  sherlock: true
+  social-engineer-toolkit: true
 
 ai:
   provider: "openai"  # openai, anthropic, gemini
@@ -44,12 +90,6 @@ dashboard:
   debug: false
   theme: "dark"
   auto_refresh: 30
-
-security:
-  enable_encryption: true
-  session_timeout: 3600
-  max_login_attempts: 5
-  require_ssl: false
 
 output:
   base_dir: "kali_results"

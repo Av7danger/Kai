@@ -28,8 +28,6 @@ from pathlib import Path
 import logging
 import yaml
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -160,11 +158,6 @@ class KaliBugHunter:
                 'host': '0.0.0.0',
                 'debug': False,
                 'theme': 'dark'
-            },
-            'security': {
-                'enable_encryption': True,
-                'session_timeout': 3600,
-                'max_login_attempts': 5
             }
         }
     
@@ -317,10 +310,21 @@ class KaliBugHunter:
         if not self.config['kali']['enable_kali_tools']:
             return
         
-        # Check for common Kali tools
+        # Expanded tool list
         tools_to_check = [
-            'nmap', 'nuclei', 'ffuf', 'subfinder', 'amass', 'httpx',
-            'gobuster', 'dirb', 'nikto', 'sqlmap', 'xsser'
+            # Recon
+            'nmap', 'masscan', 'subfinder', 'amass', 'theharvester', 'dnsrecon', 'whatweb', 'wafw00f',
+            'gobuster', 'dirb', 'assetfinder', 'eyewitness', 'spiderfoot',
+            # Vuln scan
+            'nuclei', 'httpx', 'nikto', 'wpscan', 'joomscan', 'sqlmap', 'xsser', 'arachni', 'ffuf', 'dalfox',
+            # Exploitation
+            'metasploit-framework', 'hydra', 'medusa', 'patator', 'crackmapexec', 'responder', 'impacket-scripts',
+            # Post-exploitation/analysis
+            'hashcat', 'john', 'binwalk', 'strings', 'exiftool', 'steghide', 'foremost', 'volatility', 'radare2', 'gdb',
+            # Wireless/network
+            'aircrack-ng', 'reaver', 'bettercap', 'kismet',
+            # OSINT/other
+            'recon-ng', 'sherlock', 'social-engineer-toolkit'
         ]
         
         for tool in tools_to_check:
@@ -356,7 +360,7 @@ class KaliBugHunter:
         logger.info(f"Target added: {domain}")
         return target_id
     
-    def start_scan(self, target_id: str, scan_type: str = "comprehensive") -> str:
+    def start_scan(self, target_id: str, scan_type: str = "comprehensive", selected_tools: List[str] = []) -> str:
         """Start a scan on a target"""
         if target_id not in self.targets:
             raise ValueError(f"Target {target_id} not found")
@@ -382,40 +386,108 @@ class KaliBugHunter:
         self._save_scan_session(session)
         
         # Start scan in background thread
-        scan_thread = threading.Thread(target=self._run_scan, args=(session_id,))
+        scan_thread = threading.Thread(target=self._run_scan, args=(session_id, selected_tools))
         scan_thread.daemon = True
         scan_thread.start()
         
         logger.info(f"Scan started: {session_id} for {self.targets[target_id].domain}")
         return session_id
     
-    def _run_scan(self, session_id: str):
+    def _run_scan(self, session_id: str, selected_tools: List[str] = None):
         """Run scan in background thread"""
         session = self.scan_sessions[session_id]
         target = self.targets[session.target_id]
         
+        # Set default tools based on scan type if none selected
+        if not selected_tools:
+            if session.scan_type == 'quick':
+                selected_tools = ['nmap', 'httpx', 'nuclei']
+            elif session.scan_type == 'comprehensive':
+                selected_tools = ['subfinder', 'nmap', 'httpx', 'nuclei', 'nikto', 'wpscan', 'joomscan']
+            else:  # custom
+                selected_tools = ['nmap', 'httpx', 'nuclei']  # fallback
+        
         try:
             results = {}
             
-            # Subdomain enumeration
-            if self.kali_tools.get('subfinder'):
+            # Enhanced reconnaissance phase
+            if 'subfinder' in selected_tools and self.kali_tools.get('subfinder'):
                 results['subdomains'] = self._run_subfinder(target.domain)
+                session.progress = 10
+            
+            if 'theharvester' in selected_tools and self.kali_tools.get('theharvester'):
+                results['harvester'] = self._run_theharvester(target.domain)
+                session.progress = 15
+            
+            if 'dnsrecon' in selected_tools and self.kali_tools.get('dnsrecon'):
+                results['dns_recon'] = self._run_dnsrecon(target.domain)
                 session.progress = 20
             
+            if 'assetfinder' in selected_tools and self.kali_tools.get('assetfinder'):
+                results['assets'] = self._run_assetfinder(target.domain)
+                session.progress = 25
+            
+            # Technology fingerprinting
+            if 'whatweb' in selected_tools and self.kali_tools.get('whatweb'):
+                results['technologies'] = self._run_whatweb(target.domain)
+                session.progress = 30
+            
+            if 'wafw00f' in selected_tools and self.kali_tools.get('wafw00f'):
+                results['waf_detection'] = self._run_wafw00f(target.domain)
+                session.progress = 35
+            
             # Port scanning
-            if self.kali_tools.get('nmap'):
+            if 'nmap' in selected_tools and self.kali_tools.get('nmap'):
                 results['ports'] = self._run_nmap(target.domain)
                 session.progress = 40
             
+            if 'masscan' in selected_tools and self.kali_tools.get('masscan'):
+                results['masscan_ports'] = self._run_masscan(target.domain)
+                session.progress = 45
+            
             # Web discovery
-            if self.kali_tools.get('httpx'):
+            if 'httpx' in selected_tools and self.kali_tools.get('httpx'):
                 results['web_targets'] = self._run_httpx(target.domain)
+                session.progress = 50
+            
+            if 'gobuster' in selected_tools and self.kali_tools.get('gobuster'):
+                results['directories'] = self._run_gobuster(target.domain)
+                session.progress = 55
+            
+            if 'dirb' in selected_tools and self.kali_tools.get('dirb'):
+                results['dirb_results'] = self._run_dirb(target.domain)
                 session.progress = 60
             
             # Vulnerability scanning
-            if self.kali_tools.get('nuclei'):
+            if 'nuclei' in selected_tools and self.kali_tools.get('nuclei'):
                 results['vulnerabilities'] = self._run_nuclei(target.domain)
+                session.progress = 65
+            
+            if 'nikto' in selected_tools and self.kali_tools.get('nikto'):
+                results['nikto_scan'] = self._run_nikto(target.domain)
+                session.progress = 70
+            
+            if 'wpscan' in selected_tools and self.kali_tools.get('wpscan'):
+                results['wordpress_scan'] = self._run_wpscan(target.domain)
+                session.progress = 75
+            
+            if 'joomscan' in selected_tools and self.kali_tools.get('joomscan'):
+                results['joomla_scan'] = self._run_joomscan(target.domain)
                 session.progress = 80
+            
+            if 'xsser' in selected_tools and self.kali_tools.get('xsser'):
+                results['xss_scan'] = self._run_xsser(target.domain)
+                session.progress = 85
+            
+            if 'dalfox' in selected_tools and self.kali_tools.get('dalfox'):
+                results['xss_dalfox'] = self._run_dalfox(target.domain)
+                session.progress = 90
+            
+            # Advanced scanning (if comprehensive scan)
+            if session.scan_type == 'comprehensive':
+                if 'arachni' in selected_tools and self.kali_tools.get('arachni'):
+                    results['arachni_scan'] = self._run_arachni(target.domain)
+                    session.progress = 95
             
             # AI analysis
             if self.config['ai']['enable_auto_analysis']:
@@ -732,13 +804,138 @@ class KaliBugHunter:
         conn.commit()
         conn.close()
 
+    # Placeholders for new tool runners
+    def _run_theharvester(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['theharvester', '-d', domain, '-b', 'all'], capture_output=True, text=True, timeout=300)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"theHarvester failed: {e}")
+            return ''
+
+    def _run_dnsrecon(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['dnsrecon', '-d', domain], capture_output=True, text=True, timeout=300)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"dnsrecon failed: {e}")
+            return ''
+
+    def _run_masscan(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['masscan', domain, '-p1-65535', '--rate', '1000'], capture_output=True, text=True, timeout=300)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"masscan failed: {e}")
+            return ''
+
+    def _run_whatweb(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['whatweb', domain], capture_output=True, text=True, timeout=120)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"whatweb failed: {e}")
+            return ''
+
+    def _run_wafw00f(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['wafw00f', domain], capture_output=True, text=True, timeout=120)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"wafw00f failed: {e}")
+            return ''
+
+    def _run_nikto(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['nikto', '-h', domain], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"nikto failed: {e}")
+            return ''
+
+    def _run_wpscan(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['wpscan', '--url', domain, '--disable-tls-checks'], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"wpscan failed: {e}")
+            return ''
+
+    def _run_joomscan(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['joomscan', '--url', domain], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"joomscan failed: {e}")
+            return ''
+
+    def _run_xsser(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['xsser', '--url', domain], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"xsser failed: {e}")
+            return ''
+
+    def _run_arachni(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['arachni', domain], capture_output=True, text=True, timeout=900)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"arachni failed: {e}")
+            return ''
+
+    def _run_dalfox(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['dalfox', 'url', domain], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"dalfox failed: {e}")
+            return ''
+
+    def _run_gobuster(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['gobuster', 'dir', '-u', domain, '-w', '/usr/share/wordlists/dirb/common.txt'], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"gobuster failed: {e}")
+            return ''
+
+    def _run_dirb(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['dirb', domain], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"dirb failed: {e}")
+            return ''
+
+    def _run_assetfinder(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['assetfinder', domain], capture_output=True, text=True, timeout=300)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"assetfinder failed: {e}")
+            return ''
+
+    def _run_eyewitness(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['eyewitness', '--web', domain], capture_output=True, text=True, timeout=600)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"eyewitness failed: {e}")
+            return ''
+
+    def _run_spiderfoot(self, domain: str) -> str:
+        try:
+            result = subprocess.run(['spiderfoot', '-s', domain], capture_output=True, text=True, timeout=900)
+            return result.stdout if result.returncode == 0 else ''
+        except Exception as e:
+            logger.error(f"spiderfoot failed: {e}")
+            return ''
+
 # Global application instance
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'kali-bug-hunter-secret-key')
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
 
 # Global bug hunter instance
 bug_hunter = None
@@ -755,19 +952,7 @@ def get_bug_hunter() -> KaliBugHunter:
         raise RuntimeError("Bug hunter not initialized. Call initialize_bug_hunter() first.")
     return bug_hunter
 
-@login_manager.user_loader
-def load_user(user_id):
-    """Load user for Flask-Login"""
-    # Simplified user management for demo
-    class SimpleUser:
-        def __init__(self, user_id):
-            self.id = user_id
-            self.username = user_id
-    
-    return SimpleUser(user_id)
-
 @app.route('/')
-@login_required
 def dashboard():
     """Main dashboard"""
     hunter = get_bug_hunter()
@@ -779,32 +964,7 @@ def dashboard():
                          vulnerabilities=list(hunter.vulnerabilities.values()),
                          kali_tools=hunter.kali_tools)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Login page"""
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        # Simple authentication for demo
-        if username == 'kali' and password == 'kali':
-            user = SimpleUser(username)
-            login_user(user)
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Invalid credentials')
-    
-    return render_template('kali_login.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    """Logout"""
-    logout_user()
-    return redirect(url_for('login'))
-
 @app.route('/api/targets', methods=['GET', 'POST'])
-@login_required
 def api_targets():
     """API endpoint for targets"""
     hunter = get_bug_hunter()
@@ -821,20 +981,21 @@ def api_targets():
     return jsonify([asdict(target) for target in hunter.targets.values()])
 
 @app.route('/api/scan/<target_id>', methods=['POST'])
-@login_required
 def api_scan(target_id):
     """API endpoint for starting scans"""
     hunter = get_bug_hunter()
     
     try:
-        scan_type = request.json.get('scan_type', 'comprehensive')
-        session_id = hunter.start_scan(target_id, scan_type)
+        data = request.get_json()
+        scan_type = data.get('scan_type', 'comprehensive')
+        selected_tools = data.get('selected_tools', [])
+        
+        session_id = hunter.start_scan(target_id, scan_type, selected_tools)
         return jsonify({'success': True, 'session_id': session_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/scan/status/<session_id>')
-@login_required
 def api_scan_status(session_id):
     """API endpoint for scan status"""
     hunter = get_bug_hunter()
@@ -846,7 +1007,6 @@ def api_scan_status(session_id):
         return jsonify({'error': 'Session not found'})
 
 @app.route('/api/report')
-@login_required
 def api_report():
     """API endpoint for generating reports"""
     hunter = get_bug_hunter()

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Autonomous Bug Hunter - AI-Powered Vulnerability Discovery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00ff88, #00ccff, #ff0088, #00ff88);
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ff88, #00ccff, #ff0088);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .header p {
+            color: #b8b8b8;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .ai-status {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 20px;
+        }
+
+        .ai-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 25px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .ai-pulse {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #b8b8b8;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #00ff88;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2::before {
+            content: '🤖';
+            font-size: 1.5rem;
+        }
+
+        .target-form {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b8b8b8;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff0088, #ff6b6b);
+        }
+
+        .target-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .target-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00ff88;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .target-item:hover {
+            transform: translateX(10px);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .target-domain {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #00ff88;
+            margin-bottom: 8px;
+        }
+
+        .target-info {
+            color: #b8b8b8;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .target-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(0, 204, 255, 0.2);
+            color: #00ccff;
+            border: 1px solid rgba(0, 204, 255, 0.3);
+        }
+
+        .status-failed {
+            background: rgba(255, 0, 136, 0.2);
+            color: #ff0088;
+            border: 1px solid rgba(255, 0, 136, 0.3);
+        }
+
+        .vulnerability-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .vulnerability-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff0088;
+            transition: all 0.3s ease;
+        }
+
+        .vulnerability-item:hover {
+            transform: translateX(10px);
+            background: rgba(255, 0, 136, 0.1);
+        }
+
+        .vuln-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ff0088;
+            margin-bottom: 8px;
+        }
+
+        .vuln-severity {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .severity-critical {
+            background: rgba(255, 0, 136, 0.2);
+            color: #ff0088;
+            border: 1px solid rgba(255, 0, 136, 0.3);
+        }
+
+        .severity-high {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .severity-medium {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .severity-low {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .zero-day-badge {
+            background: linear-gradient(45deg, #ff0088, #00ff88);
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .session-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00ccff;
+            transition: all 0.3s ease;
+        }
+
+        .session-item:hover {
+            transform: translateX(10px);
+            background: rgba(0, 204, 255, 0.1);
+        }
+
+        .session-type {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #00ccff;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .ai-decisions {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .ai-decisions h4 {
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .decision-item {
+            color: #b8b8b8;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .decision-item::before {
+            content: '🤖';
+            position: absolute;
+            left: 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #00ff88, #00ccff);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #ff0088, #ff6b6b);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Autonomous Bug Hunter</h1>
+            <p>AI-Powered Vulnerability Discovery & Exploitation System</p>
+            <div class="ai-status">
+                <div class="ai-indicator">
+                    <div class="ai-pulse"></div>
+                    <span>AI Active</span>
+                </div>
+                <div class="ai-indicator">
+                    <div class="ai-pulse"></div>
+                    <span>Learning Enabled</span>
+                </div>
+                <div class="ai-indicator">
+                    <div class="ai-pulse"></div>
+                    <span>Zero-Day Hunting</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_targets }}</div>
+                <div class="stat-label">Active Targets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.active_sessions }}</div>
+                <div class="stat-label">AI Sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.vulnerabilities_found }}</div>
+                <div class="stat-label">Vulnerabilities Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.zero_day_potential }}</div>
+                <div class="stat-label">Zero-Day Candidates</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2>Autonomous Target Management</h2>
+                
+                <div class="target-form">
+                    <div class="form-group">
+                        <label for="domain">Target Domain</label>
+                        <input type="text" id="domain" placeholder="example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="program">Bug Bounty Program</label>
+                        <input type="text" id="program" placeholder="Program Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="reward">Reward Range</label>
+                        <input type="text" id="reward" placeholder="$100-$1000">
+                    </div>
+                    <button class="btn" onclick="addAutonomousTarget()">
+                        <span class="loading" id="add-loading" style="display: none;"></span>
+                        <span id="add-text">🤖 Start Autonomous Hunt</span>
+                    </button>
+                </div>
+
+                <h3>Active Targets</h3>
+                <div class="target-list">
+                    {% for target in targets %}
+                    <div class="target-item">
+                        <div class="target-domain">{{ target.domain }}</div>
+                        <div class="target-info">Program: {{ target.program_name }}</div>
+                        <div class="target-info">Reward: {{ target.reward_range }}</div>
+                        <div class="target-info">AI Confidence: {{ "%.1f"|format(target.ai_confidence * 100) }}%</div>
+                        <div class="target-info">Success Rate: {{ "%.1f"|format(target.success_rate * 100) }}%</div>
+                        <span class="target-status status-{{ target.status }}">{{ target.status.upper() }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>AI Discovered Vulnerabilities</h2>
+                <div class="vulnerability-list">
+                    {% for vuln in vulnerabilities %}
+                    <div class="target-item">
+                        <div class="vuln-title">
+                            {{ vuln.title }}
+                            {% if vuln.zero_day_potential %}
+                            <span class="zero-day-badge">ZERO-DAY</span>
+                            {% endif %}
+                        </div>
+                        <div class="target-info">Target: {{ vuln.target_id }}</div>
+                        <div class="target-info">CVSS: {{ "%.1f"|format(vuln.cvss_score) }}</div>
+                        <div class="target-info">Status: {{ vuln.status.upper() }}</div>
+                        <span class="vuln-severity severity-{{ vuln.severity }}">{{ vuln.severity.upper() }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🤖 AI Session Intelligence</h2>
+            <div class="session-list">
+                {% for session in sessions %}
+                <div class="session-item">
+                    <div class="session-type">{{ session.session_type.upper() }} Session</div>
+                    <div class="target-info">Target: {{ session.target_id }}</div>
+                    <div class="target-info">Status: {{ session.status.upper() }}</div>
+                    <div class="target-info">Progress: {{ "%.1f"|format(session.progress) }}%</div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ session.progress }}%"></div>
+                    </div>
+                    
+                    {% if session.ai_decisions %}
+                    <div class="ai-decisions">
+                        <h4>🤖 AI Decisions Made:</h4>
+                        {% for decision in session.ai_decisions[:5] %}
+                        <div class="decision-item">{{ decision }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Real-time updates
+        function updateStats() {
+            fetch('/api/autonomous/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update stats in real-time
+                    console.log('Autonomous status updated:', data);
+                })
+                .catch(error => console.error('Error updating stats:', error));
+        }
+
+        // Update every 30 seconds
+        setInterval(updateStats, 30000);
+
+        function addAutonomousTarget() {
+            const domain = document.getElementById('domain').value;
+            const program = document.getElementById('program').value;
+            const reward = document.getElementById('reward').value;
+
+            if (!domain) {
+                showNotification('Please enter a target domain', 'error');
+                return;
+            }
+
+            const loading = document.getElementById('add-loading');
+            const text = document.getElementById('add-text');
+            
+            loading.style.display = 'inline-block';
+            text.style.display = 'none';
+
+            fetch('/api/autonomous/targets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    domain: domain,
+                    program_name: program,
+                    reward_range: reward
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('🤖 Autonomous hunt started for ' + domain, 'success');
+                    document.getElementById('domain').value = '';
+                    document.getElementById('program').value = '';
+                    document.getElementById('reward').value = '';
+                    
+                    // Reload page after 2 seconds to show new target
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotification('Failed to start autonomous hunt', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error starting autonomous hunt', 'error');
+            })
+            .finally(() => {
+                loading.style.display = 'none';
+                text.style.display = 'inline';
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+        });
+    </script>
+</body>
+</html> 

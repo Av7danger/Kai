@@ -67,23 +67,72 @@ def test_kali_tools():
     """Test Kali Linux tools availability"""
     print("\n🛠️ Testing Kali tools...")
     
-    tools = ['nmap', 'nuclei', 'ffuf', 'subfinder', 'amass', 'httpx']
+    # Core tools
+    core_tools = ['nmap', 'nuclei', 'ffuf', 'subfinder', 'amass', 'httpx']
+    
+    # New reconnaissance tools
+    recon_tools = ['masscan', 'theharvester', 'dnsrecon', 'whatweb', 'wafw00f', 'gobuster', 'dirb', 'assetfinder']
+    
+    # New vulnerability scanning tools
+    vuln_tools = ['nikto', 'wpscan', 'joomscan', 'sqlmap', 'xsser', 'arachni', 'dalfox']
+    
+    # New exploitation tools
+    exploit_tools = ['metasploit-framework', 'hydra', 'medusa', 'patator', 'crackmapexec', 'responder']
+    
+    # New analysis tools
+    analysis_tools = ['hashcat', 'john', 'binwalk', 'strings', 'exiftool', 'steghide', 'foremost']
+    
+    all_tools = core_tools + recon_tools + vuln_tools + exploit_tools + analysis_tools
     available_tools = []
     
-    for tool in tools:
-        try:
-            result = subprocess.run([tool, '--version'], 
-                                  capture_output=True, text=True, timeout=5)
-            if result.returncode == 0:
-                print(f"✅ {tool} is available")
-                available_tools.append(tool)
-            else:
-                print(f"❌ {tool} not working properly")
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            print(f"❌ {tool} not found")
+    print("🔍 Testing core tools...")
+    for tool in core_tools:
+        if test_tool_availability(tool):
+            available_tools.append(tool)
     
-    print(f"\n📊 Tools available: {len(available_tools)}/{len(tools)}")
+    print("🕵️ Testing reconnaissance tools...")
+    for tool in recon_tools:
+        if test_tool_availability(tool):
+            available_tools.append(tool)
+    
+    print("🛡️ Testing vulnerability scanning tools...")
+    for tool in vuln_tools:
+        if test_tool_availability(tool):
+            available_tools.append(tool)
+    
+    print("⚔️ Testing exploitation tools...")
+    for tool in exploit_tools:
+        if test_tool_availability(tool):
+            available_tools.append(tool)
+    
+    print("🔬 Testing analysis tools...")
+    for tool in analysis_tools:
+        if test_tool_availability(tool):
+            available_tools.append(tool)
+    
+    print(f"\n📊 Tools available: {len(available_tools)}/{len(all_tools)}")
+    print(f"✅ Core tools: {len([t for t in core_tools if t in available_tools])}/{len(core_tools)}")
+    print(f"✅ Recon tools: {len([t for t in recon_tools if t in available_tools])}/{len(recon_tools)}")
+    print(f"✅ Vuln tools: {len([t for t in vuln_tools if t in available_tools])}/{len(vuln_tools)}")
+    print(f"✅ Exploit tools: {len([t for t in exploit_tools if t in available_tools])}/{len(exploit_tools)}")
+    print(f"✅ Analysis tools: {len([t for t in analysis_tools if t in available_tools])}/{len(analysis_tools)}")
+    
     return len(available_tools) > 0
+
+def test_tool_availability(tool):
+    """Test if a specific tool is available"""
+    try:
+        result = subprocess.run([tool, '--version'], 
+                              capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            print(f"✅ {tool} is available")
+            return True
+        else:
+            print(f"❌ {tool} not working properly")
+            return False
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        print(f"❌ {tool} not found")
+        return False
 
 def test_database():
     """Test database functionality"""

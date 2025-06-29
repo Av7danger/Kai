@@ -67,44 +67,74 @@ sudo apt install -y \
 print_status "Checking Kali tools..."
 KALI_TOOLS=(
     "nmap"
-    "nuclei"
-    "ffuf"
+    "masscan"
     "subfinder"
     "amass"
-    "httpx"
+    "theharvester"
+    "dnsrecon"
+    "whatweb"
+    "wafw00f"
     "gobuster"
     "dirb"
+    "assetfinder"
+    "eyewitness"
+    "spiderfoot"
+    "nuclei"
+    "httpx"
     "nikto"
+    "wpscan"
+    "joomscan"
     "sqlmap"
+    "xsser"
+    "arachni"
+    "ffuf"
+    "dalfox"
+    "metasploit-framework"
+    "hydra"
+    "medusa"
+    "patator"
+    "crackmapexec"
+    "responder"
+    "impacket-scripts"
+    "hashcat"
+    "john"
+    "binwalk"
+    "strings"
+    "exiftool"
+    "steghide"
+    "foremost"
+    "volatility"
+    "radare2"
+    "gdb"
+    "aircrack-ng"
+    "reaver"
+    "bettercap"
+    "kismet"
+    "recon-ng"
+    "sherlock"
+    "social-engineer-toolkit"
 )
 
-for tool in "${KALI_TOOLS[@]}"; do
-    if ! command -v "$tool" &> /dev/null; then
-        print_warning "$tool not found. Installing..."
-        case $tool in
-            "nuclei")
-                go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-                ;;
-            "subfinder")
-                go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-                ;;
-            "amass")
-                go install -v github.com/owasp-amass/amass/v4/...@master
-                ;;
-            "httpx")
-                go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-                ;;
-            "ffuf")
-                go install github.com/ffuf/ffuf@latest
-                ;;
-            *)
-                sudo apt install -y "$tool"
-                ;;
-        esac
-    else
-        print_success "$tool is already installed"
-    fi
-done
+# Install via apt
+APT_TOOLS=(
+    nmap masscan subfinder amass theharvester dnsrecon whatweb wafw00f gobuster dirb assetfinder eyewitness spiderfoot nuclei httpx nikto joomscan sqlmap xsser ffuf dalfox metasploit-framework hydra medusa patator crackmapexec responder impacket-scripts hashcat john binwalk strings exiftool steghide foremost volatility radare2 gdb aircrack-ng reaver bettercap kismet recon-ng social-engineer-toolkit
+)
+
+print_status "Installing tools via apt..."
+sudo apt install -y ${APT_TOOLS[@]}
+
+# Special installs
+print_status "Installing wpscan (via gem)..."
+sudo gem install wpscan || true
+
+print_status "Installing arachni (via gem, may take time)..."
+sudo gem install arachni || true
+
+print_status "Installing sherlock (via pip)..."
+pip install sherlock || true
+
+# Note: shodan and maltego require manual/API setup
+print_warning "Shodan and Maltego require manual/API setup. Skipping automatic install."
 
 # Create virtual environment
 print_status "Creating Python virtual environment..."
