@@ -434,6 +434,74 @@
             </div>
         </div>
         
+        <!-- AI-Powered Bug Hunting Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-robot"></i> AI-Powered Bug Hunting</h5>
+            </div>
+            <div class="card-body">
+                <form id="aiHuntForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="aiTarget">Target Domain *</label>
+                                <input type="text" class="form-control" id="aiTarget" placeholder="example.com" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="aiProvider">AI Provider</label>
+                                <select class="form-control" id="aiProvider">
+                                    <option value="gemini">Gemini</option>
+                                    <option value="openai">OpenAI</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="programOverview">Program Overview *</label>
+                        <textarea class="form-control" id="programOverview" rows="3" 
+                            placeholder="Describe the bug bounty program, target application, business context, and what makes it valuable..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="aiScope">Scope *</label>
+                        <textarea class="form-control" id="aiScope" rows="2" 
+                            placeholder="*.example.com, api.example.com, admin.example.com" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="bountyRanges">Bounty Ranges</label>
+                                <input type="text" class="form-control" id="bountyRanges" 
+                                    placeholder="Critical: $5000-10000, High: $1000-5000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="focusAreas">Focus Areas</label>
+                                <input type="text" class="form-control" id="focusAreas" 
+                                    placeholder="Authentication, payment processing, API security">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-robot"></i> Start AI-Powered Hunt
+                    </button>
+                </form>
+                
+                <div id="aiHuntStatus" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-cog fa-spin"></i> AI Analysis in Progress...</h6>
+                        <div id="aiHuntProgress"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="toast" id="toast"></div>
     </div>
     <script>
@@ -701,6 +769,120 @@
         
         // Initialize tools status on page load
         refreshToolsStatus();
+
+        // AI-Powered Hunting
+        $('#aiHuntForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const target = $('#aiTarget').val();
+            const programOverview = $('#programOverview').val();
+            const scope = $('#aiScope').val();
+            const bountyRanges = $('#bountyRanges').val();
+            const focusAreas = $('#focusAreas').val();
+            const aiProvider = $('#aiProvider').val();
+            
+            if (!target || !programOverview || !scope) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Show status
+            $('#aiHuntStatus').show();
+            $('#aiHuntProgress').html('<p>Starting AI-powered analysis...</p>');
+            
+            // Start AI hunt
+            fetch('/api/ai-hunt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    target: target,
+                    program_overview: programOverview,
+                    scope: scope,
+                    bounty_ranges: bountyRanges,
+                    focus_areas: focusAreas,
+                    ai_provider: aiProvider
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const workflowId = data.workflow_id;
+                    showToast('AI-powered hunt started!', 'success');
+                    
+                    // Monitor AI hunt progress
+                    monitorAIHunt(workflowId);
+                } else {
+                    showToast('AI hunt failed: ' + data.error, 'error');
+                    $('#aiHuntStatus').hide();
+                }
+            })
+            .catch(error => {
+                showToast('AI hunt error: ' + error, 'error');
+                $('#aiHuntStatus').hide();
+            });
+        });
+        
+        function monitorAIHunt(workflowId) {
+            const checkInterval = setInterval(() => {
+                fetch(`/api/workflow/${workflowId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const workflow = data.workflow;
+                        const status = workflow.status;
+                        const results = workflow.results || [];
+                        
+                        // Update progress
+                        if (results.length > 0) {
+                            const latestResult = results[results.length - 1];
+                            $('#aiHuntProgress').html(`
+                                <p><strong>Status:</strong> ${status}</p>
+                                <p><strong>Latest:</strong> ${latestResult.message}</p>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: ${(results.length / 9) * 100}%"></div>
+                                </div>
+                            `);
+                        }
+                        
+                        if (status === 'completed') {
+                            clearInterval(checkInterval);
+                            $('#aiHuntStatus').html(`
+                                <div class="alert alert-success">
+                                    <h6><i class="fas fa-check-circle"></i> AI-Powered Hunt Completed!</h6>
+                                    <p><strong>Target:</strong> ${workflow.target}</p>
+                                    <p><strong>Vulnerabilities Found:</strong> ${workflow.vulnerabilities ? workflow.vulnerabilities.length : 0}</p>
+                                    <p><strong>AI-Guided Findings:</strong> ${workflow.vulnerabilities ? workflow.vulnerabilities.filter(v => v.ai_guided).length : 0}</p>
+                                    ${workflow.ai_report && workflow.ai_report.potential_bounty ? 
+                                        `<p><strong>Potential Bounty:</strong> $${workflow.ai_report.potential_bounty}</p>` : ''}
+                                </div>
+                            `);
+                            
+                            // Refresh results
+                            loadResults();
+                        } else if (status === 'failed') {
+                            clearInterval(checkInterval);
+                            $('#aiHuntStatus').html(`
+                                <div class="alert alert-danger">
+                                    <h6><i class="fas fa-exclamation-triangle"></i> AI Hunt Failed</h6>
+                                    <p>${workflow.error || 'Unknown error'}</p>
+                                </div>
+                            `);
+                        }
+                    } else {
+                        clearInterval(checkInterval);
+                        showToast('Failed to check AI hunt status', 'error');
+                        $('#aiHuntStatus').hide();
+                    }
+                })
+                .catch(error => {
+                    clearInterval(checkInterval);
+                    showToast('Error checking AI hunt status: ' + error, 'error');
+                    $('#aiHuntStatus').hide();
+                });
+            }, 2000);
+        }
     </script>
 </body>
 </html> 

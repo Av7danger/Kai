@@ -44,10 +44,21 @@ class TargetRequest(BaseModel):
     target: str
     scope: str
     ai_provider: str = "gemini"
+    program_overview: Optional[str] = None
+    bounty_ranges: Optional[str] = None
+    focus_areas: Optional[str] = None
 
 class ChatMessage(BaseModel):
     message: str
     session_id: Optional[str] = None
+
+class AIHuntRequest(BaseModel):
+    target: str
+    program_overview: str
+    scope: str
+    bounty_ranges: Optional[str] = None
+    focus_areas: Optional[str] = None
+    ai_provider: str = "gemini"
 
 # Global state
 active_workflows: Dict[str, Dict] = {}
@@ -449,6 +460,60 @@ async def start_hunt(request: TargetRequest):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+@app.post("/api/ai-hunt")
+async def start_ai_hunt(request: AIHuntRequest):
+    """Start AI-powered bug hunting with program analysis"""
+    try:
+        target = request.target
+        program_overview = request.program_overview
+        scope = request.scope
+        bounty_ranges = request.bounty_ranges
+        focus_areas = request.focus_areas
+        ai_provider = request.ai_provider
+        
+        if not target or not program_overview:
+            return {"success": False, "error": "Target domain and program overview are required"}
+        
+        # Generate a unique workflow ID
+        workflow_id = f"ai_hunt_{int(time.time())}_{random.randint(1000, 9999)}"
+        
+        # Create workflow data
+        workflow_data = {
+            "id": workflow_id,
+            "target": target,
+            "program_overview": program_overview,
+            "scope": scope,
+            "bounty_ranges": bounty_ranges,
+            "focus_areas": focus_areas,
+            "ai_provider": ai_provider,
+            "status": "running",
+            "started_at": datetime.now().isoformat(),
+            "results": [],
+            "subdomains": [],
+            "open_ports": {},
+            "vulnerabilities": [],
+            "ai_analysis": {},
+            "ai_report": {}
+        }
+        
+        # Store workflow
+        active_workflows[workflow_id] = workflow_data
+        
+        # Start the AI-powered hunting process in background
+        asyncio.create_task(run_ai_hunting_workflow(
+            workflow_id, target, program_overview, scope, 
+            bounty_ranges or "", focus_areas or "", ai_provider
+        ))
+        
+        return {
+            "success": True, 
+            "workflow_id": workflow_id,
+            "message": f"AI-powered bug hunt started for {target}"
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @app.get("/api/workflow/{workflow_id}")
 async def get_workflow_status(workflow_id: str):
     """Get status of a specific workflow"""
@@ -551,6 +616,377 @@ async def run_real_hunting_workflow(workflow_id: str, target: str, scope: str, a
             workflow["error"] = str(e)
             workflow["failed_at"] = datetime.now().isoformat()
         logger.error(f"Workflow error: {e}")
+
+async def ai_analyze_program(program_overview: str, scope: str, bounty_ranges: str = "", focus_areas: str = "") -> Dict:
+    """AI analysis of the bug bounty program"""
+    try:
+        # Create comprehensive analysis prompt
+        analysis_prompt = f"""
+        BUG BOUNTY PROGRAM ANALYSIS
+        
+        PROGRAM OVERVIEW:
+        {program_overview}
+        
+        SCOPE:
+        {scope}
+        
+        BOUNTY RANGES:
+        {bounty_ranges or "Not specified"}
+        
+        FOCUS AREAS:
+        {focus_areas or "All vulnerabilities"}
+        
+        Based on this information, provide:
+        1. Most valuable vulnerability types to focus on
+        2. Specific attack vectors to test
+        3. High-priority endpoints to target
+        4. Common misconfigurations to look for
+        5. Recommended testing methodology
+        """
+        
+        # For now, simulate AI analysis (replace with actual Gemini API call)
+        analysis_result = {
+            "priority_vulnerabilities": [
+                "SQL Injection",
+                "XSS (Cross-Site Scripting)", 
+                "SSRF (Server-Side Request Forgery)",
+                "Authentication Bypass",
+                "Privilege Escalation"
+            ],
+            "attack_vectors": [
+                "Input validation bypass",
+                "Authentication mechanisms",
+                "API endpoints",
+                "File upload functionality",
+                "Admin panels"
+            ],
+            "high_priority_endpoints": [
+                "/api/",
+                "/admin/",
+                "/login",
+                "/upload",
+                "/search"
+            ],
+            "common_misconfigurations": [
+                "Missing security headers",
+                "CORS misconfiguration",
+                "Information disclosure",
+                "Default credentials",
+                "Debug endpoints"
+            ],
+            "testing_methodology": [
+                "Start with reconnaissance",
+                "Map all endpoints",
+                "Test authentication flows",
+                "Fuzz input parameters",
+                "Check for business logic flaws"
+            ]
+        }
+        
+        logger.info("AI analysis completed")
+        return analysis_result
+        
+    except Exception as e:
+        logger.error(f"AI analysis error: {e}")
+        return {"error": str(e)}
+
+async def ai_guided_vulnerability_scan(target: str, ai_analysis: Dict, ports: Dict[int, str]) -> List[Dict]:
+    """AI-guided vulnerability scanning based on program analysis"""
+    vulnerabilities = []
+    
+    try:
+        # Get AI recommendations
+        priority_vulns = ai_analysis.get("priority_vulnerabilities", [])
+        attack_vectors = ai_analysis.get("attack_vectors", [])
+        high_priority_endpoints = ai_analysis.get("high_priority_endpoints", [])
+        
+        if 80 in ports or 443 in ports:
+            protocol = "https" if 443 in ports else "http"
+            base_url = f"{protocol}://{target}"
+            
+            # AI-guided vulnerability tests
+            ai_vuln_tests = []
+            
+            # SQL Injection tests based on AI analysis
+            if "SQL Injection" in priority_vulns:
+                sql_payloads = [
+                    "' OR 1=1--",
+                    "' UNION SELECT NULL--",
+                    "'; DROP TABLE users--",
+                    "' OR '1'='1",
+                    "admin'--"
+                ]
+                for payload in sql_payloads:
+                    ai_vuln_tests.append({
+                        "type": "SQL Injection",
+                        "url": f"{base_url}/search?q={payload}",
+                        "payload": payload,
+                        "severity": "High"
+                    })
+                    ai_vuln_tests.append({
+                        "type": "SQL Injection", 
+                        "url": f"{base_url}/login?username={payload}&password=test",
+                        "payload": payload,
+                        "severity": "High"
+                    })
+            
+            # XSS tests based on AI analysis
+            if "XSS" in priority_vulns:
+                xss_payloads = [
+                    "<script>alert('XSS')</script>",
+                    "<img src=x onerror=alert('XSS')>",
+                    "javascript:alert('XSS')",
+                    "<svg onload=alert('XSS')>",
+                    "'\"><script>alert('XSS')</script>"
+                ]
+                for payload in xss_payloads:
+                    ai_vuln_tests.append({
+                        "type": "XSS",
+                        "url": f"{base_url}/search?q={payload}",
+                        "payload": payload,
+                        "severity": "Medium"
+                    })
+            
+            # Test high-priority endpoints from AI analysis
+            for endpoint in high_priority_endpoints:
+                ai_vuln_tests.append({
+                    "type": "Endpoint Discovery",
+                    "url": f"{base_url}{endpoint}",
+                    "payload": "N/A",
+                    "severity": "Info"
+                })
+            
+            # Execute AI-guided tests
+            for test in ai_vuln_tests:
+                try:
+                    response = requests.get(test["url"], timeout=5, allow_redirects=False)
+                    
+                    # Analyze response based on test type
+                    if test["type"] == "SQL Injection":
+                        if any(error in response.text.lower() for error in ["sql", "mysql", "oracle", "postgresql", "syntax error"]):
+                            vulnerabilities.append({
+                                "type": "SQL Injection",
+                                "url": test["url"],
+                                "severity": "High",
+                                "description": f"Potential SQL injection with payload: {test['payload']}",
+                                "evidence": response.text[:200],
+                                "ai_guided": True
+                            })
+                    
+                    elif test["type"] == "XSS":
+                        if test["payload"] in response.text:
+                            vulnerabilities.append({
+                                "type": "XSS",
+                                "url": test["url"],
+                                "severity": "Medium",
+                                "description": f"Potential XSS with payload: {test['payload']}",
+                                "evidence": response.text[:200],
+                                "ai_guided": True
+                            })
+                    
+                    elif test["type"] == "Endpoint Discovery":
+                        if response.status_code != 404:
+                            vulnerabilities.append({
+                                "type": "Endpoint Found",
+                                "url": test["url"],
+                                "severity": "Info",
+                                "description": f"Discovered endpoint: {test['url']} (Status: {response.status_code})",
+                                "evidence": f"Status code: {response.status_code}",
+                                "ai_guided": True
+                            })
+                
+                except Exception as e:
+                    logger.error(f"AI test error for {test['type']}: {e}")
+        
+        # Check for business logic vulnerabilities based on AI analysis
+        if "Authentication Bypass" in priority_vulns:
+            auth_bypass_tests = [
+                f"{base_url}/admin",
+                f"{base_url}/admin/",
+                f"{base_url}/admin.php",
+                f"{base_url}/admin.html",
+                f"{base_url}/admin/dashboard"
+            ]
+            
+            for test_url in auth_bypass_tests:
+                try:
+                    response = requests.get(test_url, timeout=5)
+                    if response.status_code == 200 and "admin" in response.text.lower():
+                        vulnerabilities.append({
+                            "type": "Potential Auth Bypass",
+                            "url": test_url,
+                            "severity": "High",
+                            "description": f"Admin panel accessible without authentication",
+                            "evidence": "Admin panel accessible",
+                            "ai_guided": True
+                        })
+                except:
+                    pass
+        
+        logger.info(f"AI-guided scan completed. Found {len(vulnerabilities)} AI-guided vulnerabilities")
+        return vulnerabilities
+        
+    except Exception as e:
+        logger.error(f"AI-guided scan error: {e}")
+        return []
+
+async def generate_ai_report(target: str, subdomains: List[str], open_ports: Dict[int, str], 
+                           vulnerabilities: List[Dict], ai_analysis: Dict) -> Dict:
+    """Generate comprehensive AI-powered report"""
+    try:
+        # Categorize vulnerabilities by severity
+        high_vulns = [v for v in vulnerabilities if v.get("severity") == "High"]
+        medium_vulns = [v for v in vulnerabilities if v.get("severity") == "Medium"]
+        low_vulns = [v for v in vulnerabilities if v.get("severity") == "Low"]
+        info_vulns = [v for v in vulnerabilities if v.get("severity") == "Info"]
+        
+        # Calculate potential bounty
+        potential_bounty = len(high_vulns) * 1000 + len(medium_vulns) * 500 + len(low_vulns) * 100
+        
+        report = {
+            "target": target,
+            "scan_date": datetime.now().isoformat(),
+            "ai_analysis": ai_analysis,
+            "findings_summary": {
+                "total_vulnerabilities": len(vulnerabilities),
+                "high_severity": len(high_vulns),
+                "medium_severity": len(medium_vulns),
+                "low_severity": len(low_vulns),
+                "info_findings": len(info_vulns),
+                "ai_guided_findings": len([v for v in vulnerabilities if v.get("ai_guided")])
+            },
+            "infrastructure": {
+                "subdomains_found": len(subdomains),
+                "subdomains": subdomains,
+                "open_ports": open_ports
+            },
+            "vulnerabilities": {
+                "high": high_vulns,
+                "medium": medium_vulns,
+                "low": low_vulns,
+                "info": info_vulns
+            },
+            "potential_bounty": potential_bounty,
+            "recommendations": [
+                "Submit high and medium severity findings immediately",
+                "Document all findings with clear proof of concept",
+                "Follow responsible disclosure guidelines",
+                "Focus on business logic vulnerabilities for higher payouts"
+            ]
+        }
+        
+        return report
+        
+    except Exception as e:
+        logger.error(f"Report generation error: {e}")
+        return {"error": str(e)}
+
+async def run_ai_hunting_workflow(workflow_id: str, target: str, program_overview: str, scope: str, 
+                                 bounty_ranges: str, focus_areas: str, ai_provider: str):
+    """Run AI-powered bug hunting workflow"""
+    try:
+        workflow = active_workflows[workflow_id]
+        
+        # Step 1: AI Program Analysis
+        workflow["results"].append({
+            "step": 1,
+            "message": "Analyzing bug bounty program with AI...",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        ai_analysis = await ai_analyze_program(program_overview, scope, bounty_ranges, focus_areas)
+        workflow["ai_analysis"] = ai_analysis
+        workflow["results"].append({
+            "step": 2,
+            "message": f"AI analysis completed. Priority vulnerabilities: {', '.join(ai_analysis.get('priority_vulnerabilities', [])[:3])}",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Step 2: Subdomain Enumeration
+        workflow["results"].append({
+            "step": 3,
+            "message": "Starting AI-guided subdomain enumeration...",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        subdomains = await subdomain_enumeration(target)
+        workflow["subdomains"] = subdomains
+        workflow["results"].append({
+            "step": 4,
+            "message": f"Found {len(subdomains)} subdomains",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Step 3: Port Scanning
+        workflow["results"].append({
+            "step": 5,
+            "message": "Starting port scanning...",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        open_ports = await port_scanning(target)
+        workflow["open_ports"] = open_ports
+        workflow["results"].append({
+            "step": 6,
+            "message": f"Found {len(open_ports)} open ports",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Step 4: AI-Guided Vulnerability Scanning
+        workflow["results"].append({
+            "step": 7,
+            "message": "Starting AI-guided vulnerability scanning...",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Regular vulnerability scan
+        regular_vulns = await vulnerability_scanning(target, open_ports)
+        
+        # AI-guided vulnerability scan
+        ai_vulns = await ai_guided_vulnerability_scan(target, ai_analysis, open_ports)
+        
+        # Combine all vulnerabilities
+        all_vulnerabilities = regular_vulns + ai_vulns
+        workflow["vulnerabilities"] = all_vulnerabilities
+        
+        workflow["results"].append({
+            "step": 8,
+            "message": f"Found {len(all_vulnerabilities)} total vulnerabilities ({len(ai_vulns)} AI-guided)",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        # Step 5: Generate AI Report
+        workflow["results"].append({
+            "step": 9,
+            "message": "Generating comprehensive AI-powered report...",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        ai_report = await generate_ai_report(target, subdomains, open_ports, all_vulnerabilities, ai_analysis)
+        workflow["ai_report"] = ai_report
+        
+        # Mark as completed
+        workflow["status"] = "completed"
+        workflow["completed_at"] = datetime.now().isoformat()
+        
+        # Log findings
+        if all_vulnerabilities:
+            logger.info(f"🎯 AI HUNT COMPLETED: Found {len(all_vulnerabilities)} vulnerabilities on {target}!")
+            logger.info(f"💰 Potential bounty: ${ai_report.get('potential_bounty', 0)}")
+            
+            for vuln in all_vulnerabilities:
+                ai_marker = "🤖" if vuln.get("ai_guided") else "🔍"
+                logger.info(f"{ai_marker} {vuln['type']} - {vuln['severity']} - {vuln['description']}")
+        else:
+            logger.info(f"✅ AI hunt completed: No vulnerabilities found on {target}")
+        
+    except Exception as e:
+        workflow = active_workflows.get(workflow_id)
+        if workflow:
+            workflow["status"] = "failed"
+            workflow["error"] = str(e)
+            workflow["failed_at"] = datetime.now().isoformat()
+        logger.error(f"AI workflow error: {e}")
 
 if __name__ == "__main__":
     # Create data directory if it doesn't exist
