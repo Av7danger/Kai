@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Any
 import threading
 import psutil
 from dataclasses import asdict
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
@@ -24,13 +25,61 @@ from pydantic import BaseModel
 import uvicorn
 
 # Import our optimized modules from the new package structure
-from app.core.subprocess_handler import SubprocessHandler
-from app.core.cache_manager import CacheManager, CacheBackend, cached
-from app.core.database_manager import DatabaseManager
-from app.core.kali_optimizer import KaliOptimizer
-from app.ai.agent import AIAgent
+try:
+    from app.core.subprocess_handler import SubprocessHandler
+    from app.core.cache_manager import CacheManager, CacheBackend, cached
+    from app.core.database_manager import DatabaseManager
+    from app.core.kali_optimizer import KaliOptimizer
+    from app.ai.agent import AIAgent
+except ImportError as e:
+    print(f"Warning: Some modules not available: {e}")
+    # Create dummy classes for missing modules
+    class SubprocessHandler:
+        def __init__(self, *args, **kwargs): pass
+        def run(self, *args, **kwargs): return None
+    
+    class CacheBackend:
+        MEMORY = "memory"
+    
+    class CacheManager:
+        def __init__(self, *args, **kwargs): pass
+        def get_stats(self): return {"total_entries": 0, "usage_percent": 0}
+        def get(self, *args, **kwargs): return None
+        def set(self, *args, **kwargs): pass
+    
+    class DatabaseManager:
+        async def initialize(self): pass
+        async def close(self): pass
+        def get_connection(self): return None
+        def save_workflow(self, *args, **kwargs): pass
+        def get_stats(self): return {"total_workflows": 0}
+    
+    class KaliOptimizer:
+        def __init__(self, *args, **kwargs): pass
+        def check_all_tools(self): return {}
+        def run_system_diagnostics(self): 
+            return {
+                'cpu_usage': 0.0,
+                'memory_usage': 0.0,
+                'disk_usage': 0.0,
+                'network_status': 'unknown',
+                'python_version': sys.version,
+                'os_info': 'Windows',
+                'kali_version': 'N/A',
+                'permissions': {},
+                'resource_limits': {},
+                'optimization_recommendations': []
+            }
+    
+    class AIAgent:
+        async def analyze_target(self, *args, **kwargs): 
+            return {"status": "dummy", "recommendations": []}
+        async def analyze_results(self, *args, **kwargs):
+            return {"status": "dummy", "findings": []}
+        async def chat(self, *args, **kwargs):
+            return {"response": "Dummy AI response"}
 
-# Configure logging
+# Configure logging properly
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -69,8 +118,19 @@ class PerformanceMonitor:
         """Get performance statistics"""
         with self.lock:
             uptime = time.time() - self.start_time
-            memory_info = psutil.virtual_memory()
-            cpu_percent = psutil.cpu_percent(interval=1)
+            try:
+                memory_info = psutil.virtual_memory()
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                disk_usage = psutil.disk_usage('/').percent if os.name != 'nt' else 0
+            except Exception:
+                # Create a proper memory info object
+                class MemoryInfo:
+                    def __init__(self):
+                        self.used = 0
+                        self.percent = 0
+                memory_info = MemoryInfo()
+                cpu_percent = 0
+                disk_usage = 0
             
             return {
                 'uptime_seconds': uptime,
@@ -83,17 +143,76 @@ class PerformanceMonitor:
                 'memory_usage_mb': memory_info.used / (1024 * 1024),
                 'memory_percent': memory_info.percent,
                 'cpu_percent': cpu_percent,
-                'disk_usage': psutil.disk_usage('/').percent if os.name != 'nt' else 0
+                'disk_usage': disk_usage
             }
 
 # Initialize components
-app = FastAPI(title="Kali Bug Hunter", version="2.0.0")
 performance_monitor = PerformanceMonitor()
 subprocess_handler = SubprocessHandler(default_timeout=60, max_memory_mb=1024)
 cache_manager = CacheManager(backend=CacheBackend.MEMORY, max_size=2000)
 db_manager = DatabaseManager()
-kali_optimizer = KaliOptimizer(run_initial_diagnostics=False)  # Don't run diagnostics on init
+kali_optimizer = KaliOptimizer(run_initial_diagnostics=False)
 ai_agent = AIAgent()
+
+# Global state
+active_workflows: Dict[str, Dict] = {}
+chat_sessions: Dict[str, List[Dict]] = {}
+system_status = {
+    'kali_tools': {},
+    'system_resources': {},
+    'cache_stats': {},
+    'performance_stats': {}
+}
+
+# Background task management
+background_tasks = set()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Modern lifespan event handler"""
+    # Startup
+    logger.info("Starting Kali Bug Hunter...")
+    
+    try:
+        # Initialize database
+        await db_manager.initialize()
+        
+        # Start background tasks
+        task1 = asyncio.create_task(background_maintenance())
+        task2 = asyncio.create_task(run_system_diagnostics())
+        background_tasks.add(task1)
+        background_tasks.add(task2)
+        
+        logger.info("Kali Bug Hunter started successfully!")
+    except Exception as e:
+        logger.error(f"Startup error: {e}")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down Kali Bug Hunter...")
+    
+    try:
+        # Cancel background tasks
+        for task in background_tasks:
+            task.cancel()
+        
+        # Wait for tasks to complete
+        await asyncio.gather(*background_tasks, return_exceptions=True)
+        
+        # Close database
+        await db_manager.close()
+        
+        logger.info("Shutdown completed successfully!")
+    except Exception as e:
+        logger.error(f"Shutdown error: {e}")
+
+# Create FastAPI app with lifespan
+app = FastAPI(
+    title="Kai Bug Hunter", 
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/dashboard/templates"), name="static")
@@ -113,36 +232,6 @@ class WorkflowControl(BaseModel):
     action: str  # pause, resume, skip, rerun
     workflow_id: str
 
-# Global state
-active_workflows: Dict[str, Dict] = {}
-chat_sessions: Dict[str, List[Dict]] = {}
-system_status = {
-    'kali_tools': {},
-    'system_resources': {},
-    'cache_stats': {},
-    'performance_stats': {}
-}
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize system on startup"""
-    logger.info("Starting Kali Bug Hunter...")
-    
-    # Initialize database
-    await db_manager.initialize()
-    
-    # Start background tasks
-    asyncio.create_task(background_maintenance())
-    asyncio.create_task(run_system_diagnostics())  # Run diagnostics in background
-    
-    logger.info("Kali Bug Hunter started successfully!")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("Shutting down Kali Bug Hunter...")
-    await db_manager.close()
-
 async def run_system_diagnostics():
     """Run comprehensive system diagnostics in background"""
     logger.info("Starting background system diagnostics...")
@@ -152,7 +241,11 @@ async def run_system_diagnostics():
         system_status['kali_tools'] = kali_optimizer.check_all_tools()
         
         # Get system resources
-        system_status['system_resources'] = asdict(kali_optimizer.run_system_diagnostics())
+        diagnostics = kali_optimizer.run_system_diagnostics()
+        if hasattr(diagnostics, '__dict__'):
+            system_status['system_resources'] = asdict(diagnostics)
+        else:
+            system_status['system_resources'] = diagnostics
         
         # Get cache stats
         system_status['cache_stats'] = cache_manager.get_stats()
@@ -170,7 +263,7 @@ async def run_system_diagnostics():
             'memory_usage': 0.0,
             'disk_usage': 0.0,
             'network_status': 'unknown',
-            'python_version': 'unknown',
+            'python_version': sys.version,
             'os_info': 'Windows',
             'kali_version': 'N/A',
             'permissions': {},
@@ -198,8 +291,12 @@ async def background_maintenance():
             
             logger.info(f"Background maintenance completed. Active workflows: {len(active_workflows)}")
             
+        except asyncio.CancelledError:
+            logger.info("Background maintenance cancelled")
+            break
         except Exception as e:
             logger.error(f"Background maintenance error: {e}")
+            await asyncio.sleep(60)  # Wait before retrying
 
 @app.get("/", response_class=HTMLResponse)
 async def get_dashboard():
