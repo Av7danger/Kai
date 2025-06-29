@@ -1,5 +1,0 @@
-testphp.vulnweb.com
-www.testphp.vulnweb.com
-sieb-web1.testphp.vulnweb.com
-hackthissite.org
-dvwa.co.uk

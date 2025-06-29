@@ -1,5 +1,0 @@
-target1.com
-target2.com
-example.com
-# This is a comment
-testphp.vulnweb.com
