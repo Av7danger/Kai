@@ -1,0 +1,698 @@
+{% extends "advanced_base.html" %}
+
+{% block title %}Vulnerabilities | Bug Bounty Pro{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="header-section">
+        <h1><i class="fas fa-bug"></i> Vulnerabilities Database</h1>
+        <p class="subtitle">Comprehensive vulnerability tracking and management</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVulnModal">
+            <i class="fas fa-plus"></i> Add Vulnerability
+        </button>
+        <button class="btn btn-secondary" id="bulkAnalyzeBtn">
+            <i class="fas fa-cogs"></i> Bulk Analyze
+        </button>
+        <button class="btn btn-info" onclick="exportVulnerabilities()">
+            <i class="fas fa-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<!-- Filter and Search Section -->
+<div class="filter-section">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Search</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search vulnerabilities...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Severity</label>
+            <select class="form-select" id="severityFilter">
+                <option value="">All Severities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+                <option value="Info">Info</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Fixed">Fixed</option>
+                <option value="Closed">Closed</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="typeFilter">
+                <option value="">All Types</option>
+                <option value="SQL Injection">SQL Injection</option>
+                <option value="XSS">XSS</option>
+                <option value="CSRF">CSRF</option>
+                <option value="IDOR">IDOR</option>
+                <option value="RCE">RCE</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                <i class="fas fa-times"></i> Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card critical">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="criticalCount">{{ stats.critical if stats else 0 }}</h3>
+                <p>Critical</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card high">
+            <div class="stat-icon">
+                <i class="fas fa-fire"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="highCount">{{ stats.high if stats else 0 }}</h3>
+                <p>High</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card medium">
+            <div class="stat-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="mediumCount">{{ stats.medium if stats else 0 }}</h3>
+                <p>Medium</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card low">
+            <div class="stat-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3 id="lowCount">{{ stats.low if stats else 0 }}</h3>
+                <p>Low & Info</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vulnerabilities Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-list"></i> Vulnerability List</h5>
+        <div class="card-actions">
+            <button class="btn btn-sm btn-outline-primary" onclick="refreshTable()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="vulnerabilitiesTable">
+                <thead>
+                    <tr>
+                        <th width="40">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                            </div>
+                        </th>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Target</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>CVSS</th>
+                        <th>Date</th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vuln in vulnerabilities %}
+                    <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input vuln-checkbox" type="checkbox" value="{{ vuln.id }}">
+                            </div>
+                        </td>
+                        <td><span class="text-monospace">#{{ vuln.id }}</span></td>
+                        <td>
+                            <div class="vuln-title">
+                                <a href="/vulnerability/{{ vuln.id }}" class="text-decoration-none">
+                                    {{ vuln.title }}
+                                </a>
+                                {% if vuln.exploit_available %}
+                                <span class="badge bg-warning ms-2">PoC Available</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="target-name">{{ vuln.target_name }}</span>
+                            <small class="text-muted d-block">{{ vuln.endpoint }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ vuln.vuln_type }}</span>
+                        </td>
+                        <td>
+                            <span class="severity-badge severity-{{ vuln.severity.lower() }}">
+                                {{ vuln.severity }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ vuln.status.lower().replace(' ', '-') }}">
+                                {{ vuln.status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if vuln.cvss_score %}
+                            <span class="cvss-score cvss-{{ 'critical' if vuln.cvss_score >= 9.0 else 'high' if vuln.cvss_score >= 7.0 else 'medium' if vuln.cvss_score >= 4.0 else 'low' }}">
+                                {{ "%.1f"|format(vuln.cvss_score) }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ vuln.discovered_date.strftime('%Y-%m-%d') if vuln.discovered_date else 'N/A' }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="/vulnerability/{{ vuln.id }}" class="btn btn-outline-primary btn-sm" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-outline-success btn-sm" onclick="analyzeVulnerability({{ vuln.id }})" title="Analyze">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="generateReport({{ vuln.id }})" title="Generate Report">
+                                    <i class="fas fa-file-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<nav aria-label="Vulnerabilities pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item disabled">
+            <span class="page-link">Previous</span>
+        </li>
+        <li class="page-item active">
+            <span class="page-link">1</span>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="#">2</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="#">3</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Add Vulnerability Modal -->
+<div class="modal fade" id="addVulnModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Add New Vulnerability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addVulnForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Title *</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Target *</label>
+                            <input type="text" class="form-control" name="target" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Vulnerability Type *</label>
+                            <select class="form-select" name="vuln_type" required>
+                                <option value="">Select Type</option>
+                                <option value="SQL Injection">SQL Injection</option>
+                                <option value="XSS">Cross-Site Scripting (XSS)</option>
+                                <option value="CSRF">Cross-Site Request Forgery</option>
+                                <option value="IDOR">Insecure Direct Object Reference</option>
+                                <option value="RCE">Remote Code Execution</option>
+                                <option value="LFI">Local File Inclusion</option>
+                                <option value="RFI">Remote File Inclusion</option>
+                                <option value="SSRF">Server-Side Request Forgery</option>
+                                <option value="XXE">XML External Entity</option>
+                                <option value="Command Injection">Command Injection</option>
+                                <option value="Auth Bypass">Authentication Bypass</option>
+                                <option value="Privilege Escalation">Privilege Escalation</option>
+                                <option value="Information Disclosure">Information Disclosure</option>
+                                <option value="Buffer Overflow">Buffer Overflow</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Severity *</label>
+                            <select class="form-select" name="severity" required>
+                                <option value="">Select Severity</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                                <option value="Info">Informational</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CVSS Score</label>
+                            <input type="number" class="form-control" name="cvss_score" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Fixed">Fixed</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Endpoint/URL</label>
+                            <input type="url" class="form-control" name="endpoint">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="4"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Proof of Concept</label>
+                            <textarea class="form-control" name="poc" rows="6" placeholder="Enter PoC steps, code, or payload..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Vulnerability</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal for Bulk Operations -->
+<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cogs"></i> Processing...</h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="progressText">Initializing...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    initializeFilters();
+    
+    // Bulk operations
+    document.getElementById('bulkAnalyzeBtn').addEventListener('click', function() {
+        const selected = getSelectedVulnerabilities();
+        if (selected.length === 0) {
+            showAlert('Please select vulnerabilities to analyze', 'warning');
+            return;
+        }
+        bulkAnalyze(selected);
+    });
+    
+    // Select all checkbox
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.vuln-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+    
+    // Add vulnerability form
+    document.getElementById('addVulnForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addVulnerability(new FormData(this));
+    });
+});
+
+function initializeFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const severityFilter = document.getElementById('severityFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    
+    [searchInput, severityFilter, statusFilter, typeFilter].forEach(element => {
+        element.addEventListener('change', filterTable);
+        element.addEventListener('keyup', filterTable);
+    });
+}
+
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const severity = document.getElementById('severityFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    
+    const rows = document.querySelectorAll('#vulnerabilitiesTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowSeverity = row.querySelector('.severity-badge').textContent.trim();
+        const rowStatus = row.querySelector('.status-badge').textContent.trim();
+        const rowType = row.querySelector('.badge.bg-info').textContent.trim();
+        
+        const matchesSearch = !search || text.includes(search);
+        const matchesSeverity = !severity || rowSeverity === severity;
+        const matchesStatus = !status || rowStatus === status;
+        const matchesType = !type || rowType === type;
+        
+        row.style.display = matchesSearch && matchesSeverity && matchesStatus && matchesType ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('severityFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    filterTable();
+}
+
+function getSelectedVulnerabilities() {
+    const checkboxes = document.querySelectorAll('.vuln-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function analyzeVulnerability(vulnId) {
+    showProgressModal('Analyzing vulnerability...');
+    
+    fetch(`/api/analyze/${vulnId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgressModal();
+        if (data.success) {
+            showAlert('Analysis completed successfully', 'success');
+            refreshTable();
+        } else {
+            showAlert('Analysis failed: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideProgressModal();
+        showAlert('Analysis failed: ' + error.message, 'danger');
+    });
+}
+
+function generateReport(vulnId) {
+    showProgressModal('Generating report...');
+    
+    fetch(`/api/report/${vulnId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgressModal();
+        if (data.success) {
+            window.open(data.report_url, '_blank');
+        } else {
+            showAlert('Report generation failed: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideProgressModal();
+        showAlert('Report generation failed: ' + error.message, 'danger');
+    });
+}
+
+function bulkAnalyze(vulnIds) {
+    showProgressModal('Starting bulk analysis...');
+    
+    let completed = 0;
+    const total = vulnIds.length;
+    
+    vulnIds.forEach((vulnId, index) => {
+        setTimeout(() => {
+            fetch(`/api/analyze/${vulnId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                completed++;
+                const progress = (completed / total) * 100;
+                updateProgress(progress, `Completed ${completed}/${total} analyses`);
+                
+                if (completed === total) {
+                    setTimeout(() => {
+                        hideProgressModal();
+                        showAlert('Bulk analysis completed', 'success');
+                        refreshTable();
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                completed++;
+                const progress = (completed / total) * 100;
+                updateProgress(progress, `Completed ${completed}/${total} analyses (${vulnId} failed)`);
+            });
+        }, index * 500); // Stagger requests
+    });
+}
+
+function addVulnerability(formData) {
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch('/api/vulnerabilities', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('addVulnModal').querySelector('.btn-close').click();
+            document.getElementById('addVulnForm').reset();
+            showAlert('Vulnerability added successfully', 'success');
+            refreshTable();
+        } else {
+            showAlert('Failed to add vulnerability: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Failed to add vulnerability: ' + error.message, 'danger');
+    });
+}
+
+function exportVulnerabilities() {
+    const selected = getSelectedVulnerabilities();
+    const params = selected.length > 0 ? `?ids=${selected.join(',')}` : '';
+    
+    window.open(`/api/export/vulnerabilities${params}`, '_blank');
+}
+
+function refreshTable() {
+    window.location.reload();
+}
+
+function showProgressModal(text) {
+    document.getElementById('progressText').textContent = text;
+    document.querySelector('#progressModal .progress-bar').style.width = '0%';
+    new bootstrap.Modal(document.getElementById('progressModal')).show();
+}
+
+function hideProgressModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
+    if (modal) modal.hide();
+}
+
+function updateProgress(percentage, text) {
+    document.querySelector('#progressModal .progress-bar').style.width = percentage + '%';
+    document.getElementById('progressText').textContent = text;
+}
+
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    const container = document.querySelector('.content-header');
+    container.insertAdjacentHTML('afterend', alertHtml);
+    
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) alert.remove();
+    }, 5000);
+}
+</script>
+
+<style>
+.filter-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.severity-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.severity-critical { background: linear-gradient(135deg, #ff4757, #ff3742); color: white; }
+.severity-high { background: linear-gradient(135deg, #ff6b6b, #ee5a52); color: white; }
+.severity-medium { background: linear-gradient(135deg, #ffa502, #ff9ff3); color: white; }
+.severity-low { background: linear-gradient(135deg, #26de81, #20bf6b); color: white; }
+.severity-info { background: linear-gradient(135deg, #3742fa, #2f3542); color: white; }
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-open { background: #ffeaa7; color: #2d3436; }
+.status-in-progress { background: #74b9ff; color: white; }
+.status-fixed { background: #00b894; color: white; }
+.status-closed { background: #636e72; color: white; }
+
+.cvss-score {
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.cvss-critical { background: #ff4757; color: white; }
+.cvss-high { background: #ff6b6b; color: white; }
+.cvss-medium { background: #ffa502; color: white; }
+.cvss-low { background: #26de81; color: white; }
+
+.vuln-title a {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.vuln-title a:hover {
+    color: #007bff;
+}
+
+.target-name {
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.table-responsive {
+    border-radius: 0 0 12px 12px;
+}
+
+#vulnerabilitiesTable th {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1rem 0.75rem;
+}
+
+#vulnerabilitiesTable td {
+    border-color: rgba(255, 255, 255, 0.1);
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+#vulnerabilitiesTable tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-group-sm .btn {
+    border-radius: 6px;
+    margin: 0 1px;
+}
+
+.modal-content {
+    background: #2c2c2c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pagination .page-link {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    margin: 0 2px;
+    border-radius: 8px;
+}
+
+.pagination .page-link:hover {
+    background: rgba(0, 123, 255, 0.2);
+    border-color: #007bff;
+    color: #ffffff;
+}
+
+.pagination .page-item.active .page-link {
+    background: #007bff;
+    border-color: #007bff;
+}
+</style>
+{% endblock %}

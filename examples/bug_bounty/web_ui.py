@@ -835,7 +835,7 @@ class BugBountyUI:
     
 @app.route('/')
 def dashboard():
-    """Main dashboard"""
+    """Main dashboard with comprehensive stats"""
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     
@@ -844,17 +844,22 @@ def dashboard():
     total_targets = cursor.fetchone()[0]
     
     cursor.execute('SELECT COUNT(*) FROM vulnerabilities')
-    total_vulns = cursor.fetchone()[0]
+    total_vulnerabilities = cursor.fetchone()[0]
     
-    cursor.execute('SELECT SUM(estimated_payout) FROM vulnerabilities')
-    total_earnings = cursor.fetchone()[0] or 0
+    cursor.execute('SELECT SUM(estimated_payout) FROM vulnerabilities WHERE estimated_payout IS NOT NULL')
+    total_estimated_payout = cursor.fetchone()[0] or 0
     
     cursor.execute('SELECT COUNT(*) FROM targets WHERE status = "scanning"')
     active_scans = cursor.fetchone()[0]
     
-    # Get recent targets
+    cursor.execute('SELECT COUNT(*) FROM vulnerabilities WHERE severity = "critical"')
+    critical_vulns = cursor.fetchone()[0]
+    
+    # Get recent targets with full data
     cursor.execute('''
-        SELECT domain, status, vulnerabilities_found, estimated_payout, last_scan
+        SELECT id, domain, status, created_at, last_scan, vulnerabilities_found, 
+               estimated_payout, program_name, reward_range, scope, ip_address, 
+               technology_stack, subdomains_count, ports_open, ssl_info, whois_data, risk_score
         FROM targets 
         ORDER BY created_at DESC 
         LIMIT 10
@@ -863,7 +868,7 @@ def dashboard():
     
     # Get recent vulnerabilities
     cursor.execute('''
-        SELECT v.title, v.severity, v.estimated_payout, t.domain, v.created_at
+        SELECT v.vulnerability_type, v.severity, v.estimated_payout, t.domain, v.created_at, v.title
         FROM vulnerabilities v
         JOIN targets t ON v.target_id = t.id
         ORDER BY v.created_at DESC
@@ -871,15 +876,66 @@ def dashboard():
     ''')
     recent_vulns = cursor.fetchall()
     
+    # Get vulnerability statistics by type
+    cursor.execute('''
+        SELECT vulnerability_type, COUNT(*) as count
+        FROM vulnerabilities
+        GROUP BY vulnerability_type
+    ''')
+    vuln_type_stats = dict(cursor.fetchall())
+    
+    # Create vuln_stats for chart
+    vuln_stats = {
+        'xss': vuln_type_stats.get('XSS', 0),
+        'sqli': vuln_type_stats.get('SQL Injection', 0),
+        'csrf': vuln_type_stats.get('CSRF', 0),
+        'lfi': vuln_type_stats.get('LFI', 0),
+        'other': sum(count for vtype, count in vuln_type_stats.items() 
+                    if vtype not in ['XSS', 'SQL Injection', 'CSRF', 'LFI'])
+    }
+    
+    # Create recent activities
+    recent_activities = []
+    
+    # Add vulnerability activities
+    for vuln in recent_vulns[:5]:
+        recent_activities.append({
+            'icon': 'fa-shield-alt',
+            'color': 'danger' if vuln[1] == 'critical' else 'warning' if vuln[1] == 'high' else 'info',
+            'title': f'New {vuln[1]} vulnerability found',
+            'description': f'{vuln[0]} on {vuln[3]}',
+            'time': vuln[4],
+            'action': 'View Details'
+        })
+    
+    # Add target activities
+    for target in recent_targets[:3]:
+        if target[4]:  # has last_scan
+            recent_activities.append({
+                'icon': 'fa-search',
+                'color': 'success',
+                'title': f'Scan completed for {target[1]}',
+                'description': f'Found {target[5] or 0} vulnerabilities',
+                'time': target[4],
+                'action': 'View Results'
+            })
+    
+    # Sort activities by time (most recent first)
+    recent_activities.sort(key=lambda x: x['time'] or '', reverse=True)
+    recent_activities = recent_activities[:8]  # Limit to 8 most recent
+    
     conn.close()
     
     return render_template('dashboard.html', 
                          total_targets=total_targets,
-                         total_vulns=total_vulns,
-                         total_earnings=total_earnings,
+                         total_vulnerabilities=total_vulnerabilities,
+                         total_estimated_payout=round(total_estimated_payout, 2),
                          active_scans=active_scans,
+                         critical_vulns=critical_vulns,
                          recent_targets=recent_targets,
-                         recent_vulns=recent_vulns)
+                         recent_vulns=recent_vulns,
+                         recent_activities=recent_activities,
+                         vuln_stats=vuln_stats)
 
 @app.route('/targets')
 def targets():
@@ -1143,10 +1199,125 @@ def reports():
                          vuln_breakdown=vuln_breakdown,
                          severity_breakdown=severity_breakdown)
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    """Settings page"""
-    return render_template('settings.html')
+    """Settings page with save/load functionality"""
+    if request.method == 'POST':
+        try:
+            # Get settings from form
+            settings_data = {
+                'general': {
+                    'max_concurrent_scans': request.form.get('max_concurrent_scans', 3),
+                    'scan_timeout': request.form.get('scan_timeout', 60),
+                    'rate_limit': request.form.get('rate_limit', 10),
+                    'auto_save_results': request.form.get('auto_save_results') == 'on',
+                    'email_notifications': request.form.get('email_notifications') == 'on'
+                },
+                'tools': {
+                    'nmap_path': request.form.get('nmap_path', '/usr/bin/nmap'),
+                    'wordlist_path': request.form.get('wordlist_path', '/usr/share/wordlists'),
+                    'output_directory': request.form.get('output_directory', '~/bb_pro_workspace/results'),
+                    'user_agent': request.form.get('user_agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36')
+                },
+                'api': {
+                    'shodan_api_key': request.form.get('shodan_api_key', ''),
+                    'virustotal_api_key': request.form.get('virustotal_api_key', ''),
+                    'gemini_api_key': request.form.get('gemini_api_key', ''),
+                    'censys_api_key': request.form.get('censys_api_key', '')
+                },
+                'notifications': {
+                    'email_address': request.form.get('email_address', ''),
+                    'smtp_server': request.form.get('smtp_server', ''),
+                    'smtp_port': request.form.get('smtp_port', 587),
+                    'discord_webhook': request.form.get('discord_webhook', ''),
+                    'slack_webhook': request.form.get('slack_webhook', '')
+                }
+            }
+            
+            # Save to database or file
+            settings_file = WORKSPACE_DIR / 'settings.json'
+            with open(settings_file, 'w') as f:
+                json.dump(settings_data, f, indent=2)
+            
+            flash('Settings saved successfully!', 'success')
+            return redirect(url_for('settings'))
+            
+        except Exception as e:
+            flash(f'Error saving settings: {str(e)}', 'error')
+    
+    # Load existing settings
+    settings_file = WORKSPACE_DIR / 'settings.json'
+    settings_data = {}
+    if settings_file.exists():
+        try:
+            with open(settings_file, 'r') as f:
+                settings_data = json.load(f)
+        except:
+            pass
+    
+    return render_template('settings.html', settings=settings_data)
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def api_settings():
+    """API endpoint for settings management"""
+    if request.method == 'GET':
+        settings_file = WORKSPACE_DIR / 'settings.json'
+        if settings_file.exists():
+            with open(settings_file, 'r') as f:
+                return jsonify(json.load(f))
+        return jsonify({})
+    
+    elif request.method == 'POST':
+        try:
+            settings_data = request.get_json()
+            settings_file = WORKSPACE_DIR / 'settings.json'
+            with open(settings_file, 'w') as f:
+                json.dump(settings_data, f, indent=2)
+            return jsonify({'success': True, 'message': 'Settings saved successfully'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/test_configuration', methods=['POST'])
+def test_configuration():
+    """Test system configuration"""
+    results = {}
+    
+    try:
+        # Test nmap
+        try:
+            subprocess.run(['nmap', '--version'], capture_output=True, check=True, timeout=5)
+            results['nmap'] = {'status': 'success', 'message': 'Nmap is available'}
+        except:
+            results['nmap'] = {'status': 'error', 'message': 'Nmap not found or not working'}
+        
+        # Test wordlists directory
+        wordlist_path = Path('/usr/share/wordlists')
+        if wordlist_path.exists():
+            results['wordlists'] = {'status': 'success', 'message': f'Wordlists directory found with {len(list(wordlist_path.glob("*")))} items'}
+        else:
+            results['wordlists'] = {'status': 'warning', 'message': 'Wordlists directory not found'}
+        
+        # Test database
+        try:
+            conn = sqlite3.connect(DATABASE_PATH)
+            cursor = conn.cursor()
+            cursor.execute('SELECT COUNT(*) FROM targets')
+            count = cursor.fetchone()[0]
+            conn.close()
+            results['database'] = {'status': 'success', 'message': f'Database working, {count} targets found'}
+        except Exception as e:
+            results['database'] = {'status': 'error', 'message': f'Database error: {str(e)}'}
+        
+        # Test workspace
+        if WORKSPACE_DIR.exists():
+            results['workspace'] = {'status': 'success', 'message': f'Workspace directory: {WORKSPACE_DIR}'}
+        else:
+            results['workspace'] = {'status': 'error', 'message': 'Workspace directory not found'}
+            
+        return jsonify({'success': True, 'results': results})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 # === ADVANCED FEATURES ===
 
@@ -1829,7 +2000,130 @@ def extract_targets_from_document(doc_id):
         conn.close()
         return jsonify({'error': f'Error extracting targets: {str(e)}'})
 
+# === API ROUTES FOR DASHBOARD ===
 
+@app.route('/api/dashboard_data')
+def api_dashboard_data():
+    """API endpoint for dashboard data updates"""
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT COUNT(*) FROM targets')
+    targets = cursor.fetchone()[0]
+    
+    cursor.execute('SELECT COUNT(*) FROM vulnerabilities')
+    vulnerabilities = cursor.fetchone()[0]
+    
+    cursor.execute('SELECT SUM(estimated_payout) FROM vulnerabilities WHERE estimated_payout IS NOT NULL')
+    payouts = cursor.fetchone()[0] or 0
+    
+    cursor.execute('SELECT COUNT(*) FROM targets WHERE status = "scanning"')
+    active_scans = cursor.fetchone()[0]
+    
+    conn.close()
+    
+    return jsonify({
+        'stats': {
+            'targets': targets,
+            'vulnerabilities': vulnerabilities,
+            'payouts': round(payouts, 2),
+            'active_scans': active_scans
+        }
+    })
+
+@app.route('/api/quick_scan_all', methods=['POST'])
+def api_quick_scan_all():
+    """Start quick scan on all targets"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id, domain FROM targets WHERE status != "scanning"')
+        targets = cursor.fetchall()
+        
+        count = 0
+        for target_id, domain in targets:
+            cursor.execute('UPDATE targets SET status = "scanning" WHERE id = ?', (target_id,))
+            count += 1
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'count': count, 'message': f'Started scanning {count} targets'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/run_full_scan', methods=['POST'])
+def api_run_full_scan():
+    """Start comprehensive scan on all targets"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT COUNT(*) FROM targets')
+        count = cursor.fetchone()[0]
+        
+        cursor.execute('UPDATE targets SET status = "scanning"')
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'count': count, 'message': f'Started full scan on {count} targets'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/generate_dashboard_report', methods=['POST'])
+def api_generate_dashboard_report():
+    """Generate dashboard report"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Get data for report
+        cursor.execute('SELECT COUNT(*) FROM targets')
+        total_targets = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM vulnerabilities')
+        total_vulns = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT vulnerability_type, severity, COUNT(*) FROM vulnerabilities GROUP BY vulnerability_type, severity')
+        vuln_breakdown = cursor.fetchall()
+        
+        conn.close()
+        
+        # Create simple text report
+        report_content = f"""
+Bug Bounty Hunter Pro - Dashboard Report
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+=== SUMMARY ===
+Total Targets: {total_targets}
+Total Vulnerabilities: {total_vulns}
+
+=== VULNERABILITY BREAKDOWN ===
+"""
+        for vuln_type, severity, count in vuln_breakdown:
+            report_content += f"{vuln_type} ({severity}): {count}\n"
+        
+        # Create file-like object
+        from io import StringIO
+        import io
+        
+        output = io.BytesIO()
+        output.write(report_content.encode('utf-8'))
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(report_content.encode('utf-8')),
+            as_attachment=True,
+            download_name='dashboard_report.txt',
+            mimetype='text/plain'
+        )
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+        
+# ...existing code...
 if __name__ == '__main__':
     print("🚀 Starting Bug Bounty Hunter Web UI...")
     print("📱 Open your browser to: http://localhost:5000")

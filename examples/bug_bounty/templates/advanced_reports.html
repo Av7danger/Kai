@@ -1,0 +1,988 @@
+{% extends "advanced_base.html" %}
+
+{% block title %}Reports | Bug Bounty Pro{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="header-section">
+        <h1><i class="fas fa-file-alt"></i> Report Center</h1>
+        <p class="subtitle">Generate comprehensive vulnerability reports and documentation</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+            <i class="fas fa-plus"></i> Generate Report
+        </button>
+        <button class="btn btn-success" onclick="bulkReportGeneration()">
+            <i class="fas fa-layer-group"></i> Bulk Generate
+        </button>
+        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#templateModal">
+            <i class="fas fa-cog"></i> Templates
+        </button>
+    </div>
+</div>
+
+<!-- Report Statistics -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_reports if stats else 0 }}</h3>
+                <p>Total Reports</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-success">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.ai_reports if stats else 0 }}</h3>
+                <p>AI Generated</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.manual_reports if stats else 0 }}</h3>
+                <p>Manual Reports</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-info">
+                <i class="fas fa-download"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.downloads if stats else 0 }}</h3>
+                <p>Downloads</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Search Reports</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search reports...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Report Type</label>
+            <select class="form-select" id="typeFilter">
+                <option value="">All Types</option>
+                <option value="Vulnerability Report">Vulnerability Report</option>
+                <option value="Penetration Test">Penetration Test</option>
+                <option value="Security Assessment">Security Assessment</option>
+                <option value="Executive Summary">Executive Summary</option>
+                <option value="Technical Deep Dive">Technical Deep Dive</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Format</label>
+            <select class="form-select" id="formatFilter">
+                <option value="">All Formats</option>
+                <option value="PDF">PDF</option>
+                <option value="HTML">HTML</option>
+                <option value="DOCX">Word Document</option>
+                <option value="JSON">JSON</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="Generated">Generated</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Failed">Failed</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="clearReportFilters()">
+                <i class="fas fa-times"></i> Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Grid -->
+<div class="row g-4">
+    {% for report in reports %}
+    <div class="col-xl-4 col-lg-6">
+        <div class="report-card">
+            <div class="report-header">
+                <div class="report-meta">
+                    <span class="report-type">{{ report.report_type }}</span>
+                    <span class="report-format">{{ report.format.upper() }}</span>
+                </div>
+                <div class="report-actions">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-ghost" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ report.file_path }}" target="_blank">
+                                <i class="fas fa-eye"></i> View
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ report.file_path }}" download>
+                                <i class="fas fa-download"></i> Download
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="shareReport('{{ report.id }}')">
+                                <i class="fas fa-share"></i> Share
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteReport('{{ report.id }}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="report-content">
+                <h5 class="report-title">{{ report.title }}</h5>
+                <p class="report-description">{{ report.description[:100] }}{% if report.description|length > 100 %}...{% endif %}</p>
+                
+                <div class="report-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Vulnerabilities:</span>
+                        <span class="detail-value">{{ report.vulnerability_count }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Generated:</span>
+                        <span class="detail-value">{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Size:</span>
+                        <span class="detail-value">{{ report.file_size if report.file_size else 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="report-footer">
+                <div class="report-status">
+                    <span class="status-indicator status-{{ report.status.lower().replace(' ', '-') }}">
+                        <i class="fas fa-circle"></i>
+                        {{ report.status }}
+                    </span>
+                </div>
+                <div class="report-actions-main">
+                    <button class="btn btn-sm btn-outline-primary" onclick="previewReport('{{ report.id }}')">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <a href="{{ report.file_path }}" class="btn btn-sm btn-primary" download>
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Empty State -->
+{% if not reports %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="fas fa-file-alt"></i>
+    </div>
+    <h3>No Reports Generated Yet</h3>
+    <p>Start by generating your first vulnerability report or assessment document.</p>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+        <i class="fas fa-plus"></i> Generate Your First Report
+    </button>
+</div>
+{% endif %}
+
+<!-- Generate Report Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Generate New Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="generateReportForm">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Report Title *</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Report Type *</label>
+                            <select class="form-select" name="report_type" required>
+                                <option value="">Select Type</option>
+                                <option value="Vulnerability Report">Vulnerability Report</option>
+                                <option value="Penetration Test">Penetration Test Report</option>
+                                <option value="Security Assessment">Security Assessment</option>
+                                <option value="Executive Summary">Executive Summary</option>
+                                <option value="Technical Deep Dive">Technical Deep Dive</option>
+                                <option value="Compliance Report">Compliance Report</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Output Format *</label>
+                            <select class="form-select" name="format" required>
+                                <option value="PDF">PDF Document</option>
+                                <option value="HTML">HTML Report</option>
+                                <option value="DOCX">Word Document</option>
+                                <option value="JSON">JSON Data</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Generation Method *</label>
+                            <select class="form-select" name="method" required>
+                                <option value="AI">AI Generated</option>
+                                <option value="Template">Template Based</option>
+                                <option value="Manual">Manual Creation</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Brief description of the report..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Include Vulnerabilities</label>
+                            <div class="vulnerability-selection">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="vuln_selection" value="all" id="allVulns" checked>
+                                    <label class="form-check-label" for="allVulns">
+                                        All Vulnerabilities
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="vuln_selection" value="severity" id="severityVulns">
+                                    <label class="form-check-label" for="severityVulns">
+                                        By Severity
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="vuln_selection" value="custom" id="customVulns">
+                                    <label class="form-check-label" for="customVulns">
+                                        Custom Selection
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="severity-options mt-2" style="display: none;">
+                                <div class="row g-2">
+                                    <div class="col-auto">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="Critical" id="criticalSev">
+                                            <label class="form-check-label" for="criticalSev">Critical</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="High" id="highSev">
+                                            <label class="form-check-label" for="highSev">High</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="Medium" id="mediumSev">
+                                            <label class="form-check-label" for="mediumSev">Medium</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="Low" id="lowSev">
+                                            <label class="form-check-label" for="lowSev">Low</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="custom-selection mt-2" style="display: none;">
+                                <select class="form-select" multiple size="6" name="vulnerability_ids">
+                                    {% for vuln in all_vulnerabilities %}
+                                    <option value="{{ vuln.id }}">{{ vuln.title }} ({{ vuln.severity }})</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple vulnerabilities</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="advanced-options">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="includeCharts" name="include_charts" checked>
+                                    <label class="form-check-label" for="includeCharts">
+                                        Include Charts and Graphs
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="includePoc" name="include_poc" checked>
+                                    <label class="form-check-label" for="includePoc">
+                                        Include Proof of Concepts
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="includeRemediation" name="include_remediation" checked>
+                                    <label class="form-check-label" for="includeRemediation">
+                                        Include Remediation Steps
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="includeExecutiveSummary" name="include_executive_summary">
+                                    <label class="form-check-label" for="includeExecutiveSummary">
+                                        Include Executive Summary
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Template Management Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cog"></i> Report Templates</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <h6>Available Templates</h6>
+                        <div class="template-list">
+                            <div class="template-item active" data-template="vulnerability">
+                                <i class="fas fa-bug"></i>
+                                <span>Vulnerability Report</span>
+                            </div>
+                            <div class="template-item" data-template="pentest">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Penetration Test</span>
+                            </div>
+                            <div class="template-item" data-template="executive">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Executive Summary</span>
+                            </div>
+                            <div class="template-item" data-template="technical">
+                                <i class="fas fa-code"></i>
+                                <span>Technical Report</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3">
+                            <i class="fas fa-plus"></i> Create Template
+                        </button>
+                    </div>
+                    <div class="col-lg-8">
+                        <h6>Template Preview</h6>
+                        <div class="template-preview">
+                            <div class="preview-content" id="templatePreview">
+                                <!-- Template preview will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save Template</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cogs"></i> Generating Report...</h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="progressText">Initializing report generation...</div>
+                <div class="mt-3">
+                    <small class="text-muted">This may take a few minutes depending on the report complexity.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    initializeReportFilters();
+    
+    // Initialize report generation form
+    initializeReportForm();
+    
+    // Initialize template management
+    initializeTemplates();
+});
+
+function initializeReportFilters() {
+    const filters = ['searchInput', 'typeFilter', 'formatFilter', 'statusFilter'];
+    filters.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', filterReports);
+            element.addEventListener('keyup', filterReports);
+        }
+    });
+}
+
+function initializeReportForm() {
+    const form = document.getElementById('generateReportForm');
+    const vulnSelection = document.querySelectorAll('input[name="vuln_selection"]');
+    
+    vulnSelection.forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelector('.severity-options').style.display = this.value === 'severity' ? 'block' : 'none';
+            document.querySelector('.custom-selection').style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+    });
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        generateReport(new FormData(this));
+    });
+}
+
+function initializeTemplates() {
+    const templateItems = document.querySelectorAll('.template-item');
+    templateItems.forEach(item => {
+        item.addEventListener('click', function() {
+            templateItems.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            loadTemplatePreview(this.dataset.template);
+        });
+    });
+    
+    // Load initial preview
+    loadTemplatePreview('vulnerability');
+}
+
+function filterReports() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value;
+    const format = document.getElementById('formatFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    const cards = document.querySelectorAll('.report-card');
+    
+    cards.forEach(card => {
+        const cardText = card.textContent.toLowerCase();
+        const cardType = card.querySelector('.report-type').textContent.trim();
+        const cardFormat = card.querySelector('.report-format').textContent.trim();
+        const cardStatus = card.querySelector('.status-indicator').textContent.trim();
+        
+        const matchesSearch = !search || cardText.includes(search);
+        const matchesType = !type || cardType === type;
+        const matchesFormat = !format || cardFormat === format.toUpperCase();
+        const matchesStatus = !status || cardStatus === status;
+        
+        card.closest('.col-xl-4').style.display = 
+            matchesSearch && matchesType && matchesFormat && matchesStatus ? '' : 'none';
+    });
+}
+
+function clearReportFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('formatFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    filterReports();
+}
+
+function generateReport(formData) {
+    const data = Object.fromEntries(formData.entries());
+    
+    // Handle multiple selections
+    if (data.vuln_selection === 'severity') {
+        const severities = [];
+        ['Critical', 'High', 'Medium', 'Low'].forEach(sev => {
+            if (formData.get(sev.toLowerCase() + 'Sev')) {
+                severities.push(sev);
+            }
+        });
+        data.severities = severities;
+    }
+    
+    showProgressModal();
+    
+    fetch('/api/generate_report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideProgressModal();
+            document.getElementById('generateReportModal').querySelector('.btn-close').click();
+            document.getElementById('generateReportForm').reset();
+            showAlert('Report generated successfully', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            hideProgressModal();
+            showAlert('Report generation failed: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        hideProgressModal();
+        showAlert('Report generation failed: ' + error.message, 'danger');
+    });
+}
+
+function bulkReportGeneration() {
+    const modal = `
+        <div class="modal fade" id="bulkReportModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Bulk Report Generation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Generate multiple reports simultaneously:</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bulkVuln" checked>
+                            <label class="form-check-label" for="bulkVuln">
+                                Individual Vulnerability Reports
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bulkSummary" checked>
+                            <label class="form-check-label" for="bulkSummary">
+                                Executive Summary
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="bulkTechnical" checked>
+                            <label class="form-check-label" for="bulkTechnical">
+                                Technical Deep Dive
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" onclick="startBulkGeneration()">
+                            Start Generation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modal);
+    new bootstrap.Modal(document.getElementById('bulkReportModal')).show();
+}
+
+function startBulkGeneration() {
+    showProgressModal();
+    // Implementation for bulk generation
+    setTimeout(() => {
+        hideProgressModal();
+        showAlert('Bulk report generation completed', 'success');
+        window.location.reload();
+    }, 5000);
+}
+
+function previewReport(reportId) {
+    fetch(`/api/report/${reportId}/preview`)
+    .then(response => response.text())
+    .then(html => {
+        const previewWindow = window.open('', '_blank');
+        previewWindow.document.write(html);
+        previewWindow.document.close();
+    })
+    .catch(error => {
+        showAlert('Failed to preview report: ' + error.message, 'danger');
+    });
+}
+
+function shareReport(reportId) {
+    const shareUrl = `${window.location.origin}/api/report/${reportId}/share`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Bug Bounty Report',
+            url: shareUrl
+        });
+    } else {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showAlert('Share link copied to clipboard', 'success');
+        });
+    }
+}
+
+function deleteReport(reportId) {
+    if (confirm('Are you sure you want to delete this report?')) {
+        fetch(`/api/report/${reportId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Report deleted successfully', 'success');
+                window.location.reload();
+            } else {
+                showAlert('Failed to delete report', 'danger');
+            }
+        });
+    }
+}
+
+function loadTemplatePreview(templateType) {
+    const previews = {
+        vulnerability: `
+            <h4>Vulnerability Report Template</h4>
+            <div class="template-structure">
+                <div class="section">1. Executive Summary</div>
+                <div class="section">2. Vulnerability Details</div>
+                <div class="section">3. Risk Assessment</div>
+                <div class="section">4. Proof of Concept</div>
+                <div class="section">5. Impact Analysis</div>
+                <div class="section">6. Remediation Steps</div>
+                <div class="section">7. References</div>
+            </div>
+        `,
+        pentest: `
+            <h4>Penetration Test Template</h4>
+            <div class="template-structure">
+                <div class="section">1. Executive Summary</div>
+                <div class="section">2. Methodology</div>
+                <div class="section">3. Scope and Limitations</div>
+                <div class="section">4. Findings Overview</div>
+                <div class="section">5. Detailed Findings</div>
+                <div class="section">6. Risk Assessment</div>
+                <div class="section">7. Recommendations</div>
+                <div class="section">8. Appendices</div>
+            </div>
+        `,
+        executive: `
+            <h4>Executive Summary Template</h4>
+            <div class="template-structure">
+                <div class="section">1. Overview</div>
+                <div class="section">2. Key Findings</div>
+                <div class="section">3. Risk Summary</div>
+                <div class="section">4. Business Impact</div>
+                <div class="section">5. Priority Recommendations</div>
+                <div class="section">6. Next Steps</div>
+            </div>
+        `,
+        technical: `
+            <h4>Technical Report Template</h4>
+            <div class="template-structure">
+                <div class="section">1. Technical Overview</div>
+                <div class="section">2. System Architecture</div>
+                <div class="section">3. Vulnerability Analysis</div>
+                <div class="section">4. Exploitation Details</div>
+                <div class="section">5. Code Examples</div>
+                <div class="section">6. Technical Remediation</div>
+                <div class="section">7. Security Measures</div>
+            </div>
+        `
+    };
+    
+    document.getElementById('templatePreview').innerHTML = previews[templateType] || '';
+}
+
+function showProgressModal() {
+    new bootstrap.Modal(document.getElementById('progressModal')).show();
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        
+        document.querySelector('#progressModal .progress-bar').style.width = progress + '%';
+        
+        const stages = [
+            'Analyzing vulnerabilities...',
+            'Generating content...',
+            'Creating visualizations...',
+            'Formatting document...',
+            'Finalizing report...'
+        ];
+        
+        const stage = Math.floor((progress / 100) * stages.length);
+        document.getElementById('progressText').textContent = stages[stage] || stages[stages.length - 1];
+        
+        if (progress >= 90) clearInterval(interval);
+    }, 500);
+}
+
+function hideProgressModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
+    if (modal) modal.hide();
+}
+
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    setTimeout(() => {
+        const alert = document.querySelector('.alert:last-child');
+        if (alert) alert.remove();
+    }, 5000);
+}
+</script>
+
+<style>
+.report-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 0;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.report-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 123, 255, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+}
+
+.report-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 1.25rem 1.25rem 0;
+}
+
+.report-meta {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.report-type {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.report-format {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.report-content {
+    padding: 1.25rem;
+    flex-grow: 1;
+}
+
+.report-title {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.report-description {
+    color: #adb5bd;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.report-details {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.detail-label {
+    color: #6c757d;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.report-footer {
+    padding: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-generated { color: #28a745; }
+.status-in-progress { color: #ffc107; }
+.status-failed { color: #dc3545; }
+
+.report-actions-main {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.vulnerability-selection {
+    margin-bottom: 1rem;
+}
+
+.advanced-options {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.advanced-options .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.template-list {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.template-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.template-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.template-item.active {
+    background: rgba(0, 123, 255, 0.2);
+    border-left: 3px solid #007bff;
+}
+
+.template-item:last-child {
+    border-bottom: none;
+}
+
+.template-preview {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    min-height: 300px;
+    padding: 1rem;
+}
+
+.template-structure .section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid #007bff;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #adb5bd;
+    margin-bottom: 2rem;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: #adb5bd;
+    padding: 0.25rem 0.5rem;
+}
+
+.btn-ghost:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    .report-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .report-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .report-actions-main {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}

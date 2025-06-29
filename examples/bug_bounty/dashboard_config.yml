@@ -1,0 +1,85 @@
+# Dashboard Configuration
+dashboard:
+  title: "Bug Bounty Framework Dashboard"
+  theme: "dark"  # dark, light
+  refresh_interval: 30  # seconds
+  max_data_points: 1000
+  timezone: "UTC"
+
+# User Management
+users:
+  default_admin:
+    username: "admin"
+    password: "admin123"
+    email: "admin@example.com"
+    role: "admin"
+  
+  default_analyst:
+    username: "analyst"
+    password: "analyst123"
+    email: "analyst@example.com"
+    role: "analyst"
+  
+  default_viewer:
+    username: "viewer"
+    password: "viewer123"
+    email: "viewer@example.com"
+    role: "viewer"
+
+# Analytics Configuration
+analytics:
+  enabled: true
+  chart_types:
+    - "line"
+    - "bar"
+    - "pie"
+    - "heatmap"
+    - "scatter"
+  export_formats:
+    - "pdf"
+    - "html"
+    - "json"
+    - "csv"
+  data_retention_days: 90
+  real_time_updates: true
+
+# Security Settings
+security:
+  session_timeout: 3600  # seconds
+  max_login_attempts: 5
+  password_min_length: 8
+  require_2fa: false
+  allowed_ips: []  # empty for all IPs
+
+# Framework Integration
+framework:
+  auto_refresh: true
+  component_timeout: 30
+  error_retry_attempts: 3
+  log_level: "INFO"
+
+# Dashboard Layout
+layout:
+  sidebar_width: 250
+  header_height: 60
+  default_chart_height: 400
+  responsive_breakpoint: 768
+
+# Notifications
+notifications:
+  enabled: true
+  email_notifications: false
+  webhook_url: ""
+  alert_levels:
+    - "info"
+    - "warning"
+    - "error"
+    - "critical"
+
+# Export Settings
+export:
+  default_format: "json"
+  include_charts: true
+  include_raw_data: false
+  compression: false
+  max_file_size: "10MB" 

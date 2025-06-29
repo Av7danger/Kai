@@ -1,0 +1,111 @@
+# Bug Submission & Payout Tracking Configuration
+# Configure platform integrations and submission settings
+
+platforms:
+  hackerone:
+    enabled: false
+    api_token: ${HACKERONE_API_TOKEN}  # Set via environment variable
+    username: ${HACKERONE_USERNAME}
+    base_url: https://api.hackerone.com/v1
+    rate_limit: 100  # requests per hour
+    auto_submit: false
+    programs:
+      - program_handle: example_program
+        scope: example.com
+        min_severity: medium
+  
+  bugcrowd:
+    enabled: false
+    api_token: ${BUGCROWD_API_TOKEN}  # Set via environment variable
+    username: ${BUGCROWD_USERNAME}
+    base_url: https://api.bugcrowd.com
+    rate_limit: 100
+    auto_submit: false
+    programs:
+      - program_name: Example Program
+        scope: example.com
+        min_severity: medium
+
+submission_settings:
+  auto_submit_enabled: false
+  quality_threshold: 0.7  # Minimum quality score for auto-submission
+  duplicate_check_enabled: true
+  rate_limiting_enabled: true
+  max_submissions_per_day: 10
+  min_severity_for_auto_submit: medium
+  submission_cooldown_hours: 24  # Wait time between submissions to same target
+
+report_settings:
+  include_proof_of_concept: true
+  include_recommendations: true
+  include_references: true
+  max_report_length: 5000
+  required_fields:
+    - title
+    - description
+    - steps_to_reproduce
+    - severity
+  quality_scoring:
+    title_weight: 0.2
+    description_weight: 0.25
+    steps_weight: 0.2
+    poc_weight: 0.15
+    recommendations_weight: 0.1
+    references_weight: 0.1
+
+payout_tracking:
+  enabled: true
+  auto_track_payouts: true
+  payout_notifications: true
+  currency_preference: USD
+  min_payout_threshold: 10.0
+  payout_analytics:
+    track_by_platform: true
+    track_by_severity: true
+    track_by_vulnerability_type: true
+    generate_reports: true
+
+notifications:
+  email:
+    enabled: false
+    smtp_server: smtp.gmail.com
+    smtp_port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    recipients: []
+    notify_on:
+      - submission_accepted
+      - payout_received
+      - submission_rejected
+  
+  slack:
+    enabled: false
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    channel: #bug-bounty
+    notify_on:
+      - submission_accepted
+      - payout_received
+  
+  webhook:
+    enabled: false
+    url: ${WEBHOOK_URL}
+    headers: {}
+    notify_on:
+      - submission_accepted
+      - payout_received
+
+analytics:
+  track_success_rate: true
+  track_payout_trends: true
+  track_platform_performance: true
+  generate_weekly_reports: true
+  generate_monthly_reports: true
+  export_data: true
+  data_retention_days: 365
+
+security:
+  encrypt_sensitive_data: true
+  api_key_rotation_days: 90
+  audit_logging: true
+  access_control: true
+  rate_limiting: true 

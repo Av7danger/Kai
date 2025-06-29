@@ -1,520 +1,633 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - Bug Bounty Hunter Pro{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item active">Dashboard</li>
-{% endblock %}
-
-{% block content %}
-<!-- Page Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Dashboard</h1>
-        <p class="text-muted mb-0">Welcome back! Here's what's happening with your bug bounty campaigns.</p>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-primary" onclick="startQuickScan()">
-            <i class="fas fa-search"></i> Quick Scan
-        </button>
-        <button class="btn btn-success" onclick="showAddTargetModal()">
-            <i class="fas fa-plus"></i> Add Target
-        </button>
-    </div>
-</div>
-
-<!-- Quick Stats -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ total_targets }}</div>
-            <div class="stats-label">Active Targets</div>
-            <div class="mt-2">
-                <small class="text-success">
-                    <i class="fas fa-arrow-up"></i> +2 this week
-                </small>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Bounty Framework Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --dark-bg: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color) !important;
+            border-bottom: 2px solid var(--accent-color);
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            min-height: calc(100vh - 60px);
+            padding: 20px 0;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .main-content {
+            padding: 20px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--secondary-color);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            border-bottom: 1px solid var(--secondary-color);
+            color: var(--text-color);
+            font-weight: bold;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .chart-container {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background-color: var(--success-color); }
+        .status-offline { background-color: var(--danger-color); }
+        .status-warning { background-color: var(--warning-color); }
+        
+        .refresh-btn {
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #2980b9;
+            transform: rotate(180deg);
+        }
+        
+        .export-btn {
+            background-color: var(--success-color);
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            background-color: #229954;
+            color: white;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner-border {
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bug me-2"></i>
+                Bug Bounty Framework
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        {{ current_user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ total_vulnerabilities }}</div>
-            <div class="stats-label">Vulnerabilities Found</div>
-            <div class="mt-2">
-                <small class="text-danger">
-                    <i class="fas fa-exclamation-triangle"></i> {{ critical_vulns }} Critical
-                </small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stats-card">
-            <div class="stats-number">${{ total_estimated_payout }}</div>
-            <div class="stats-label">Estimated Payouts</div>
-            <div class="mt-2">
-                <small class="text-info">
-                    <i class="fas fa-chart-line"></i> +15% this month
-                </small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ active_scans }}</div>
-            <div class="stats-label">Active Scans</div>
-            <div class="mt-2">
-                <small class="text-warning">
-                    <i class="fas fa-clock"></i> 2 pending
-                </small>
-            </div>
-        </div>
-    </div>
-</div>
+    </nav>
 
-<!-- Main Content Row -->
-<div class="row g-4">
-    <!-- Recent Activity -->
-    <div class="col-md-8">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-clock"></i> Recent Activity</h5>
-                <button class="btn btn-sm btn-outline-primary">View All</button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#overview" data-section="overview">
+                            <i class="fas fa-tachometer-alt me-2"></i>Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reconnaissance" data-section="reconnaissance">
+                            <i class="fas fa-search me-2"></i>Reconnaissance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#ai-analysis" data-section="ai-analysis">
+                            <i class="fas fa-brain me-2"></i>AI Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#monitoring" data-section="monitoring">
+                            <i class="fas fa-chart-line me-2"></i>Monitoring
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#submissions" data-section="submissions">
+                            <i class="fas fa-paper-plane me-2"></i>Submissions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#exploitation" data-section="exploitation">
+                            <i class="fas fa-terminal me-2"></i>Exploitation
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#analytics" data-section="analytics">
+                            <i class="fas fa-chart-bar me-2"></i>Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reports" data-section="reports">
+                            <i class="fas fa-file-alt me-2"></i>Reports
+                        </a>
+                    </li>
+                </ul>
             </div>
-            <div class="card-body">
-                <div class="activity-timeline">
-                    {% for activity in recent_activities %}
-                    <div class="activity-item d-flex align-items-start mb-3">
-                        <div class="activity-icon me-3">
-                            <i class="fas {{ activity.icon }} text-{{ activity.color }}"></i>
-                        </div>
-                        <div class="activity-content flex-grow-1">
-                            <div class="activity-title">{{ activity.title }}</div>
-                            <div class="activity-description text-muted">{{ activity.description }}</div>
-                            <div class="activity-time text-muted small">{{ activity.time }}</div>
-                        </div>
-                        <div class="activity-action">
-                            {% if activity.action %}
-                            <button class="btn btn-sm btn-outline-primary">{{ activity.action }}</button>
-                            {% endif %}
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Overview Section -->
+                <div id="overview" class="content-section">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard Overview</h2>
+                        <div>
+                            <button class="refresh-btn me-2" onclick="refreshData()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="export-btn" onclick="exportReport()">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
                         </div>
                     </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-clock text-muted" style="font-size: 3rem;"></i>
-                        <h5 class="mt-3 text-muted">No recent activity</h5>
-                        <p class="text-muted">Start by adding a target or running a scan</p>
-                        <button class="btn btn-primary" onclick="showAddTargetModal()">
-                            <i class="fas fa-plus"></i> Add Your First Target
-                        </button>
+
+                    <!-- Statistics Cards -->
+                    <div class="row" id="stats-cards">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="total-targets">{{ stats.total_targets }}</div>
+                                    <div class="stat-label">Total Targets</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="active-scans">{{ stats.active_scans }}</div>
+                                    <div class="stat-label">Active Scans</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="vulnerabilities">{{ stats.vulnerabilities_found }}</div>
+                                    <div class="stat-label">Vulnerabilities</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="success-rate">{{ "%.1f"|format(stats.success_rate) }}%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Quick Actions & Stats -->
-    <div class="col-md-4">
-        <!-- Quick Actions -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-zap"></i> Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="window.location.href='{{ url_for('add_target') }}'">
-                        <i class="fas fa-crosshairs"></i> Add New Target
-                    </button>
-                    <button class="btn btn-success" onclick="runFullScan()">
-                        <i class="fas fa-search"></i> Run Full Scan
-                    </button>
-                    <button class="btn btn-info" onclick="window.location.href='{{ url_for('documents_manager') }}'">
-                        <i class="fas fa-upload"></i> Upload Scope Document
-                    </button>
-                    <button class="btn btn-warning" onclick="generateReport()">
-                        <i class="fas fa-file-pdf"></i> Generate Report
-                    </button>
-                </div>
-            </div>
-        </div>
+                    <!-- Charts Row -->
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="chart-container">
+                                <h5><i class="fas fa-chart-line me-2"></i>Vulnerability Trends</h5>
+                                <div id="vulnerability-chart"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="chart-container">
+                                <h5><i class="fas fa-chart-pie me-2"></i>Success Rates</h5>
+                                <div id="success-chart"></div>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Vulnerability Distribution -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Vulnerability Types</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="vulnChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Targets -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-crosshairs"></i> Recent Targets</h5>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshTargets()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                    <a href="{{ url_for('targets') }}" class="btn btn-sm btn-primary">View All</a>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if recent_targets %}
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover">
-                        <thead>
-                            <tr>
-                                <th>Target</th>
-                                <th>Status</th>
-                                <th>Last Scan</th>
-                                <th>Vulnerabilities</th>
-                                <th>Risk Score</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for target in recent_targets %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-globe me-2 text-primary"></i>
-                                        <div>
-                                            <strong>{{ target[1] }}</strong>
-                                            {% if target[7] %}
-                                            <br><small class="text-muted">{{ target[7] }}</small>
-                                            {% endif %}
+                    <!-- Framework Status -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-server me-2"></i>Framework Status
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="framework-status">
+                                        <div class="col-md-2 col-sm-4 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <span class="status-indicator status-online"></span>
+                                                <span>Reconnaissance</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 col-sm-4 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <span class="status-indicator status-online"></span>
+                                                <span>AI Analysis</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 col-sm-4 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <span class="status-indicator status-online"></span>
+                                                <span>Monitoring</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 col-sm-4 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <span class="status-indicator status-online"></span>
+                                                <span>Submissions</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 col-sm-4 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <span class="status-indicator status-online"></span>
+                                                <span>Exploitation</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </td>
-                                <td>
-                                    {% if target[2] == 'completed' %}
-                                    <span class="badge badge-success">Scanned</span>
-                                    {% elif target[2] == 'scanning' %}
-                                    <span class="badge badge-warning">Scanning</span>
-                                    {% else %}
-                                    <span class="badge badge-info">Pending</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if target[4] %}
-                                    <span class="text-muted">{{ target[4] }}</span>
-                                    {% else %}
-                                    <span class="text-muted">Never</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge badge-danger">{{ target[5] or 0 }}</span>
-                                </td>
-                                <td>
-                                    {% set risk_score = target[16] or 0 %}
-                                    {% if risk_score >= 80 %}
-                                    <span class="badge badge-danger">{{ risk_score }}</span>
-                                    {% elif risk_score >= 60 %}
-                                    <span class="badge badge-warning">{{ risk_score }}</span>
-                                    {% elif risk_score >= 40 %}
-                                    <span class="badge badge-info">{{ risk_score }}</span>
-                                    {% else %}
-                                    <span class="badge badge-success">{{ risk_score }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-primary" onclick="quickScan({{ target[0] }})">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                        <button class="btn btn-info" onclick="viewTarget({{ target[0] }})">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-success" onclick="showIntelligence({{ target[0] }})">
-                                            <i class="fas fa-brain"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-crosshairs text-muted" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3 text-muted">No targets found</h5>
-                    <p class="text-muted">Add your first target to get started with bug bounty hunting</p>
-                    <a href="{{ url_for('add_target') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Target
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add Target Modal -->
-<div class="modal fade" id="addTargetModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-plus"></i> Quick Add Target</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="quickTargetForm">
-                    <div class="mb-3">
-                        <label for="quickDomain" class="form-label">Domain</label>
-                        <input type="text" class="form-control" id="quickDomain" placeholder="example.com" required>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="quickProgram" class="form-label">Program Name</label>
-                                <input type="text" class="form-control" id="quickProgram" placeholder="Bug Bounty Program">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="quickReward" class="form-label">Reward Range</label>
-                                <input type="text" class="form-control" id="quickReward" placeholder="$100 - $5000">
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="quickScanNow">
-                            <label class="form-check-label" for="quickScanNow">
-                                Start scanning immediately
-                            </label>
-                        </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="loading" id="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="submitQuickTarget()">
-                    <i class="fas fa-plus"></i> Add Target
-                </button>
+                    <p class="mt-2">Loading data...</p>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Initialize vulnerability chart
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('vulnChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['XSS', 'SQL Injection', 'CSRF', 'LFI', 'Other'],
-            datasets: [{
-                data: [{{ vuln_stats.xss or 0 }}, {{ vuln_stats.sqli or 0 }}, {{ vuln_stats.csrf or 0 }}, {{ vuln_stats.lfi or 0 }}, {{ vuln_stats.other or 0 }}],
-                backgroundColor: [
-                    '#ff6b6b',
-                    '#4ecdc4',
-                    '#45b7d1',
-                    '#f7b801',
-                    '#6c5ce7'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        padding: 15,
-                        color: '#e8e8f0'
-                    }
-                }
-            }
-        }
-    });
-});
-
-// Dashboard functions
-function showAddTargetModal() {
-    new bootstrap.Modal(document.getElementById('addTargetModal')).show();
-}
-
-function submitQuickTarget() {
-    const domain = document.getElementById('quickDomain').value;
-    const program = document.getElementById('quickProgram').value;
-    const reward = document.getElementById('quickReward').value;
-    const scanNow = document.getElementById('quickScanNow').checked;
-
-    if (!domain) {
-        showNotification('Please enter a domain', 'warning');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('domain', domain);
-    formData.append('program_name', program);
-    formData.append('reward_range', reward);
-
-    fetch('/add_target', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Target added successfully!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('addTargetModal')).hide();
-            
-            if (scanNow) {
-                quickScan(data.target_id);
-            }
-            
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showNotification(data.error || 'Failed to add target', 'danger');
-        }
-    })
-    .catch(error => {
-        showNotification('Error adding target', 'danger');
-        console.error(error);
-    });
-}
-
-function startQuickScan() {
-    showNotification('Starting quick scan on all targets...', 'info');
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    fetch('/api/quick_scan_all', {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(`Started scanning ${data.count} targets`, 'success');
-        } else {
-            showNotification('Failed to start quick scan', 'danger');
-        }
-    })
-    .catch(error => {
-        showNotification('Error starting scan', 'danger');
-    });
-}
-
-function quickScan(targetId) {
-    showNotification('Starting quick scan...', 'info');
-    
-    fetch(`/scan/${targetId}`)
-    .then(response => {
-        if (response.ok) {
-            showNotification('Scan started successfully!', 'success');
-            setTimeout(checkScanStatus, 2000, targetId);
-        } else {
-            showNotification('Failed to start scan', 'danger');
-        }
-    })
-    .catch(error => {
-        showNotification('Error starting scan', 'danger');
-    });
-}
-
-function viewTarget(targetId) {
-    window.location.href = `/target/${targetId}`;
-}
-
-function showIntelligence(targetId) {
-    window.location.href = `/intelligence/${targetId}`;
-}
-
-function runFullScan() {
-    if (confirm('This will run a comprehensive scan on all targets. Continue?')) {
-        showNotification('Starting full scan...', 'info');
+    <script>
+        // Global variables
+        let currentSection = 'overview';
+        let refreshInterval;
         
-        fetch('/api/run_full_scan', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Full scan started!', 'success');
-            } else {
-                showNotification('Failed to start full scan', 'danger');
-            }
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupNavigation();
+            startAutoRefresh();
         });
-    }
-}
-
-function generateReport() {
-    showNotification('Generating report...', 'info');
-    
-    fetch('/api/generate_dashboard_report', {
-        method: 'POST'
-    })
-    .then(response => response.blob())
-    .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'bb_dashboard_report.pdf';
-        a.click();
-        showNotification('Report generated successfully!', 'success');
-    })
-    .catch(error => {
-        showNotification('Failed to generate report', 'danger');
-    });
-}
-
-function refreshTargets() {
-    const refreshBtn = document.querySelector('[onclick="refreshTargets()"]');
-    const icon = refreshBtn.querySelector('i');
-    
-    icon.classList.add('fa-spin');
-    
-    setTimeout(() => {
-        location.reload();
-    }, 1000);
-}
-
-function checkScanStatus(targetId) {
-    fetch(`/api/scan_status/${targetId}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'completed') {
-            showNotification('Scan completed!', 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else if (data.status === 'running') {
-            showNotification('Scan in progress...', 'info');
-            setTimeout(checkScanStatus, 5000, targetId);
-        } else if (data.status === 'failed') {
-            showNotification('Scan failed', 'danger');
+        
+        function initializeDashboard() {
+            loadCharts();
+            updateFrameworkStatus();
         }
-    });
-}
-
-// Auto-refresh dashboard every 30 seconds
-setInterval(() => {
-    // Refresh activity and stats without full page reload
-    fetch('/api/dashboard_data')
-    .then(response => response.json())
-    .then(data => {
-        // Update stats if they've changed
-        if (data.stats) {
-            document.querySelector('.stats-card:nth-child(1) .stats-number').textContent = data.stats.targets;
-            document.querySelector('.stats-card:nth-child(2) .stats-number').textContent = data.stats.vulnerabilities;
-            document.querySelector('.stats-card:nth-child(3) .stats-number').textContent = '$' + data.stats.payouts;
-            document.querySelector('.stats-card:nth-child(4) .stats-number').textContent = data.stats.active_scans;
+        
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    // Show section
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                });
+            });
         }
-    })
-    .catch(error => {
-        console.log('Auto-refresh failed:', error);
-    });
-}, 30000);
-</script>
-{% endblock %}
+        
+        function showSection(sectionName) {
+            currentSection = sectionName;
+            
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.style.display = 'none');
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+            
+            // Load section-specific data
+            loadSectionData(sectionName);
+        }
+        
+        function loadSectionData(sectionName) {
+            switch(sectionName) {
+                case 'overview':
+                    refreshData();
+                    break;
+                case 'reconnaissance':
+                    loadReconnaissanceData();
+                    break;
+                case 'ai-analysis':
+                    loadAIAnalysisData();
+                    break;
+                case 'monitoring':
+                    loadMonitoringData();
+                    break;
+                case 'submissions':
+                    loadSubmissionsData();
+                    break;
+                case 'exploitation':
+                    loadExploitationData();
+                    break;
+                case 'analytics':
+                    loadAnalyticsData();
+                    break;
+                case 'reports':
+                    loadReportsData();
+                    break;
+            }
+        }
+        
+        function loadCharts() {
+            // Load vulnerability trends chart
+            fetch('/api/charts')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.vulnerability_trends) {
+                        const chartData = JSON.parse(data.vulnerability_trends);
+                        Plotly.newPlot('vulnerability-chart', chartData.data, chartData.layout);
+                    }
+                    
+                    if (data.success_rates) {
+                        const chartData = JSON.parse(data.success_rates);
+                        Plotly.newPlot('success-chart', chartData.data, chartData.layout);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading charts:', error);
+                    showError('Failed to load charts');
+                });
+        }
+        
+        function refreshData() {
+            showLoading(true);
+            
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    updateStats(data);
+                    showLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error refreshing data:', error);
+                    showError('Failed to refresh data');
+                    showLoading(false);
+                });
+        }
+        
+        function updateStats(data) {
+            document.getElementById('total-targets').textContent = data.total_targets;
+            document.getElementById('active-scans').textContent = data.active_scans;
+            document.getElementById('vulnerabilities').textContent = data.vulnerabilities_found;
+            document.getElementById('success-rate').textContent = data.success_rate.toFixed(1) + '%';
+        }
+        
+        function updateFrameworkStatus() {
+            // This would typically fetch status from the backend
+            // For now, we'll simulate status updates
+            const statusIndicators = document.querySelectorAll('.status-indicator');
+            statusIndicators.forEach(indicator => {
+                const random = Math.random();
+                if (random > 0.8) {
+                    indicator.className = 'status-indicator status-warning';
+                } else if (random > 0.9) {
+                    indicator.className = 'status-indicator status-offline';
+                } else {
+                    indicator.className = 'status-indicator status-online';
+                }
+            });
+        }
+        
+        function exportReport() {
+            const format = prompt('Enter export format (json, html, pdf, csv):', 'json');
+            if (!format) return;
+            
+            showLoading(true);
+            
+            fetch(`/api/export/overview?format=${format}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccess(`Report exported successfully: ${data.filepath}`);
+                    } else {
+                        showError(`Export failed: ${data.error}`);
+                    }
+                    showLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error exporting report:', error);
+                    showError('Failed to export report');
+                    showLoading(false);
+                });
+        }
+        
+        function startAutoRefresh() {
+            // Refresh data every 30 seconds
+            refreshInterval = setInterval(refreshData, 30000);
+        }
+        
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const content = document.querySelector('.main-content');
+            
+            if (show) {
+                loading.style.display = 'block';
+                content.style.opacity = '0.5';
+            } else {
+                loading.style.display = 'none';
+                content.style.opacity = '1';
+            }
+        }
+        
+        function showSuccess(message) {
+            // Create success notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+        
+        function showError(message) {
+            // Create error notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+        
+        // Placeholder functions for other sections
+        function loadReconnaissanceData() {
+            console.log('Loading reconnaissance data...');
+        }
+        
+        function loadAIAnalysisData() {
+            console.log('Loading AI analysis data...');
+        }
+        
+        function loadMonitoringData() {
+            console.log('Loading monitoring data...');
+        }
+        
+        function loadSubmissionsData() {
+            console.log('Loading submissions data...');
+        }
+        
+        function loadExploitationData() {
+            console.log('Loading exploitation data...');
+        }
+        
+        function loadAnalyticsData() {
+            console.log('Loading analytics data...');
+        }
+        
+        function loadReportsData() {
+            console.log('Loading reports data...');
+        }
+    </script>
+</body>
+</html>

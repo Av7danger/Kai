@@ -1,0 +1,1141 @@
+{% extends "next_gen_base.html" %}
+
+{% block title %}Vulnerabilities - Next-Gen Analysis{% endblock %}
+{% block page_title %}Vulnerability Database{% endblock %}
+{% block page_subtitle %}AI-powered vulnerability management and analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vulnerability-filters {
+        background: var(--bg-card);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+    
+    .filter-item {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .vulnerability-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+    
+    .vuln-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .vuln-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .vuln-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+    
+    .vuln-card.critical::before {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+    }
+    
+    .vuln-card.high::before {
+        background: linear-gradient(135deg, #ea580c, #f59e0b);
+    }
+    
+    .vuln-card.medium::before {
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+    }
+    
+    .vuln-card.low::before {
+        background: linear-gradient(135deg, #059669, #10b981);
+    }
+    
+    .vuln-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+    
+    .vuln-title {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: var(--text-primary);
+    }
+    
+    .vuln-title a {
+        color: inherit;
+        text-decoration: none;
+        transition: var(--transition-fast);
+    }
+    
+    .vuln-title a:hover {
+        color: var(--primary);
+    }
+    
+    .vuln-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .vuln-target {
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        margin-bottom: 1rem;
+        word-break: break-all;
+    }
+    
+    .vuln-description {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .vuln-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .vuln-stat {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-sm);
+    }
+    
+    .vuln-stat-value {
+        font-size: var(--font-size-lg);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .vuln-stat-label {
+        font-size: var(--font-size-xs);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .vuln-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .confidence-indicator {
+        position: relative;
+        width: 60px;
+        height: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .confidence-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.8s ease;
+    }
+    
+    .confidence-high {
+        background: linear-gradient(90deg, var(--success), #059669);
+    }
+    
+    .confidence-medium {
+        background: linear-gradient(90deg, var(--warning), #d97706);
+    }
+    
+    .confidence-low {
+        background: linear-gradient(90deg, var(--danger), #dc2626);
+    }
+    
+    .ai-badge {
+        background: linear-gradient(135deg, var(--info), #0891b2);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 2rem 0;
+    }
+    
+    .pagination {
+        background: var(--bg-card);
+        border-radius: var(--border-radius);
+        padding: 0.5rem;
+        box-shadow: var(--shadow);
+    }
+    
+    .page-link {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        transition: var(--transition-fast);
+    }
+    
+    .page-link:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+    
+    .page-link.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .bulk-actions {
+        background: var(--bg-card);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow);
+        display: none;
+    }
+    
+    .bulk-actions.show {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+    
+    .search-highlight {
+        background: rgba(99, 102, 241, 0.3);
+        padding: 0.1rem 0.2rem;
+        border-radius: 0.2rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--bg-card);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+    
+    .view-toggle {
+        background: var(--bg-card);
+        border-radius: var(--border-radius-sm);
+        padding: 0.25rem;
+        display: flex;
+        gap: 0.25rem;
+    }
+    
+    .view-toggle button {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.5rem;
+        border-radius: var(--border-radius-sm);
+        transition: var(--transition-fast);
+    }
+    
+    .view-toggle button.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .table-view {
+        background: var(--bg-card);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+    
+    .vuln-row {
+        display: grid;
+        grid-template-columns: 1fr 150px 100px 120px 100px auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: var(--transition-fast);
+    }
+    
+    .vuln-row:hover {
+        background: var(--bg-secondary);
+    }
+    
+    .vuln-row.header {
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-group {
+            flex-direction: column;
+        }
+        
+        .filter-item {
+            min-width: 100%;
+        }
+        
+        .vuln-header {
+            flex-direction: column;
+            align-items: start;
+        }
+        
+        .vuln-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .vuln-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            text-align: left;
+        }
+        
+        .vuln-row.header {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-gradient mb-1">Vulnerability Database</h2>
+        <p class="text-muted mb-0">
+            {{ total_count }} vulnerabilities found
+            {% if search_query %}
+            for "{{ search_query }}"
+            {% endif %}
+        </p>
+    </div>
+    
+    <div class="d-flex gap-2 align-items-center">
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button onclick="setView('grid')" class="active" id="grid-view-btn">
+                <i class="fas fa-th"></i>
+            </button>
+            <button onclick="setView('table')" id="table-view-btn">
+                <i class="fas fa-list"></i>
+            </button>
+        </div>
+        
+        <button class="btn btn-outline btn-sm" onclick="exportSelected()">
+            <i class="fas fa-download me-2"></i>Export
+        </button>
+        
+        <button class="btn btn-primary btn-sm" onclick="startQuickScan()">
+            <i class="fas fa-plus me-2"></i>New Scan
+        </button>
+    </div>
+</div>
+
+<!-- Advanced Filters -->
+<div class="vulnerability-filters">
+    <form method="GET" class="filter-group">
+        <div class="filter-item">
+            <label class="form-label">Search</label>
+            <div class="position-relative">
+                <input type="text" class="form-control" name="search" 
+                       value="{{ search_query }}" placeholder="Search vulnerabilities...">
+                <i class="fas fa-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+            </div>
+        </div>
+        
+        <div class="filter-item">
+            <label class="form-label">Severity</label>
+            <select class="form-control" name="severity">
+                <option value="">All Severities</option>
+                <option value="Critical" {% if severity_filter == 'Critical' %}selected{% endif %}>Critical</option>
+                <option value="High" {% if severity_filter == 'High' %}selected{% endif %}>High</option>
+                <option value="Medium" {% if severity_filter == 'Medium' %}selected{% endif %}>Medium</option>
+                <option value="Low" {% if severity_filter == 'Low' %}selected{% endif %}>Low</option>
+            </select>
+        </div>
+        
+        <div class="filter-item">
+            <label class="form-label">Status</label>
+            <select class="form-control" name="status">
+                <option value="">All Statuses</option>
+                <option value="new" {% if status_filter == 'new' %}selected{% endif %}>New</option>
+                <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+                <option value="false_positive" {% if status_filter == 'false_positive' %}selected{% endif %}>False Positive</option>
+                <option value="fixed" {% if status_filter == 'fixed' %}selected{% endif %}>Fixed</option>
+            </select>
+        </div>
+        
+        <div class="filter-item">
+            <label class="form-label">Sort By</label>
+            <select class="form-control" name="sort_by">
+                <option value="discovered_at" {% if sort_by == 'discovered_at' %}selected{% endif %}>Date Discovered</option>
+                <option value="severity" {% if sort_by == 'severity' %}selected{% endif %}>Severity</option>
+                <option value="confidence" {% if sort_by == 'confidence' %}selected{% endif %}>Confidence</option>
+                <option value="cvss_score" {% if sort_by == 'cvss_score' %}selected{% endif %}>CVSS Score</option>
+                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
+            </select>
+        </div>
+        
+        <div class="filter-item">
+            <label class="form-label">Order</label>
+            <select class="form-control" name="sort_order">
+                <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
+                <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
+            </select>
+        </div>
+        
+        <div class="filter-item">
+            <label class="form-label">&nbsp;</label>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-2"></i>Filter
+                </button>
+                <a href="{{ url_for('vulnerabilities') }}" class="btn btn-outline">
+                    <i class="fas fa-times me-2"></i>Clear
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Bulk Actions -->
+<div class="bulk-actions" id="bulk-actions">
+    <div class="d-flex align-items-center gap-2">
+        <span id="selected-count">0</span> vulnerabilities selected
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline btn-sm" onclick="markAsVerified()">
+            <i class="fas fa-check me-2"></i>Mark as Verified
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="markAsFalsePositive()">
+            <i class="fas fa-times me-2"></i>False Positive
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="exportSelected()">
+            <i class="fas fa-download me-2"></i>Export Selected
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="clearSelection()">
+            <i class="fas fa-times me-2"></i>Clear Selection
+        </button>
+    </div>
+</div>
+
+<!-- Vulnerabilities Grid -->
+{% if vulnerabilities %}
+<div id="vulnerabilities-grid" class="vulnerability-grid">
+    {% for vuln in vulnerabilities %}
+    <div class="vuln-card {{ vuln.severity.lower() }}" data-vuln-id="{{ vuln.id }}">
+        <div class="vuln-header">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                    <input type="checkbox" class="form-check-input vuln-checkbox" 
+                           value="{{ vuln.id }}" onchange="updateBulkActions()">
+                    <h3 class="vuln-title">
+                        <a href="{{ url_for('vulnerability_detail', vuln_id=vuln.id) }}">
+                            {{ vuln.title }}
+                        </a>
+                    </h3>
+                </div>
+                
+                <div class="vuln-meta">
+                    <span class="badge badge-{{ vuln.severity.lower() }}">
+                        {{ vuln.severity }}
+                    </span>
+                    
+                    {% if vuln.ai_provider %}
+                    <span class="ai-badge">
+                        <i class="fas fa-robot"></i>
+                        {{ vuln.ai_provider.title() }}
+                    </span>
+                    {% endif %}
+                    
+                    <span class="badge badge-info">{{ vuln.vulnerability_type }}</span>
+                    
+                    {% if vuln.cvss_score > 0 %}
+                    <span class="badge badge-secondary">CVSS {{ vuln.cvss_score }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-end">
+                <div class="vuln-stat-value">{{ (vuln.confidence * 100) | round }}%</div>
+                <div class="vuln-stat-label">Confidence</div>
+                <div class="confidence-indicator mt-1">
+                    <div class="confidence-fill 
+                        {% if vuln.confidence >= 0.8 %}confidence-high
+                        {% elif vuln.confidence >= 0.5 %}confidence-medium
+                        {% else %}confidence-low{% endif %}"
+                        style="width: {{ (vuln.confidence * 100) }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="vuln-target">
+            <i class="fas fa-globe me-2"></i>{{ vuln.target_url }}
+        </div>
+        
+        <div class="vuln-description">
+            {{ vuln.description | truncate(200) }}
+        </div>
+        
+        <div class="vuln-stats">
+            <div class="vuln-stat">
+                <div class="vuln-stat-value">{{ vuln.cvss_score or 'N/A' }}</div>
+                <div class="vuln-stat-label">CVSS</div>
+            </div>
+            
+            <div class="vuln-stat">
+                <div class="vuln-stat-value">{{ ((1 - vuln.false_positive_probability) * 100) | round }}%</div>
+                <div class="vuln-stat-label">Accuracy</div>
+            </div>
+            
+            <div class="vuln-stat">
+                <div class="vuln-stat-value">
+                    {% if vuln.reproduction_success %}
+                    <i class="fas fa-check text-success"></i>
+                    {% else %}
+                    <i class="fas fa-times text-muted"></i>
+                    {% endif %}
+                </div>
+                <div class="vuln-stat-label">Reproduced</div>
+            </div>
+        </div>
+        
+        <div class="vuln-actions">
+            <a href="{{ url_for('vulnerability_detail', vuln_id=vuln.id) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-eye me-2"></i>View Details
+            </a>
+            
+            {% if not vuln.reproduction_success %}
+            <button class="btn btn-outline btn-sm" onclick="reproduceVulnerability('{{ vuln.id }}')">
+                <i class="fas fa-flask me-2"></i>Reproduce
+            </button>
+            {% endif %}
+            
+            <button class="btn btn-outline btn-sm" onclick="generatePoc('{{ vuln.id }}')">
+                <i class="fas fa-code me-2"></i>Generate PoC
+            </button>
+            
+            <div class="dropdown">
+                <button class="btn btn-outline btn-sm dropdown-toggle" type="button" 
+                        data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="markAsVerified('{{ vuln.id }}')">
+                        <i class="fas fa-check me-2"></i>Mark as Verified
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="markAsFalsePositive('{{ vuln.id }}')">
+                        <i class="fas fa-times me-2"></i>False Positive
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportVulnerability('{{ vuln.id }}')">
+                        <i class="fas fa-download me-2"></i>Export
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-2 text-muted">
+            <small>
+                <i class="fas fa-clock me-1"></i>
+                Discovered {{ vuln.discovered_at }}
+                {% if vuln.analyst %}
+                by {{ vuln.analyst }}
+                {% endif %}
+            </small>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Table View (Hidden by default) -->
+<div id="vulnerabilities-table" class="table-view" style="display: none;">
+    <div class="vuln-row header">
+        <div>
+            <input type="checkbox" class="form-check-input" id="select-all" onchange="toggleSelectAll()">
+            Vulnerability
+        </div>
+        <div>Target</div>
+        <div>Severity</div>
+        <div>Confidence</div>
+        <div>CVSS</div>
+        <div>Actions</div>
+    </div>
+    
+    {% for vuln in vulnerabilities %}
+    <div class="vuln-row" data-vuln-id="{{ vuln.id }}">
+        <div class="d-flex align-items-center gap-2">
+            <input type="checkbox" class="form-check-input vuln-checkbox" 
+                   value="{{ vuln.id }}" onchange="updateBulkActions()">
+            <div>
+                <a href="{{ url_for('vulnerability_detail', vuln_id=vuln.id) }}" 
+                   class="text-decoration-none fw-semibold">
+                    {{ vuln.title }}
+                </a>
+                <div class="text-muted small">{{ vuln.vulnerability_type }}</div>
+            </div>
+        </div>
+        <div class="text-truncate" style="max-width: 150px;">{{ vuln.target_url }}</div>
+        <div><span class="badge badge-{{ vuln.severity.lower() }}">{{ vuln.severity }}</span></div>
+        <div>{{ (vuln.confidence * 100) | round }}%</div>
+        <div>{{ vuln.cvss_score or 'N/A' }}</div>
+        <div>
+            <button class="btn btn-outline btn-sm" onclick="reproduceVulnerability('{{ vuln.id }}')">
+                <i class="fas fa-flask"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<!-- Empty State -->
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="fas fa-search"></i>
+    </div>
+    <h3 class="mb-3">No Vulnerabilities Found</h3>
+    <p class="text-muted mb-4">
+        {% if search_query or severity_filter or status_filter %}
+        No vulnerabilities match your current filters. Try adjusting your search criteria.
+        {% else %}
+        Start your first vulnerability scan to discover security issues.
+        {% endif %}
+    </p>
+    {% if not search_query and not severity_filter and not status_filter %}
+    <button class="btn btn-primary" onclick="startQuickScan()">
+        <i class="fas fa-search me-2"></i>Start Your First Scan
+    </button>
+    {% else %}
+    <a href="{{ url_for('vulnerabilities') }}" class="btn btn-outline">
+        <i class="fas fa-times me-2"></i>Clear Filters
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="pagination-container">
+    <div class="pagination">
+        {% if has_prev %}
+        <a href="{{ url_for('vulnerabilities', page=page-1, search=search_query, severity=severity_filter, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}" 
+           class="page-link">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        
+        {% set start_page = [1, page - 2] | max %}
+        {% set end_page = [total_pages, page + 2] | min %}
+        
+        {% if start_page > 1 %}
+        <a href="{{ url_for('vulnerabilities', page=1, search=search_query, severity=severity_filter, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}" 
+           class="page-link">1</a>
+        {% if start_page > 2 %}
+        <span class="page-link">...</span>
+        {% endif %}
+        {% endif %}
+        
+        {% for p in range(start_page, end_page + 1) %}
+        <a href="{{ url_for('vulnerabilities', page=p, search=search_query, severity=severity_filter, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}" 
+           class="page-link {% if p == page %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+        
+        {% if end_page < total_pages %}
+        {% if end_page < total_pages - 1 %}
+        <span class="page-link">...</span>
+        {% endif %}
+        <a href="{{ url_for('vulnerabilities', page=total_pages, search=search_query, severity=severity_filter, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}" 
+           class="page-link">{{ total_pages }}</a>
+        {% endif %}
+        
+        {% if has_next %}
+        <a href="{{ url_for('vulnerabilities', page=page+1, search=search_query, severity=severity_filter, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}" 
+           class="page-link">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="text-muted">
+        Showing {{ ((page - 1) * 20) + 1 }} to {{ [page * 20, total_count] | min }} of {{ total_count }} vulnerabilities
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedVulnerabilities = new Set();
+    let currentView = 'grid';
+    
+    function setView(view) {
+        currentView = view;
+        const gridView = document.getElementById('vulnerabilities-grid');
+        const tableView = document.getElementById('vulnerabilities-table');
+        const gridBtn = document.getElementById('grid-view-btn');
+        const tableBtn = document.getElementById('table-view-btn');
+        
+        if (view === 'grid') {
+            gridView.style.display = 'grid';
+            tableView.style.display = 'none';
+            gridBtn.classList.add('active');
+            tableBtn.classList.remove('active');
+        } else {
+            gridView.style.display = 'none';
+            tableView.style.display = 'block';
+            gridBtn.classList.remove('active');
+            tableBtn.classList.add('active');
+        }
+        
+        localStorage.setItem('vulnerability-view', view);
+    }
+    
+    function updateBulkActions() {
+        const checkboxes = document.querySelectorAll('.vuln-checkbox:checked');
+        const bulkActions = document.getElementById('bulk-actions');
+        const selectedCount = document.getElementById('selected-count');
+        
+        selectedVulnerabilities.clear();
+        checkboxes.forEach(cb => selectedVulnerabilities.add(cb.value));
+        
+        if (selectedVulnerabilities.size > 0) {
+            bulkActions.classList.add('show');
+            selectedCount.textContent = selectedVulnerabilities.size;
+        } else {
+            bulkActions.classList.remove('show');
+        }
+    }
+    
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.vuln-checkbox');
+        
+        checkboxes.forEach(cb => {
+            cb.checked = selectAll.checked;
+        });
+        
+        updateBulkActions();
+    }
+    
+    function clearSelection() {
+        const checkboxes = document.querySelectorAll('.vuln-checkbox');
+        checkboxes.forEach(cb => cb.checked = false);
+        
+        const selectAll = document.getElementById('select-all');
+        if (selectAll) selectAll.checked = false;
+        
+        updateBulkActions();
+    }
+    
+    async function reproduceVulnerability(vulnId) {
+        try {
+            app.showNotification('Starting vulnerability reproduction...', 'info');
+            
+            const response = await axios.post(`/api/vulnerabilities/${vulnId}/reproduce`);
+            
+            if (response.data.status === 'started') {
+                app.showNotification('Reproduction started successfully', 'success');
+            }
+            
+        } catch (error) {
+            console.error('Reproduction error:', error);
+            app.showNotification('Failed to start reproduction', 'error');
+        }
+    }
+    
+    function generatePoc(vulnId) {
+        app.showModal('Generate Proof of Concept', `
+            <div class="mb-3">
+                <label class="form-label">PoC Type</label>
+                <select class="form-control" id="poc-type">
+                    <option value="curl">cURL Command</option>
+                    <option value="python">Python Script</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="bash">Bash Script</option>
+                    <option value="burp">Burp Suite Request</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="include-comments" checked>
+                    <label class="form-check-label" for="include-comments">
+                        Include explanatory comments
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="safe-mode" checked>
+                    <label class="form-check-label" for="safe-mode">
+                        Safe mode (non-destructive)
+                    </label>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="handlePocGeneration('${vulnId}')">
+                    <i class="fas fa-code me-2"></i>Generate PoC
+                </button>
+            </div>
+        `);
+    }
+    
+    function handlePocGeneration(vulnId) {
+        const pocType = document.getElementById('poc-type').value;
+        const includeComments = document.getElementById('include-comments').checked;
+        const safeMode = document.getElementById('safe-mode').checked;
+        
+        bootstrap.Modal.getInstance(document.getElementById('dynamicModal')).hide();
+        
+        app.showNotification('Generating Proof of Concept...', 'info');
+        
+        // Simulate PoC generation
+        setTimeout(() => {
+            app.showModal('Generated Proof of Concept', `
+                <div class="mb-3">
+                    <label class="form-label">Generated ${pocType.toUpperCase()} PoC:</label>
+                    <div class="position-relative">
+                        <pre class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code id="poc-code"># Generated PoC for vulnerability ${vulnId}
+${pocType === 'curl' ? `curl -X POST "https://target.com/vulnerable-endpoint" \\
+  -H "Content-Type: application/json" \\
+  -d '{"payload": "<script>alert('XSS')</script>"}'` :
+pocType === 'python' ? `import requests
+
+# Vulnerability exploitation script
+target_url = "https://target.com/vulnerable-endpoint"
+payload = {"input": "<script>alert('XSS')</script>"}
+
+response = requests.post(target_url, json=payload)
+print(f"Response: {response.status_code}")
+print(response.text)` :
+`// JavaScript PoC
+const payload = "<script>alert('XSS')</script>";
+fetch('/vulnerable-endpoint', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({input: payload})
+});`}</code></pre>
+                        <button class="btn btn-sm btn-outline position-absolute top-0 end-0 m-2" 
+                                onclick="copyToClipboard('poc-code')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This PoC is for educational and authorized testing purposes only. 
+                    Do not use against systems you do not own or have explicit permission to test.
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadPoc('${vulnId}', '${pocType}')">
+                        <i class="fas fa-download me-2"></i>Download PoC
+                    </button>
+                </div>
+            `);
+        }, 2000);
+    }
+    
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            app.showNotification('PoC copied to clipboard!', 'success');
+        }).catch(() => {
+            app.showNotification('Failed to copy to clipboard', 'error');
+        });
+    }
+    
+    function downloadPoc(vulnId, type) {
+        const code = document.getElementById('poc-code').textContent;
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `vuln_${vulnId}_poc.${type === 'python' ? 'py' : type === 'javascript' ? 'js' : 'sh'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    function markAsVerified(vulnId) {
+        const ids = vulnId ? [vulnId] : Array.from(selectedVulnerabilities);
+        
+        if (ids.length === 0) {
+            app.showNotification('No vulnerabilities selected', 'warning');
+            return;
+        }
+        
+        app.showNotification(`Marking ${ids.length} vulnerability(s) as verified...`, 'info');
+        
+        // Simulate API call
+        setTimeout(() => {
+            app.showNotification('Vulnerabilities marked as verified', 'success');
+            if (!vulnId) clearSelection();
+        }, 1000);
+    }
+    
+    function markAsFalsePositive(vulnId) {
+        const ids = vulnId ? [vulnId] : Array.from(selectedVulnerabilities);
+        
+        if (ids.length === 0) {
+            app.showNotification('No vulnerabilities selected', 'warning');
+            return;
+        }
+        
+        app.showModal('Mark as False Positive', `
+            <div class="mb-3">
+                <label class="form-label">Reason for False Positive</label>
+                <select class="form-control" id="fp-reason">
+                    <option value="">Select reason...</option>
+                    <option value="duplicate">Duplicate finding</option>
+                    <option value="accepted_risk">Accepted business risk</option>
+                    <option value="mitigated">Already mitigated</option>
+                    <option value="invalid">Invalid finding</option>
+                    <option value="out_of_scope">Out of scope</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Additional Notes</label>
+                <textarea class="form-control" rows="3" id="fp-notes" 
+                          placeholder="Provide additional context..."></textarea>
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmFalsePositive(${JSON.stringify(ids)})">
+                    <i class="fas fa-times me-2"></i>Mark as False Positive
+                </button>
+            </div>
+        `);
+    }
+    
+    function confirmFalsePositive(ids) {
+        const reason = document.getElementById('fp-reason').value;
+        const notes = document.getElementById('fp-notes').value;
+        
+        if (!reason) {
+            app.showNotification('Please select a reason', 'warning');
+            return;
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('dynamicModal')).hide();
+        app.showNotification(`Marking ${ids.length} vulnerability(s) as false positive...`, 'info');
+        
+        // Simulate API call
+        setTimeout(() => {
+            app.showNotification('Vulnerabilities marked as false positive', 'success');
+            clearSelection();
+        }, 1000);
+    }
+    
+    function exportSelected() {
+        const ids = Array.from(selectedVulnerabilities);
+        
+        if (ids.length === 0) {
+            app.showNotification('No vulnerabilities selected', 'warning');
+            return;
+        }
+        
+        app.showModal('Export Vulnerabilities', `
+            <div class="mb-3">
+                <label class="form-label">Export Format</label>
+                <select class="form-control" id="export-format">
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF Report</option>
+                    <option value="xml">XML</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Include Fields</label>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-title" checked>
+                            <label class="form-check-label" for="include-title">Title & Description</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-technical" checked>
+                            <label class="form-check-label" for="include-technical">Technical Details</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-remediation" checked>
+                            <label class="form-check-label" for="include-remediation">Remediation</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-poc">
+                            <label class="form-check-label" for="include-poc">Proof of Concept</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-evidence">
+                            <label class="form-check-label" for="include-evidence">Evidence</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-metadata" checked>
+                            <label class="form-check-label" for="include-metadata">Metadata</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="handleExport(${JSON.stringify(ids)})">
+                    <i class="fas fa-download me-2"></i>Export ${ids.length} Vulnerabilities
+                </button>
+            </div>
+        `);
+    }
+    
+    function handleExport(ids) {
+        const format = document.getElementById('export-format').value;
+        
+        bootstrap.Modal.getInstance(document.getElementById('dynamicModal')).hide();
+        
+        exportVulnerabilities(ids, format);
+    }
+    
+    function exportVulnerability(vulnId) {
+        exportSelected();
+        // Pre-select the vulnerability
+        const checkbox = document.querySelector(`input[value="${vulnId}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+            updateBulkActions();
+        }
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Restore view preference
+        const savedView = localStorage.getItem('vulnerability-view') || 'grid';
+        setView(savedView);
+        
+        // Highlight search terms
+        highlightSearchTerms();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (selectedVulnerabilities.size === 0) {
+                // Only refresh if no vulnerabilities are selected
+                updateVulnerabilityCounters();
+            }
+        }, 30000);
+    });
+    
+    function highlightSearchTerms() {
+        const searchQuery = '{{ search_query }}';
+        if (!searchQuery) return;
+        
+        const elements = document.querySelectorAll('.vuln-title, .vuln-description');
+        elements.forEach(element => {
+            const regex = new RegExp(`(${searchQuery})`, 'gi');
+            element.innerHTML = element.innerHTML.replace(regex, '<span class="search-highlight">$1</span>');
+        });
+    }
+    
+    function updateVulnerabilityCounters() {
+        // Update vulnerability stats in real-time
+        axios.get('/api/stats')
+            .then(response => {
+                console.log('Vulnerability stats updated');
+            })
+            .catch(error => {
+                console.error('Failed to update stats:', error);
+            });
+    }
+    
+    // Real-time updates via WebSocket
+    socket.on('vulnerability_found', function(data) {
+        // Add new vulnerability to the list if it matches current filters
+        const shouldShow = (
+            (!('{{ severity_filter }}') || data.severity === '{{ severity_filter }}') &&
+            (!('{{ status_filter }}') || data.status === '{{ status_filter }}') &&
+            (!('{{ search_query }}') || data.title.toLowerCase().includes('{{ search_query }}'.toLowerCase()))
+        );
+        
+        if (shouldShow) {
+            app.showNotification('New vulnerability found matching your filters!', 'info', 10000);
+        }
+    });
+    
+    socket.on('reproduction_completed', function(data) {
+        // Update reproduction status for the specific vulnerability
+        const vulnCard = document.querySelector(`[data-vuln-id="${data.vuln_id}"]`);
+        if (vulnCard) {
+            const reproductionStat = vulnCard.querySelector('.vuln-stat:last-child .vuln-stat-value');
+            if (reproductionStat) {
+                reproductionStat.innerHTML = data.success ? 
+                    '<i class="fas fa-check text-success"></i>' : 
+                    '<i class="fas fa-times text-danger"></i>';
+            }
+        }
+        
+        app.showNotification(
+            `Vulnerability reproduction ${data.success ? 'successful' : 'failed'}`,
+            data.success ? 'success' : 'warning'
+        );
+    });
+</script>
+{% endblock %}

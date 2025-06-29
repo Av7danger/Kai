@@ -1,0 +1,92 @@
+# AI Agent Configuration
+# Configure AI providers and analysis settings for the bug bounty framework
+
+ai_providers:
+  openai:
+    enabled: true
+    api_key: ${OPENAI_API_KEY}  # Set via environment variable
+    model: gpt-4-turbo-preview
+    max_tokens: 4000
+    temperature: 0.3
+  
+  anthropic:
+    enabled: true
+    api_key: ${ANTHROPIC_API_KEY}  # Set via environment variable
+    model: claude-3-opus-20240229
+    max_tokens: 4000
+    temperature: 0.3
+  
+  gemini:
+    enabled: true
+    api_key: ${GEMINI_API_KEY}  # Set via environment variable
+    model: gemini-1.5-pro-latest
+    temperature: 0.3
+
+analysis_settings:
+  enable_pattern_recognition: true
+  enable_anomaly_detection: true
+  enable_vulnerability_prioritization: true
+  confidence_threshold: 0.7
+  max_analysis_retries: 3
+  analysis_timeout: 30
+
+report_settings:
+  template_path: templates/bug_report_template.md
+  auto_generate_poc: true
+  include_impact_analysis: true
+  include_recommendations: true
+  include_references: true
+  report_format: json  # json, markdown, html
+
+payload_generation:
+  enable_custom_payloads: true
+  max_payloads_per_category: 10
+  payload_categories:
+    - xss
+    - sqli
+    - command_injection
+    - ssrf
+    - xxe
+    - lfi
+    - rfi
+    - open_redirect
+    - csrf
+    - idor
+
+vulnerability_prioritization:
+  severity_weights:
+    critical: 10.0
+    high: 8.0
+    medium: 5.0
+    low: 2.0
+    info: 1.0
+  
+  impact_weights:
+    rce: 5.0
+    sqli: 4.0
+    xss: 3.0
+    lfi: 4.0
+    ssrf: 3.5
+    xxe: 4.0
+  
+  asset_weights:
+    admin: 2.0
+    api: 2.0
+    auth: 2.0
+    payment: 3.0
+    user_data: 2.5
+
+output_settings:
+  save_analysis_results: true
+  save_custom_payloads: true
+  save_bug_reports: true
+  output_directory: ai_analysis_results
+  file_format: json
+  compress_output: false
+
+logging:
+  level: INFO
+  save_logs: true
+  log_file: ai_agent.log
+  max_log_size: 10MB
+  backup_count: 5 

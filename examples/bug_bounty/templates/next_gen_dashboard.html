@@ -1,0 +1,779 @@
+{% extends "next_gen_base.html" %}
+
+{% block title %}Enhanced Security Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Skeleton Loading Animation */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    .skeleton-card {
+        height: 120px;
+        margin-bottom: 1rem;
+    }
+    
+    .skeleton-text {
+        height: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .skeleton-text.short {
+        width: 60%;
+    }
+    
+    /* Optimization Controls */
+    .optimization-controls {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .control-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .control-label {
+        font-weight: 600;
+        min-width: 120px;
+    }
+    
+    .control-value {
+        font-family: monospace;
+        background: var(--code-bg);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+    
+    .control-button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+    
+    .control-button:hover {
+        background: var(--primary-dark);
+    }
+    
+    .control-button.danger {
+        background: var(--danger);
+    }
+    
+    .control-button.danger:hover {
+        background: var(--danger-dark);
+    }
+    
+    /* System Health Indicators */
+    .health-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .health-good {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+    
+    .health-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+    
+    .health-critical {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+    
+    /* Mobile Responsive Improvements */
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .control-group {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .control-label {
+            min-width: auto;
+        }
+        
+        .ai-status-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .chart-container {
+            margin-bottom: 2rem;
+        }
+    }
+    
+    /* Accessibility Improvements */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    
+    /* Throttled Updates */
+    .update-indicator {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        background: var(--success);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+    }
+    
+    .update-indicator.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Update Indicator -->
+<div id="update-indicator" class="update-indicator" role="status" aria-live="polite">
+    <span id="update-message">Data updated</span>
+</div>
+
+<!-- Dashboard Header with Real-time Stats -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="text-gradient mb-1" id="dashboard-title">Security Overview</h2>
+                <p class="text-muted mb-0" id="dashboard-subtitle">Real-time vulnerability analysis dashboard</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline btn-sm" onclick="refreshDashboard()" aria-label="Refresh dashboard data">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="startQuickScan()" aria-label="Start quick security scan">
+                    <i class="fas fa-search me-2"></i>Quick Scan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="optimization-controls">
+            <h5 class="mb-3">
+                <i class="fas fa-heartbeat me-2"></i>System Health & Optimization
+            </h5>
+            <div class="control-group">
+                <span class="control-label">Overall Status:</span>
+                <span id="system-status" class="health-indicator health-good">
+                    <i class="fas fa-circle"></i>
+                    <span>Healthy</span>
+                </span>
+            </div>
+            <div class="control-group">
+                <span class="control-label">CPU Usage:</span>
+                <span id="cpu-usage" class="control-value">--</span>
+                <span class="control-label">Memory:</span>
+                <span id="memory-usage" class="control-value">--</span>
+                <span class="control-label">Cache Hit Rate:</span>
+                <span id="cache-hit-rate" class="control-value">--</span>
+            </div>
+            <div class="control-group">
+                <span class="control-label">AI Providers:</span>
+                <span id="ai-providers-status" class="control-value">--</span>
+                <button class="control-button" onclick="clearCache()" aria-label="Clear application cache">
+                    <i class="fas fa-broom me-1"></i>Clear Cache
+                </button>
+                <button class="control-button" onclick="optimizeSystem()" aria-label="Run system optimization">
+                    <i class="fas fa-magic me-1"></i>Optimize
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Grid with Skeleton Loading -->
+<div class="dashboard-grid" id="metrics-grid">
+    <!-- Skeleton loaders will be replaced with actual content -->
+    <div class="card metric-card skeleton skeleton-card" aria-hidden="true">
+        <div class="card-body">
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text short"></div>
+        </div>
+    </div>
+    <div class="card metric-card skeleton skeleton-card" aria-hidden="true">
+        <div class="card-body">
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text short"></div>
+        </div>
+    </div>
+    <div class="card metric-card skeleton skeleton-card" aria-hidden="true">
+        <div class="card-body">
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text short"></div>
+        </div>
+    </div>
+    <div class="card metric-card skeleton skeleton-card" aria-hidden="true">
+        <div class="card-body">
+            <div class="skeleton-text short"></div>
+            <div class="skeleton-text"></div>
+            <div class="skeleton-text short"></div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Providers Status -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-robot me-2"></i>AI Analysis Providers
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="ai-status-grid" id="ai-providers-grid">
+            <!-- AI providers will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <button class="btn btn-outline-primary w-100" onclick="startComprehensiveScan()" aria-label="Start comprehensive security scan">
+                            <i class="fas fa-shield-alt mb-2"></i>
+                            <div>Comprehensive Scan</div>
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <button class="btn btn-outline-success w-100" onclick="generateReport()" aria-label="Generate vulnerability report">
+                            <i class="fas fa-file-alt mb-2"></i>
+                            <div>Generate Report</div>
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <button class="btn btn-outline-info w-100" onclick="exportData()" aria-label="Export vulnerability data">
+                            <i class="fas fa-download mb-2"></i>
+                            <div>Export Data</div>
+                        </button>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <button class="btn btn-outline-warning w-100" onclick="showSettings()" aria-label="Open system settings">
+                            <i class="fas fa-cog mb-2"></i>
+                            <div>Settings</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section with Lazy Loading -->
+<div class="row mb-4">
+    <!-- Vulnerability Severity Distribution -->
+    <div class="col-lg-6">
+        <div class="chart-container" data-chart="severity">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-pie me-2"></i>Severity Distribution
+            </h5>
+            <div id="severity-chart" class="chart-placeholder">
+                <div class="skeleton skeleton-card" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Discovery Timeline -->
+    <div class="col-lg-6">
+        <div class="chart-container" data-chart="timeline">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>Discovery Timeline
+            </h5>
+            <div id="timeline-chart" class="chart-placeholder">
+                <div class="skeleton skeleton-card" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Performance Chart -->
+<div class="card mb-4" id="ai-performance-section" style="display: none;">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-robot me-2"></i>AI Provider Performance
+        </h5>
+    </div>
+    <div class="card-body">
+        <div id="ai-performance-chart" class="chart-placeholder">
+            <div class="skeleton skeleton-card" style="height: 300px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Active Targets -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-activity" class="activity-feed">
+                    <!-- Activity items will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-crosshairs me-2"></i>Active Targets
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="active-targets">
+                    <!-- Active targets will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global variables for throttling and state management
+    let updateThrottle = null;
+    let lastUpdateTime = 0;
+    let chartsInitialized = false;
+    let systemStats = {};
+    let aiProviders = {};
+    
+    // Initialize dashboard with optimizations
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeDashboard();
+        setupThrottledUpdates();
+        setupIntersectionObserver();
+    });
+    
+    function initializeDashboard() {
+        // Load initial data
+        loadSystemStats();
+        loadMetrics();
+        loadAIProviders();
+        loadRecentActivity();
+        loadActiveTargets();
+        
+        // Initialize charts when they become visible
+        initializeChartsWhenVisible();
+    }
+    
+    function setupThrottledUpdates() {
+        // Throttle updates to every 2 seconds to prevent UI overload
+        setInterval(() => {
+            if (Date.now() - lastUpdateTime > 2000) {
+                updateDashboardData();
+                lastUpdateTime = Date.now();
+            }
+        }, 2000);
+    }
+    
+    function setupIntersectionObserver() {
+        // Lazy load charts when they become visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const chartType = entry.target.dataset.chart;
+                    if (chartType && !chartsInitialized) {
+                        initializeCharts();
+                        chartsInitialized = true;
+                    }
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.chart-container').forEach(container => {
+            observer.observe(container);
+        });
+    }
+    
+    async function loadSystemStats() {
+        try {
+            const response = await fetch('/api/optimization_stats');
+            systemStats = await response.json();
+            updateSystemHealthDisplay();
+        } catch (error) {
+            console.error('Failed to load system stats:', error);
+            showError('Failed to load system statistics');
+        }
+    }
+    
+    function updateSystemHealthDisplay() {
+        // Update system health indicators
+        const health = systemStats.system_health || {};
+        const optimization = systemStats.optimization || {};
+        
+        // CPU and Memory
+        document.getElementById('cpu-usage').textContent = 
+            health.cpu_usage ? `${health.cpu_usage.toFixed(1)}%` : '--';
+        document.getElementById('memory-usage').textContent = 
+            health.memory_usage ? `${health.memory_usage.toFixed(1)}%` : '--';
+        
+        // Cache hit rate
+        const cacheStats = optimization.cache_stats || {};
+        document.getElementById('cache-hit-rate').textContent = 
+            cacheStats.hit_ratio ? `${(cacheStats.hit_ratio * 100).toFixed(1)}%` : '--';
+        
+        // AI providers status
+        const aiStats = systemStats.ai_providers || {};
+        document.getElementById('ai-providers-status').textContent = 
+            `${aiStats.total_available || 0} available`;
+        
+        // Overall system status
+        updateSystemStatus(health, aiStats);
+    }
+    
+    function updateSystemStatus(health, aiStats) {
+        const statusElement = document.getElementById('system-status');
+        let status = 'healthy';
+        let statusClass = 'health-good';
+        let icon = 'fas fa-circle';
+        
+        // Determine status based on health metrics
+        if (health.cpu_usage > 80 || health.memory_usage > 85) {
+            status = 'critical';
+            statusClass = 'health-critical';
+            icon = 'fas fa-exclamation-triangle';
+        } else if (health.cpu_usage > 60 || health.memory_usage > 70) {
+            status = 'warning';
+            statusClass = 'health-warning';
+            icon = 'fas fa-exclamation-circle';
+        }
+        
+        if (aiStats.total_available === 0) {
+            status = 'degraded';
+            statusClass = 'health-warning';
+            icon = 'fas fa-robot';
+        }
+        
+        statusElement.className = `health-indicator ${statusClass}`;
+        statusElement.innerHTML = `<i class="${icon}"></i><span>${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+    }
+    
+    async function loadMetrics() {
+        try {
+            const response = await fetch('/api/stats');
+            const stats = await response.json();
+            
+            // Replace skeleton loaders with actual metrics
+            const metricsGrid = document.getElementById('metrics-grid');
+            metricsGrid.innerHTML = generateMetricsHTML(stats);
+            
+        } catch (error) {
+            console.error('Failed to load metrics:', error);
+        }
+    }
+    
+    function generateMetricsHTML(stats) {
+        return `
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="metric-icon">
+                        <i class="fas fa-bug text-danger"></i>
+                    </div>
+                    <div class="stat-number text-danger" id="total-vulns">
+                        ${stats.get('by_severity', {}).values() | sum | default(0)}
+                    </div>
+                    <div class="stat-label">Total Vulnerabilities</div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+12% this week</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="metric-icon">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                    </div>
+                    <div class="stat-number text-warning">
+                        ${stats.get('by_severity', {}).get('Critical', 0) + stats.get('by_severity', {}).get('High', 0)}
+                    </div>
+                    <div class="stat-label">Critical & High</div>
+                    <div class="trend-indicator trend-down">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>-5% this week</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card metric-card">
+                <div class="card-body text-center">
+                    <div class="security-score">
+                        <div class="security-score-text">75</div>
+                    </div>
+                    <div class="stat-label">Security Score</div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+8 points</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="metric-icon">
+                        <i class="fas fa-robot text-info"></i>
+                    </div>
+                    <div class="stat-number text-info" id="ai-analyses">247</div>
+                    <div class="stat-label">AI Analyses Today</div>
+                    <div class="trend-indicator trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>+23% efficiency</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    async function loadAIProviders() {
+        try {
+            const response = await fetch('/api/optimization_stats');
+            const data = await response.json();
+            aiProviders = data.ai_providers || {};
+            
+            const providersGrid = document.getElementById('ai-providers-grid');
+            providersGrid.innerHTML = generateAIProvidersHTML(aiProviders);
+            
+        } catch (error) {
+            console.error('Failed to load AI providers:', error);
+        }
+    }
+    
+    function generateAIProvidersHTML(aiProviders) {
+        let html = '';
+        
+        for (const [provider, config] of Object.entries(aiProviders.providers || {})) {
+            const statusClass = config.available ? 'online' : 'offline';
+            const statusText = config.available ? 'Online' : 'Offline';
+            const statusBadge = config.available ? 'badge-success' : 'badge-secondary';
+            
+            html += `
+                <div class="ai-provider-card ${statusClass}">
+                    <div class="ai-provider-icon ${provider}-icon">
+                        <i class="fas fa-${provider === 'gemini' ? 'google' : provider === 'openai' ? 'brain' : 'robot'}"></i>
+                    </div>
+                    <h6 class="mb-1">${config.name}</h6>
+                    <div class="badge ${statusBadge}">
+                        ${statusText}
+                    </div>
+                    ${config.available ? `
+                        <div class="mt-2">
+                            <small class="text-muted">Model: ${config.model}</small>
+                            <br>
+                            <small class="text-muted">Success Rate: ${(config.success_rate * 100).toFixed(1)}%</small>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        return html;
+    }
+    
+    function initializeChartsWhenVisible() {
+        // Charts will be initialized when they become visible
+        // This is handled by the IntersectionObserver
+    }
+    
+    function initializeCharts() {
+        // Initialize charts with actual data
+        {% if charts_data.severity_distribution %}
+        const severityData = {{ charts_data.severity_distribution | safe }};
+        Plotly.newPlot('severity-chart', severityData.data, severityData.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        {% endif %}
+        
+        {% if charts_data.discovery_timeline %}
+        const timelineData = {{ charts_data.discovery_timeline | safe }};
+        Plotly.newPlot('timeline-chart', timelineData.data, timelineData.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        {% endif %}
+        
+        {% if charts_data.ai_performance %}
+        const aiData = {{ charts_data.ai_performance | safe }};
+        Plotly.newPlot('ai-performance-chart', aiData.data, aiData.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        document.getElementById('ai-performance-section').style.display = 'block';
+        {% endif %}
+    }
+    
+    async function updateDashboardData() {
+        // Throttled update function
+        try {
+            await Promise.all([
+                loadSystemStats(),
+                loadAIProviders()
+            ]);
+            
+            showUpdateIndicator('Data updated');
+        } catch (error) {
+            console.error('Failed to update dashboard:', error);
+        }
+    }
+    
+    function showUpdateIndicator(message) {
+        const indicator = document.getElementById('update-indicator');
+        const messageElement = document.getElementById('update-message');
+        
+        messageElement.textContent = message;
+        indicator.classList.add('show');
+        
+        setTimeout(() => {
+            indicator.classList.remove('show');
+        }, 2000);
+    }
+    
+    // Optimization control functions
+    async function clearCache() {
+        try {
+            const response = await fetch('/api/optimization/clear-cache', { method: 'POST' });
+            if (response.ok) {
+                showUpdateIndicator('Cache cleared successfully');
+                loadSystemStats(); // Refresh stats
+            } else {
+                showError('Failed to clear cache');
+            }
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+            showError('Error clearing cache');
+        }
+    }
+    
+    async function optimizeSystem() {
+        try {
+            const response = await fetch('/api/optimization/run', { method: 'POST' });
+            if (response.ok) {
+                showUpdateIndicator('System optimization completed');
+                loadSystemStats(); // Refresh stats
+            } else {
+                showError('Failed to optimize system');
+            }
+        } catch (error) {
+            console.error('Error optimizing system:', error);
+            showError('Error optimizing system');
+        }
+    }
+    
+    // Quick action functions
+    function startQuickScan() {
+        // Implementation for quick scan
+        showUpdateIndicator('Quick scan started');
+    }
+    
+    function startComprehensiveScan() {
+        // Implementation for comprehensive scan
+        showUpdateIndicator('Comprehensive scan started');
+    }
+    
+    function generateReport() {
+        // Implementation for report generation
+        showUpdateIndicator('Report generation started');
+    }
+    
+    function exportData() {
+        // Implementation for data export
+        showUpdateIndicator('Data export started');
+    }
+    
+    function showSettings() {
+        // Implementation for settings modal
+        showUpdateIndicator('Settings opened');
+    }
+    
+    function refreshDashboard() {
+        // Manual refresh
+        loadSystemStats();
+        loadMetrics();
+        loadAIProviders();
+        showUpdateIndicator('Dashboard refreshed');
+    }
+    
+    function showError(message) {
+        // Show error notification
+        showUpdateIndicator(`Error: ${message}`);
+    }
+    
+    // Load additional data
+    async function loadRecentActivity() {
+        // Implementation for loading recent activity
+    }
+    
+    async function loadActiveTargets() {
+        // Implementation for loading active targets
+    }
+</script>
+{% endblock %}
