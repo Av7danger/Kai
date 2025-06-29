@@ -1,293 +1,307 @@
-# 🎯 Bug Bounty Hunting with CAI Framework & Google Gemini
+# 🐛 Kali Bug Hunter
 
-Enhanced bug bounty hunting using the CAI (Cybersecurity AI) framework with Google Gemini integration for superior vulnerability discovery and analysis.
+**Advanced Bug Bounty Framework - Optimized for Kali Linux**
 
-## 🌟 Features
+A streamlined, modern bug bounty framework designed specifically for Kali Linux with an intuitive web interface, automated scanning, and comprehensive reporting.
 
-- **Google Gemini Integration**: Advanced AI analysis with superior pattern recognition
-- **Comprehensive Toolset**: 20+ security testing tools integrated
-- **Automated Workflows**: Complete bug bounty hunting pipelines
-- **Intelligent Analysis**: AI-powered vulnerability correlation and false positive reduction
-- **Responsible Disclosure**: Built-in reporting templates and ethics guidelines
+## ✨ Features
 
-## 🚀 Quick Setup
+### 🎯 Core Features
+- **Target Management** - Add and manage bug bounty targets
+- **Automated Scanning** - Comprehensive vulnerability scanning with Kali tools
+- **Real-time Dashboard** - Modern web interface with live updates
+- **Vulnerability Tracking** - Track and categorize discovered vulnerabilities
+- **Report Generation** - Professional HTML reports with detailed findings
+- **Kali Linux Optimization** - Optimized for Kali Linux tools and environment
 
-### 1. Run the Setup Script
-```bash
-python setup_bug_bounty.py
-```
+### 🛠️ Integrated Tools
+- **Nmap** - Port scanning and service detection
+- **Nuclei** - Vulnerability scanning
+- **Subfinder** - Subdomain enumeration
+- **Amass** - Advanced subdomain discovery
+- **FFuf** - Web fuzzing and directory discovery
+- **Httpx** - HTTP probing and web discovery
 
-This will:
-- Install CAI framework and dependencies
-- Install bug bounty tools (subfinder, nuclei, ffuf, etc.)
-- Download common wordlists
-- Create configuration templates
+### 🎨 Modern Interface
+- **Dark Theme** - Professional dark interface optimized for security work
+- **Responsive Design** - Works on desktop, tablet, and mobile
+- **Real-time Updates** - Live status updates and progress tracking
+- **Intuitive Navigation** - Clean, organized interface
 
-### 2. Configure API Keys
+## 🚀 Quick Start
 
-Copy `bug_bounty_config.env` to `.env` and add your API keys:
+### Prerequisites
+- Kali Linux (recommended) or Ubuntu/Debian
+- Python 3.8+
+- Internet connection for tool installation
 
-```bash
-# Primary AI Model (Recommended)
-GOOGLE_API_KEY=your_google_gemini_api_key_here
-CAI_MODEL=gemini/gemini-1.5-pro-latest
+### Installation
 
-# Search & Intelligence
-SHODAN_API_KEY=your_shodan_api_key_here
-GOOGLE_SEARCH_API_KEY=your_google_search_api_key_here
-GOOGLE_SEARCH_CX=your_custom_search_engine_id_here
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd bug_bounty
+   ```
 
-### 3. Get Your Gemini API Key
+2. **Run the setup script**
+   ```bash
+   chmod +x kali_setup.sh
+   ./kali_setup.sh
+   ```
 
-1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
-3. Click "Create API Key"
-4. Copy the key to your `.env` file
+3. **Start the application**
+   ```bash
+   ./start.sh
+   ```
 
-## 🎯 Usage Examples
-
-### Quick Reconnaissance
-```bash
-python bug_bounty_workflow.py example.com quick
-```
-
-### Full Bug Bounty Assessment
-```bash
-python bug_bounty_workflow.py example.com full
-```
-
-### Focused Vulnerability Hunting
-```bash
-# XSS hunting
-python bug_bounty_workflow.py example.com xss
-
-# SQL injection testing
-python bug_bounty_workflow.py example.com sqli
-
-# SSRF testing
-python bug_bounty_workflow.py example.com ssrf
-
-# IDOR testing
-python bug_bounty_workflow.py example.com idor
-```
-
-### Using the Enhanced Agent Directly
-```python
-import asyncio
-from gemini_bug_bounty_agent import BugBountyAgent
-
-async def hunt():
-    hunter = BugBountyAgent(["example.com", "*.example.com"])
-    results = await hunter.hunt("example.com")
-    print(results["findings"])
-
-asyncio.run(hunt())
-```
-
-## 📊 Workflow Phases
-
-### Phase 1: Reconnaissance
-- **Subdomain enumeration** using multiple tools
-- **Technology stack detection** and analysis
-- **Initial security assessment** with Gemini AI
-- **Scope expansion** based on findings
-
-### Phase 2: Asset Discovery
-- **Service discovery** and port scanning
-- **Web application identification**
-- **API endpoint discovery** and analysis
-- **Attack surface mapping**
-
-### Phase 3: Vulnerability Assessment
-- **Automated scanning** with Nuclei
-- **Directory and file discovery**
-- **Parameter analysis** and injection testing
-- **Technology-specific vulnerability checks**
-
-### Phase 4: Deep Analysis
-- **AI-powered correlation** of findings
-- **Attack chain identification**
-- **Business logic flaw analysis**
-- **Risk assessment** and prioritization
-
-### Phase 5: Reporting
-- **Executive summary** generation
-- **Technical report** with PoC
-- **Remediation guidance**
-- **Responsible disclosure** recommendations
-
-## 🛠️ Integrated Tools
-
-### Reconnaissance Tools
-- **Subfinder**: Subdomain discovery
-- **Assetfinder**: Asset enumeration
-- **Amass**: Network mapping
-- **Shodan**: Internet-wide scanning
-- **Wayback URLs**: Historical URL discovery
-
-### Vulnerability Scanners
-- **Nuclei**: Template-based vulnerability scanning
-- **SQLMap**: SQL injection testing
-- **FFUF**: Web fuzzing and discovery
-- **Dalfox**: XSS testing
-- **Custom tools**: Parameter analysis, API testing
-
-### Analysis & Intelligence
-- **Google Search**: OSINT research
-- **Perplexity AI**: Enhanced research capabilities
-- **Gemini AI**: Advanced pattern recognition
-- **Custom analysis**: Technology detection, correlation
-
-## 🤖 Why Gemini for Bug Bounty?
-
-### Superior Capabilities
-- **Enhanced Pattern Recognition**: Better identification of complex attack patterns
-- **Reduced False Positives**: More accurate vulnerability assessment
-- **Attack Chain Analysis**: Superior understanding of multi-step attacks
-- **Context Awareness**: Better correlation of findings across different tools
-
-### Optimized for Security
-- **Security-focused training**: Better understanding of cybersecurity concepts
-- **Code analysis**: Superior ability to analyze code for vulnerabilities
-- **Payload generation**: More effective exploit payload creation
-- **Report quality**: Better technical writing for vulnerability reports
+4. **Access the dashboard**
+   - Open your browser and go to: `http://localhost:5000`
+   - Login with: `username=kali, password=kali`
 
 ## 📁 Project Structure
 
 ```
-examples/bug_bounty/
-├── gemini_bug_bounty_agent.py    # Main agent with Gemini integration
-├── advanced_tools.py             # Enhanced security testing tools
-├── bug_bounty_workflow.py        # Complete workflow automation
-├── setup_bug_bounty.py          # Setup and installation script
-├── .env.example                  # Configuration template
-└── README.md                     # This file
-
-Generated Results:
-bug_bounty_results/
-├── bb_<timestamp>/
-│   ├── findings.json            # Complete results in JSON
-│   ├── executive_summary.md     # Executive summary
-│   ├── technical_report.md      # Detailed technical report
-│   └── deep_analysis.md         # AI-powered deep analysis
+bug_bounty/
+├── kali_bug_hunter.py          # Main application
+├── kali_config.yml             # Configuration file
+├── kali_setup.sh               # Setup script
+├── start.sh                    # Start script
+├── stop.sh                     # Stop script
+├── status.sh                   # Status script
+├── test_kali_tools.sh          # Tool testing script
+├── templates/                  # Web templates
+│   ├── kali_dashboard.html     # Main dashboard
+│   └── kali_login.html         # Login page
+├── kali_results/               # Output directory
+│   ├── reports/                # Generated reports
+│   ├── scans/                  # Scan results
+│   ├── payloads/               # Generated payloads
+│   └── exports/                # Data exports
+├── logs/                       # Application logs
+└── venv/                       # Python virtual environment
 ```
 
-## 🔧 Advanced Configuration
+## 🔧 Configuration
 
-### Custom Model Configuration
-```python
-# Use different Gemini models
-CAI_MODEL=gemini/gemini-1.5-pro-latest      # Latest Pro model
-CAI_MODEL=gemini/gemini-1.5-flash-latest    # Faster, cost-effective
+The application is configured via `kali_config.yml`:
 
-# Adjust model parameters
-GEMINI_TEMPERATURE=0.3    # Lower for more focused responses
-GEMINI_MAX_TOKENS=8192    # Adjust response length
+```yaml
+kali:
+  tools_path: "/usr/bin"
+  enable_kali_tools: true
+  auto_update: true
+  theme: "dark"
+
+scanning:
+  default_scan_type: "comprehensive"
+  max_concurrent_scans: 3
+  scan_timeout: 3600
+  enable_ai_analysis: true
+
+tools:
+  nmap: true
+  nuclei: true
+  ffuf: true
+  subfinder: true
+  amass: true
+  httpx: true
+
+dashboard:
+  port: 5000
+  host: "0.0.0.0"
+  debug: false
+  theme: "dark"
+
+security:
+  enable_encryption: true
+  session_timeout: 3600
+  max_login_attempts: 5
 ```
 
-### Tool Customization
-```python
-# Custom wordlists
-WORDLISTS_DIR=/path/to/custom/wordlists
+## 🎯 Usage
 
-# Rate limiting
-RATE_LIMIT=10            # Requests per second
-MAX_THREADS=50           # Concurrent operations
+### Adding Targets
+1. Go to the dashboard
+2. Enter the target domain in the "Target Management" section
+3. Optionally add program name and reward range
+4. Click "Add Target"
 
-# Proxy configuration (for Burp Suite integration)
-HTTP_PROXY=http://127.0.0.1:8080
-HTTPS_PROXY=http://127.0.0.1:8080
+### Starting Scans
+1. Find your target in the targets list
+2. Click the "Scan" button
+3. Monitor progress in real-time
+4. View results in the "Vulnerabilities" section
+
+### Viewing Reports
+- Reports are automatically generated after scans complete
+- Access reports from the `kali_results/reports/` directory
+- Reports include detailed vulnerability information and recommendations
+
+## 🛠️ Management Commands
+
+```bash
+# Start the application
+./start.sh
+
+# Stop the application
+./stop.sh
+
+# Check application status
+./status.sh
+
+# Test Kali tools availability
+./test_kali_tools.sh
+
+# View logs
+tail -f logs/kali_bug_hunter.log
 ```
 
-## 🛡️ Ethical Guidelines
+## 🔍 Scanning Types
 
-### Scope Compliance
-- Always define and respect target scope
-- Obtain proper authorization before testing
-- Avoid testing production systems without permission
+### Quick Scan
+- Basic port scanning
+- Common vulnerability checks
+- Fast execution (5-10 minutes)
 
-### Responsible Disclosure
-- Report vulnerabilities through proper channels
-- Provide clear reproduction steps
-- Suggest remediation guidance
-- Maintain confidentiality of findings
+### Comprehensive Scan
+- Full subdomain enumeration
+- Deep vulnerability scanning
+- Technology fingerprinting
+- Extended execution (15-30 minutes)
 
-### Impact Consideration
-- Avoid destructive testing
-- Minimize impact on target systems
-- Use stealth techniques when appropriate
-- Respect rate limits and system resources
+### Custom Scan
+- User-defined scan parameters
+- Selective tool usage
+- Configurable timeouts
 
-## 📚 Learning Resources
+## 📊 Dashboard Features
 
-### Bug Bounty Platforms
-- [HackerOne](https://hackerone.com/) - Leading bug bounty platform
-- [Bugcrowd](https://bugcrowd.com/) - Crowdsourced security platform
-- [Intigriti](https://intigriti.com/) - European bug bounty platform
+### Statistics Overview
+- Total targets
+- Active scans
+- Vulnerabilities found
+- Available Kali tools
 
-### Training & Practice
-- [PortSwigger Web Security Academy](https://portswigger.net/web-security) - Free web security training
-- [HackTheBox](https://hackthebox.eu/) - Penetration testing labs
-- [TryHackMe](https://tryhackme.com/) - Cybersecurity training platform
+### Target Management
+- Add new targets
+- View target status
+- Start scans
+- Track progress
 
-### CAI Framework
-- [CAI Documentation](https://github.com/aliasrobotics/cai) - Official documentation
-- [CAI Research Paper](https://arxiv.org/pdf/2504.06017) - Technical details
-- [CAI Examples](../../../examples/) - Additional examples and patterns
+### Vulnerability Tracking
+- Severity classification
+- CVSS scoring
+- Status tracking
+- Detailed descriptions
 
-## 🆘 Troubleshooting
+### Tool Status
+- Real-time tool availability
+- Installation status
+- Version information
+
+## 🔒 Security Features
+
+- **Session Management** - Secure user sessions with timeout
+- **Input Validation** - Comprehensive input sanitization
+- **SQL Injection Protection** - Parameterized queries
+- **XSS Protection** - Output encoding
+- **CSRF Protection** - Token-based protection
+- **Rate Limiting** - Request throttling
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-**API Key Errors**
+**Dashboard not accessible**
 ```bash
-# Verify your Gemini API key
-curl -H "Authorization: Bearer $GOOGLE_API_KEY" \
-     "https://generativelanguage.googleapis.com/v1/models"
+# Check if service is running
+./status.sh
+
+# Check firewall settings
+sudo ufw status
+
+# Check port availability
+netstat -tlnp | grep 5000
 ```
 
-**Tool Installation Issues**
+**Tools not found**
 ```bash
-# Install Go tools manually
-go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+# Test tool availability
+./test_kali_tools.sh
 
-# Update tool databases
-nuclei -update-templates
+# Install missing tools
+sudo apt update
+sudo apt install <tool-name>
 ```
 
-**Permission Issues**
+**Permission errors**
 ```bash
-# Ensure tools are in PATH
-export PATH=$PATH:$(go env GOPATH)/bin
+# Fix file permissions
+chmod 755 *.sh
+chmod 644 kali_config.yml
 
-# Set appropriate permissions
-chmod +x setup_bug_bounty.py
+# Fix directory permissions
+chmod 755 kali_results/
 ```
 
-### Support
+### Logs
+- Application logs: `logs/kali_bug_hunter.log`
+- System logs: `journalctl -u kali-bug-hunter.service`
 
-- **GitHub Issues**: [CAI Repository](https://github.com/aliasrobotics/cai/issues)
-- **Discord**: [CAI Community](https://discord.gg/fnUFcTaQAC)
-- **Email**: research@aliasrobotics.com
+## 🔄 Updates
 
-## 📜 License
+### Updating the Application
+```bash
+# Pull latest changes
+git pull origin main
 
-This project is dual-licensed:
-- **MIT License**: For research and educational use
-- **Commercial License**: For commercial bug bounty operations
+# Reinstall dependencies
+source venv/bin/activate
+pip install -r requirements.txt
 
-See the main [LICENSE](../../LICENSE) file for details.
+# Restart the service
+./stop.sh
+./start.sh
+```
 
-## 🏆 Achievements
+### Updating Kali Tools
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade
 
-CAI Framework has demonstrated excellence in:
-- HackTheBox CTF competitions (Top 1 Spain, Top 20 World)
-- Real-world bug bounty discoveries
-- Academic research and publications
-- Community adoption and contribution
+# Update Go tools
+go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## ⚠️ Disclaimer
+
+This tool is for educational and authorized security testing purposes only. Users are responsible for ensuring they have proper authorization before testing any systems. The authors are not responsible for any misuse of this tool.
+
+## 🆘 Support
+
+- **Documentation**: Check this README and inline code comments
+- **Issues**: Report bugs and feature requests via GitHub issues
+- **Community**: Join our community discussions
+
+## 🎉 Acknowledgments
+
+- Kali Linux team for the excellent security tools
+- ProjectDiscovery for Nuclei and other tools
+- The open-source security community
 
 ---
 
-**⚠️ Disclaimer**: This tool is for authorized security testing only. Users are responsible for compliance with applicable laws and regulations. Always obtain proper authorization before testing systems you do not own.
+**Happy Bug Hunting! 🐛🔍**
