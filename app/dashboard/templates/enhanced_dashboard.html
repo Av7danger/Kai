@@ -290,6 +290,39 @@
                 font-size: 2rem;
             }
         }
+        
+        .workflow-card {
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #fff;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .recon-card {
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            padding: 1rem;
+            background: #fff;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .recon-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .recon-card h6 {
+            color: #5a5c69;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .recon-card .badge {
+            font-size: 0.7rem;
+        }
     </style>
 </head>
 <body>
@@ -433,6 +466,117 @@
                 </button>
             </form>
             <div id="aiHuntStatus" style="display: none;" class="mt-3"></div>
+        </div>
+
+        <!-- Reconnaissance Tools Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search"></i> Reconnaissance Tools
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Light Recon -->
+                    <div class="col-md-6 mb-3">
+                        <div class="recon-card">
+                            <h6><i class="fas fa-eye"></i> Light Reconnaissance</h6>
+                            <p class="text-muted small">Quick exposure discovery (open ports, virtual hosts, subdomains)</p>
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-sm" id="lightReconTarget" placeholder="Enter target domain">
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100" onclick="startLightRecon()">
+                                <i class="fas fa-play"></i> Start Light Scan
+                            </button>
+                            <div class="mt-2">
+                                <span class="badge badge-success">Included in Free</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Deep Recon -->
+                    <div class="col-md-6 mb-3">
+                        <div class="recon-card">
+                            <h6><i class="fas fa-search-plus"></i> Deep Reconnaissance</h6>
+                            <p class="text-muted small">In-depth attack surface mapping (hidden files, port lists, reverse DNS, WAF)</p>
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-sm" id="deepReconTarget" placeholder="Enter target domain">
+                            </div>
+                            <button class="btn btn-warning btn-sm w-100" onclick="startDeepRecon()">
+                                <i class="fas fa-play"></i> Start Deep Scan
+                            </button>
+                            <div class="mt-2">
+                                <span class="badge badge-warning">Not included in Free</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Light Vulnerability Scan -->
+                    <div class="col-md-6 mb-3">
+                        <div class="recon-card">
+                            <h6><i class="fas fa-shield-alt"></i> Light Vulnerability Scan</h6>
+                            <p class="text-muted small">Quick vulnerability and misconfiguration detection (Web, Network & Cloud)</p>
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-sm" id="lightVulnTarget" placeholder="Enter target domain">
+                            </div>
+                            <button class="btn btn-info btn-sm w-100" onclick="startLightVulnScan()">
+                                <i class="fas fa-play"></i> Start Light Vuln Scan
+                            </button>
+                            <div class="mt-2">
+                                <span class="badge badge-success">Included in Free</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Deep Vulnerability Scan -->
+                    <div class="col-md-6 mb-3">
+                        <div class="recon-card">
+                            <h6><i class="fas fa-shield-virus"></i> Deep Vulnerability Scan</h6>
+                            <p class="text-muted small">In-depth findings with all detection options enabled</p>
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-sm" id="deepVulnTarget" placeholder="Enter target domain">
+                            </div>
+                            <button class="btn btn-danger btn-sm w-100" onclick="startDeepVulnScan()">
+                                <i class="fas fa-play"></i> Start Deep Vuln Scan
+                            </button>
+                            <div class="mt-2">
+                                <span class="badge badge-warning">Not included in Free</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exploit Tools Section -->
+                <div class="mt-4">
+                    <h6><i class="fas fa-bug"></i> Exploit Tools</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="recon-card">
+                                <h6><i class="fas fa-crosshairs"></i> Safe Attack Simulations</h6>
+                                <p class="text-muted small">Controlled remote attack simulations for testing</p>
+                                <button class="btn btn-dark btn-sm w-100" disabled>
+                                    <i class="fas fa-lock"></i> Premium Feature
+                                </button>
+                                <div class="mt-2">
+                                    <span class="badge badge-warning">Not included in Free</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="recon-card">
+                                <h6><i class="fas fa-cookie-bite"></i> Automatic Capture</h6>
+                                <p class="text-muted small">Cookies, keystrokes, HTML content, source IP with proprietary Handlers</p>
+                                <button class="btn btn-dark btn-sm w-100" disabled>
+                                    <i class="fas fa-lock"></i> Premium Feature
+                                </button>
+                                <div class="mt-2">
+                                    <span class="badge badge-warning">Not included in Free</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Toast Notifications -->
@@ -774,6 +918,147 @@
             setTimeout(() => {
                 toast.className = 'toast';
             }, 5000);
+        }
+
+        // Reconnaissance Tools Functions
+        async function startLightRecon() {
+            const target = document.getElementById('lightReconTarget').value.trim();
+            if (!target) {
+                showToast('Please enter a target domain', 'warning');
+                return;
+            }
+            
+            try {
+                showToast('Starting light reconnaissance scan...', 'info');
+                
+                const response = await fetch('/api/recon/light', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target: target,
+                        scope: '*',
+                        ai_provider: 'gemini'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Light reconnaissance scan started successfully!', 'success');
+                    monitorWorkflow(data.workflow_id, 'Light Reconnaissance');
+                } else {
+                    showToast(`Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function startDeepRecon() {
+            const target = document.getElementById('deepReconTarget').value.trim();
+            if (!target) {
+                showToast('Please enter a target domain', 'warning');
+                return;
+            }
+            
+            try {
+                showToast('Starting deep reconnaissance scan...', 'info');
+                
+                const response = await fetch('/api/recon/deep', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target: target,
+                        scope: '*',
+                        ai_provider: 'gemini'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Deep reconnaissance scan started successfully!', 'success');
+                    monitorWorkflow(data.workflow_id, 'Deep Reconnaissance');
+                } else {
+                    showToast(`Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function startLightVulnScan() {
+            const target = document.getElementById('lightVulnTarget').value.trim();
+            if (!target) {
+                showToast('Please enter a target domain', 'warning');
+                return;
+            }
+            
+            try {
+                showToast('Starting light vulnerability scan...', 'info');
+                
+                const response = await fetch('/api/vuln/light', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target: target,
+                        scope: '*',
+                        ai_provider: 'gemini'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Light vulnerability scan started successfully!', 'success');
+                    monitorWorkflow(data.workflow_id, 'Light Vulnerability Scan');
+                } else {
+                    showToast(`Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function startDeepVulnScan() {
+            const target = document.getElementById('deepVulnTarget').value.trim();
+            if (!target) {
+                showToast('Please enter a target domain', 'warning');
+                return;
+            }
+            
+            try {
+                showToast('Starting deep vulnerability scan...', 'info');
+                
+                const response = await fetch('/api/vuln/deep', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        target: target,
+                        scope: '*',
+                        ai_provider: 'gemini'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Deep vulnerability scan started successfully!', 'success');
+                    monitorWorkflow(data.workflow_id, 'Deep Vulnerability Scan');
+                } else {
+                    showToast(`Error: ${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showToast(`Error: ${error.message}`, 'error');
+            }
         }
     </script>
 </body>

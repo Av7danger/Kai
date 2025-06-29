@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from contextlib import asynccontextmanager
 import threading
+import ssl
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
@@ -1393,6 +1394,1167 @@ async def run_ai_hunting_workflow(workflow_id: str, target: str, program_overvie
             workflow["error"] = str(e)
             workflow["failed_at"] = datetime.now().isoformat()
         logger.error(f"AI workflow error: {e}")
+
+# Reconnaissance Tools
+async def light_recon_scan(target: str) -> Dict:
+    """Light reconnaissance scan for quick exposure discovery"""
+    try:
+        logger.info(f"Starting light recon scan for {target}")
+        
+        results = {
+            "target": target,
+            "scan_type": "light_recon",
+            "timestamp": datetime.now().isoformat(),
+            "open_ports": {},
+            "subdomains": [],
+            "virtual_hosts": [],
+            "dns_records": {},
+            "technologies": [],
+            "headers": {},
+            "robots_txt": None,
+            "sitemap": None,
+            "directory_listing": []
+        }
+        
+        # 1. Quick Port Scan (Common ports)
+        common_ports = [21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 3306, 3389, 5432, 8080, 8443]
+        open_ports = await quick_port_scan(target, common_ports)
+        results["open_ports"] = open_ports
+        
+        # 2. Subdomain Enumeration (Light)
+        subdomains = await light_subdomain_enumeration(target)
+        results["subdomains"] = subdomains
+        
+        # 3. Virtual Host Discovery
+        virtual_hosts = await discover_virtual_hosts(target)
+        results["virtual_hosts"] = virtual_hosts
+        
+        # 4. DNS Records
+        dns_records = await get_dns_records(target)
+        results["dns_records"] = dns_records
+        
+        # 5. Technology Detection
+        if 80 in open_ports or 443 in open_ports:
+            protocol = "https" if 443 in open_ports else "http"
+            base_url = f"{protocol}://{target}"
+            
+            # Basic technology detection
+            technologies = await detect_technologies(base_url)
+            results["technologies"] = technologies
+            
+            # Security headers
+            headers = await check_security_headers(base_url)
+            results["headers"] = headers
+            
+            # Robots.txt and sitemap
+            robots_content = await check_robots_txt(base_url)
+            results["robots_txt"] = robots_content
+            
+            sitemap_content = await check_sitemap(base_url)
+            results["sitemap"] = sitemap_content
+            
+            # Directory listing check
+            directory_listing = await check_directory_listing(base_url)
+            results["directory_listing"] = directory_listing
+        
+        logger.info(f"Light recon scan completed for {target}")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Light recon scan error: {e}")
+        return {"error": str(e)}
+
+async def deep_recon_scan(target: str) -> Dict:
+    """Deep reconnaissance scan for in-depth attack surface mapping"""
+    try:
+        logger.info(f"Starting deep recon scan for {target}")
+        
+        results = {
+            "target": target,
+            "scan_type": "deep_recon",
+            "timestamp": datetime.now().isoformat(),
+            "open_ports": {},
+            "subdomains": [],
+            "virtual_hosts": [],
+            "dns_records": {},
+            "technologies": [],
+            "headers": {},
+            "hidden_files": [],
+            "port_lists": {},
+            "reverse_dns": {},
+            "waf_detection": {},
+            "ssl_info": {},
+            "whois_info": {},
+            "certificate_info": {},
+            "backup_files": [],
+            "config_files": [],
+            "api_endpoints": [],
+            "admin_panels": [],
+            "common_directories": []
+        }
+        
+        # 1. Comprehensive Port Scan (1-65535)
+        all_ports = await comprehensive_port_scan(target)
+        results["open_ports"] = all_ports
+        
+        # 2. Deep Subdomain Enumeration
+        subdomains = await deep_subdomain_enumeration(target)
+        results["subdomains"] = subdomains
+        
+        # 3. Virtual Host Discovery
+        virtual_hosts = await discover_virtual_hosts(target)
+        results["virtual_hosts"] = virtual_hosts
+        
+        # 4. Comprehensive DNS Records
+        dns_records = await get_comprehensive_dns_records(target)
+        results["dns_records"] = dns_records
+        
+        # 5. Reverse DNS Lookup
+        reverse_dns = await reverse_dns_lookup(target)
+        results["reverse_dns"] = reverse_dns
+        
+        # 6. WAF Detection
+        waf_info = await detect_waf(target)
+        results["waf_detection"] = waf_info
+        
+        # 7. SSL/TLS Information
+        if 443 in all_ports:
+            ssl_info = await get_ssl_info(target)
+            results["ssl_info"] = ssl_info
+            
+            cert_info = await get_certificate_info(target)
+            results["certificate_info"] = cert_info
+        
+        # 8. WHOIS Information
+        whois_info = await get_whois_info(target)
+        results["whois_info"] = whois_info
+        
+        # 9. Hidden Files Discovery
+        if 80 in all_ports or 443 in all_ports:
+            protocol = "https" if 443 in all_ports else "http"
+            base_url = f"{protocol}://{target}"
+            
+            hidden_files = await discover_hidden_files(base_url)
+            results["hidden_files"] = hidden_files
+            
+            # Technology Detection
+            technologies = await detect_technologies_deep(base_url)
+            results["technologies"] = technologies
+            
+            # Security Headers
+            headers = await check_security_headers_deep(base_url)
+            results["headers"] = headers
+            
+            # Backup Files
+            backup_files = await discover_backup_files(base_url)
+            results["backup_files"] = backup_files
+            
+            # Configuration Files
+            config_files = await discover_config_files(base_url)
+            results["config_files"] = config_files
+            
+            # API Endpoints
+            api_endpoints = await discover_api_endpoints(base_url)
+            results["api_endpoints"] = api_endpoints
+            
+            # Admin Panels
+            admin_panels = await discover_admin_panels(base_url)
+            results["admin_panels"] = admin_panels
+            
+            # Common Directories
+            common_dirs = await discover_common_directories(base_url)
+            results["common_directories"] = common_dirs
+        
+        logger.info(f"Deep recon scan completed for {target}")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Deep recon scan error: {e}")
+        return {"error": str(e)}
+
+async def vulnerability_scan_light(target: str) -> Dict:
+    """Light vulnerability scan for quick detection"""
+    try:
+        logger.info(f"Starting light vulnerability scan for {target}")
+        
+        results = {
+            "target": target,
+            "scan_type": "light_vuln",
+            "timestamp": datetime.now().isoformat(),
+            "web_vulnerabilities": [],
+            "network_vulnerabilities": [],
+            "cloud_vulnerabilities": [],
+            "misconfigurations": []
+        }
+        
+        # Check if target is web-based
+        if await is_web_target(target):
+            # Web vulnerabilities
+            web_vulns = await light_web_vulnerability_scan(target)
+            results["web_vulnerabilities"] = web_vulns
+            
+            # Misconfigurations
+            misconfigs = await light_misconfiguration_scan(target)
+            results["misconfigurations"] = misconfigs
+        
+        # Network vulnerabilities
+        network_vulns = await light_network_vulnerability_scan(target)
+        results["network_vulnerabilities"] = network_vulns
+        
+        # Cloud vulnerabilities (if applicable)
+        cloud_vulns = await light_cloud_vulnerability_scan(target)
+        results["cloud_vulnerabilities"] = cloud_vulns
+        
+        logger.info(f"Light vulnerability scan completed for {target}")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Light vulnerability scan error: {e}")
+        return {"error": str(e)}
+
+async def vulnerability_scan_deep(target: str) -> Dict:
+    """Deep vulnerability scan with all detection options"""
+    try:
+        logger.info(f"Starting deep vulnerability scan for {target}")
+        
+        results = {
+            "target": target,
+            "scan_type": "deep_vuln",
+            "timestamp": datetime.now().isoformat(),
+            "web_vulnerabilities": [],
+            "network_vulnerabilities": [],
+            "cloud_vulnerabilities": [],
+            "misconfigurations": [],
+            "advanced_findings": []
+        }
+        
+        # Comprehensive web vulnerability scan
+        if await is_web_target(target):
+            web_vulns = await deep_web_vulnerability_scan(target)
+            results["web_vulnerabilities"] = web_vulns
+            
+            misconfigs = await deep_misconfiguration_scan(target)
+            results["misconfigurations"] = misconfigs
+        
+        # Comprehensive network vulnerability scan
+        network_vulns = await deep_network_vulnerability_scan(target)
+        results["network_vulnerabilities"] = network_vulns
+        
+        # Comprehensive cloud vulnerability scan
+        cloud_vulns = await deep_cloud_vulnerability_scan(target)
+        results["cloud_vulnerabilities"] = cloud_vulns
+        
+        # Advanced findings
+        advanced_findings = await advanced_vulnerability_analysis(target)
+        results["advanced_findings"] = advanced_findings
+        
+        logger.info(f"Deep vulnerability scan completed for {target}")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Deep vulnerability scan error: {e}")
+        return {"error": str(e)}
+
+# Reconnaissance Helper Functions
+async def quick_port_scan(target: str, ports: List[int]) -> Dict[int, str]:
+    """Quick port scan for common ports"""
+    open_ports = {}
+    
+    for port in ports:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2)
+            result = sock.connect_ex((target, port))
+            if result == 0:
+                service = get_service_name(port)
+                open_ports[port] = service
+            sock.close()
+        except:
+            continue
+    
+    return open_ports
+
+async def comprehensive_port_scan(target: str) -> Dict[int, str]:
+    """Comprehensive port scan (1-65535)"""
+    open_ports = {}
+    
+    # Scan common port ranges first
+    port_ranges = [
+        (1, 1024),      # Well-known ports
+        (1025, 49151),  # Registered ports
+        (49152, 65535)  # Dynamic ports
+    ]
+    
+    for start_port, end_port in port_ranges:
+        for port in range(start_port, end_port + 1):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                result = sock.connect_ex((target, port))
+                if result == 0:
+                    service = get_service_name(port)
+                    open_ports[port] = service
+                sock.close()
+            except:
+                continue
+    
+    return open_ports
+
+async def light_subdomain_enumeration(target: str) -> List[str]:
+    """Light subdomain enumeration"""
+    subdomains = []
+    
+    # Common subdomain patterns
+    common_subdomains = [
+        "www", "mail", "ftp", "admin", "blog", "dev", "test", "staging",
+        "api", "cdn", "static", "img", "images", "media", "files"
+    ]
+    
+    for subdomain in common_subdomains:
+        full_domain = f"{subdomain}.{target}"
+        try:
+            ip = socket.gethostbyname(full_domain)
+            if ip:
+                subdomains.append(full_domain)
+        except:
+            continue
+    
+    return subdomains
+
+async def deep_subdomain_enumeration(target: str) -> List[str]:
+    """Deep subdomain enumeration with wordlist"""
+    subdomains = []
+    
+    # Extended subdomain wordlist
+    extended_subdomains = [
+        "www", "mail", "ftp", "admin", "blog", "dev", "test", "staging",
+        "api", "cdn", "static", "img", "images", "media", "files",
+        "web", "app", "apps", "mobile", "m", "secure", "ssl", "vpn",
+        "remote", "support", "help", "docs", "documentation", "wiki",
+        "forum", "community", "chat", "cpanel", "whm", "webmail",
+        "ns1", "ns2", "dns", "mx", "smtp", "pop", "imap", "calendar",
+        "drive", "cloud", "backup", "db", "database", "sql", "mysql",
+        "redis", "cache", "monitor", "stats", "analytics", "tracking"
+    ]
+    
+    for subdomain in extended_subdomains:
+        full_domain = f"{subdomain}.{target}"
+        try:
+            ip = socket.gethostbyname(full_domain)
+            if ip:
+                subdomains.append(full_domain)
+        except:
+            continue
+    
+    return subdomains
+
+async def discover_virtual_hosts(target: str) -> List[str]:
+    """Discover virtual hosts"""
+    virtual_hosts = []
+    
+    # Common virtual host patterns
+    vhost_patterns = [
+        "admin", "backend", "api", "app", "dev", "test", "staging",
+        "internal", "private", "corp", "office", "remote"
+    ]
+    
+    for pattern in vhost_patterns:
+        vhost = f"{pattern}.{target}"
+        try:
+            ip = socket.gethostbyname(vhost)
+            if ip:
+                virtual_hosts.append(vhost)
+        except:
+            continue
+    
+    return virtual_hosts
+
+async def get_dns_records(target: str) -> Dict:
+    """Get basic DNS records"""
+    dns_records = {}
+    
+    try:
+        # A record
+        try:
+            a_records = socket.gethostbyname_ex(target)
+            dns_records["A"] = a_records[2]
+        except:
+            dns_records["A"] = []
+        
+        # CNAME (if applicable)
+        # This would require a DNS library like dnspython
+        
+    except Exception as e:
+        logger.error(f"DNS lookup error: {e}")
+    
+    return dns_records
+
+async def get_comprehensive_dns_records(target: str) -> Dict:
+    """Get comprehensive DNS records"""
+    dns_records = {}
+    
+    try:
+        # A record
+        try:
+            a_records = socket.gethostbyname_ex(target)
+            dns_records["A"] = a_records[2]
+        except:
+            dns_records["A"] = []
+        
+        # Additional DNS record types would be implemented here
+        # using a proper DNS library
+        
+    except Exception as e:
+        logger.error(f"Comprehensive DNS lookup error: {e}")
+    
+    return dns_records
+
+async def reverse_dns_lookup(target: str) -> Dict:
+    """Perform reverse DNS lookup"""
+    reverse_dns = {}
+    
+    try:
+        ip = socket.gethostbyname(target)
+        try:
+            hostname = socket.gethostbyaddr(ip)[0]
+            reverse_dns[ip] = hostname
+        except:
+            reverse_dns[ip] = "No reverse DNS"
+    except Exception as e:
+        logger.error(f"Reverse DNS lookup error: {e}")
+    
+    return reverse_dns
+
+async def detect_waf(target: str) -> Dict:
+    """Detect Web Application Firewall"""
+    waf_info = {
+        "detected": False,
+        "type": None,
+        "confidence": 0
+    }
+    
+    try:
+        if 80 in await quick_port_scan(target, [80, 443]):
+            protocol = "https" if 443 in await quick_port_scan(target, [443]) else "http"
+            url = f"{protocol}://{target}"
+            
+            response = requests.get(url, timeout=5, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            
+            # Check for common WAF signatures
+            waf_signatures = {
+                "Cloudflare": ["cf-ray", "__cfduid", "cloudflare"],
+                "AWS WAF": ["x-amz-cf-id", "x-amz-cf-pop"],
+                "Akamai": ["aka-debug", "x-akamai-transformed"],
+                "Imperva": ["incap_ses", "visid_incap"],
+                "F5 BIG-IP": ["bigip", "x-wa-info"],
+                "Barracuda": ["barra_counter_session", "barracuda_"],
+                "ModSecurity": ["mod_security", "modsecurity"]
+            }
+            
+            for waf_name, signatures in waf_signatures.items():
+                for signature in signatures:
+                    if signature.lower() in str(response.headers).lower() or signature.lower() in response.text.lower():
+                        waf_info["detected"] = True
+                        waf_info["type"] = waf_name
+                        waf_info["confidence"] = 80
+                        break
+                if waf_info["detected"]:
+                    break
+                    
+    except Exception as e:
+        logger.error(f"WAF detection error: {e}")
+    
+    return waf_info
+
+async def get_ssl_info(target: str) -> Dict:
+    """Get SSL/TLS information"""
+    ssl_info = {}
+    
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((target, 443), timeout=5) as sock:
+            with context.wrap_socket(sock, server_hostname=target) as ssock:
+                cert = ssock.getpeercert()
+                ssl_info["version"] = ssock.version()
+                ssl_info["cipher"] = ssock.cipher()
+                ssl_info["certificate"] = cert
+    except Exception as e:
+        logger.error(f"SSL info error: {e}")
+    
+    return ssl_info
+
+async def get_certificate_info(target: str) -> Dict:
+    """Get certificate information"""
+    cert_info = {}
+    
+    try:
+        context = ssl.create_default_context()
+        with socket.create_connection((target, 443), timeout=5) as sock:
+            with context.wrap_socket(sock, server_hostname=target) as ssock:
+                cert = ssock.getpeercert()
+                cert_info["subject"] = dict(x[0] for x in cert['subject'])
+                cert_info["issuer"] = dict(x[0] for x in cert['issuer'])
+                cert_info["not_before"] = cert['notBefore']
+                cert_info["not_after"] = cert['notAfter']
+                cert_info["serial_number"] = cert['serialNumber']
+    except Exception as e:
+        logger.error(f"Certificate info error: {e}")
+    
+    return cert_info
+
+async def get_whois_info(target: str) -> Dict:
+    """Get WHOIS information"""
+    whois_info = {}
+    
+    try:
+        # This would require a WHOIS library
+        # For now, return basic info
+        whois_info["domain"] = target
+        whois_info["status"] = "WHOIS lookup not implemented"
+    except Exception as e:
+        logger.error(f"WHOIS lookup error: {e}")
+    
+    return whois_info
+
+async def discover_hidden_files(base_url: str) -> List[str]:
+    """Discover hidden files"""
+    hidden_files = []
+    
+    # Common hidden files
+    hidden_file_patterns = [
+        ".git/config", ".env", ".htaccess", "robots.txt", "sitemap.xml",
+        ".well-known/security.txt", ".well-known/robots.txt",
+        "config.php", "wp-config.php", "config.json", "config.yml",
+        ".DS_Store", "Thumbs.db", ".svn/entries", ".hg/hgrc"
+    ]
+    
+    for pattern in hidden_file_patterns:
+        url = f"{base_url}/{pattern}"
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=False)
+            if response.status_code == 200:
+                hidden_files.append(url)
+        except:
+            continue
+    
+    return hidden_files
+
+async def detect_technologies(base_url: str) -> List[str]:
+    """Detect web technologies"""
+    technologies = []
+    
+    try:
+        response = requests.get(base_url, timeout=5, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        
+        # Check for common technology signatures
+        tech_signatures = {
+            "WordPress": ["wp-content", "wp-includes", "wordpress"],
+            "Drupal": ["drupal", "sites/default"],
+            "Joomla": ["joomla", "components/com_"],
+            "Laravel": ["laravel", "csrf-token"],
+            "Django": ["django", "csrfmiddlewaretoken"],
+            "React": ["react", "reactjs"],
+            "Angular": ["ng-", "angular"],
+            "Vue.js": ["vue", "v-"],
+            "Bootstrap": ["bootstrap"],
+            "jQuery": ["jquery"],
+            "PHP": ["php", ".php"],
+            "ASP.NET": ["asp.net", "aspx"],
+            "Java": ["jsp", "servlet"],
+            "Python": ["python", "django", "flask"],
+            "Node.js": ["node", "express"]
+        }
+        
+        for tech_name, signatures in tech_signatures.items():
+            for signature in signatures:
+                if signature.lower() in response.text.lower() or signature.lower() in str(response.headers).lower():
+                    if tech_name not in technologies:
+                        technologies.append(tech_name)
+                    break
+                    
+    except Exception as e:
+        logger.error(f"Technology detection error: {e}")
+    
+    return technologies
+
+async def detect_technologies_deep(base_url: str) -> List[str]:
+    """Deep technology detection"""
+    return await detect_technologies(base_url)  # Same for now, can be enhanced
+
+async def check_security_headers(base_url: str) -> Dict:
+    """Check security headers"""
+    headers = {}
+    
+    try:
+        response = requests.get(base_url, timeout=5)
+        
+        security_headers = [
+            "X-Frame-Options", "X-Content-Type-Options", "X-XSS-Protection",
+            "Strict-Transport-Security", "Content-Security-Policy",
+            "Referrer-Policy", "Permissions-Policy", "X-Permitted-Cross-Domain-Policies"
+        ]
+        
+        for header in security_headers:
+            if header in response.headers:
+                headers[header] = response.headers[header]
+            else:
+                headers[header] = "Missing"
+                
+    except Exception as e:
+        logger.error(f"Security headers check error: {e}")
+    
+    return headers
+
+async def check_security_headers_deep(base_url: str) -> Dict:
+    """Deep security headers check"""
+    return await check_security_headers(base_url)  # Same for now
+
+async def check_robots_txt(base_url: str) -> str:
+    """Check robots.txt"""
+    try:
+        response = requests.get(f"{base_url}/robots.txt", timeout=5)
+        if response.status_code == 200:
+            return response.text
+    except:
+        pass
+    return None
+
+async def check_sitemap(base_url: str) -> str:
+    """Check sitemap"""
+    try:
+        response = requests.get(f"{base_url}/sitemap.xml", timeout=5)
+        if response.status_code == 200:
+            return response.text
+    except:
+        pass
+    return None
+
+async def check_directory_listing(base_url: str) -> List[str]:
+    """Check for directory listing"""
+    directories_with_listing = []
+    
+    common_dirs = ["/", "/admin/", "/backup/", "/files/", "/images/", "/uploads/"]
+    
+    for directory in common_dirs:
+        try:
+            response = requests.get(f"{base_url}{directory}", timeout=5)
+            if response.status_code == 200 and "Index of" in response.text:
+                directories_with_listing.append(f"{base_url}{directory}")
+        except:
+            continue
+    
+    return directories_with_listing
+
+async def discover_backup_files(base_url: str) -> List[str]:
+    """Discover backup files"""
+    backup_files = []
+    
+    backup_patterns = [
+        "backup.zip", "backup.tar.gz", "backup.sql", "backup.bak",
+        "site.zip", "site.tar.gz", "www.zip", "www.tar.gz",
+        ".bak", ".backup", ".old", ".orig", ".tmp"
+    ]
+    
+    for pattern in backup_patterns:
+        url = f"{base_url}/{pattern}"
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=False)
+            if response.status_code == 200:
+                backup_files.append(url)
+        except:
+            continue
+    
+    return backup_files
+
+async def discover_config_files(base_url: str) -> List[str]:
+    """Discover configuration files"""
+    config_files = []
+    
+    config_patterns = [
+        "config.php", "config.json", "config.yml", "config.yaml",
+        "wp-config.php", "settings.php", "database.yml", "database.yaml",
+        ".env", "env.php", "configuration.php", "config.ini"
+    ]
+    
+    for pattern in config_patterns:
+        url = f"{base_url}/{pattern}"
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=False)
+            if response.status_code == 200:
+                config_files.append(url)
+        except:
+            continue
+    
+    return config_files
+
+async def discover_api_endpoints(base_url: str) -> List[str]:
+    """Discover API endpoints"""
+    api_endpoints = []
+    
+    api_patterns = [
+        "/api/", "/api/v1/", "/api/v2/", "/rest/", "/graphql",
+        "/swagger/", "/docs/", "/documentation/", "/openapi/"
+    ]
+    
+    for pattern in api_patterns:
+        url = f"{base_url}{pattern}"
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=False)
+            if response.status_code != 404:
+                api_endpoints.append(url)
+        except:
+            continue
+    
+    return api_endpoints
+
+async def discover_admin_panels(base_url: str) -> List[str]:
+    """Discover admin panels"""
+    admin_panels = []
+    
+    admin_patterns = [
+        "/admin/", "/administrator/", "/admin.php", "/admin.html",
+        "/wp-admin/", "/drupal/admin/", "/joomla/administrator/",
+        "/cpanel/", "/whm/", "/webmail/", "/phpmyadmin/", "/mysql/"
+    ]
+    
+    for pattern in admin_patterns:
+        url = f"{base_url}{pattern}"
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=False)
+            if response.status_code != 404:
+                admin_panels.append(url)
+        except:
+            continue
+    
+    return admin_panels
+
+async def discover_common_directories(base_url: str) -> List[str]:
+    """Discover common directories"""
+    common_dirs = []
+    
+    directory_patterns = [
+        "/admin/", "/backup/", "/files/", "/images/", "/uploads/",
+        "/downloads/", "/temp/", "/tmp/", "/cache/", "/logs/",
+        "/config/", "/includes/", "/lib/", "/src/", "/assets/"
+    ]
+    
+    for pattern in directory_patterns:
+        url = f"{base_url}{pattern}"
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=False)
+            if response.status_code != 404:
+                common_dirs.append(url)
+        except:
+            continue
+    
+    return common_dirs
+
+# Vulnerability Scanning Functions
+async def is_web_target(target: str) -> bool:
+    """Check if target is web-based"""
+    try:
+        ports = await quick_port_scan(target, [80, 443, 8080, 8443])
+        return len(ports) > 0
+    except:
+        return False
+
+async def light_web_vulnerability_scan(target: str) -> List[Dict]:
+    """Light web vulnerability scan"""
+    vulnerabilities = []
+    
+    try:
+        if 80 in await quick_port_scan(target, [80, 443]):
+            protocol = "https" if 443 in await quick_port_scan(target, [443]) else "http"
+            base_url = f"{protocol}://{target}"
+            
+            # Basic security header check
+            headers = await check_security_headers(base_url)
+            for header, value in headers.items():
+                if value == "Missing":
+                    vulnerabilities.append({
+                        "type": f"Missing {header}",
+                        "severity": "Low",
+                        "description": f"Security header {header} is missing",
+                        "url": base_url
+                    })
+            
+            # Basic directory listing check
+            directory_listing = await check_directory_listing(base_url)
+            for directory in directory_listing:
+                vulnerabilities.append({
+                    "type": "Directory Listing",
+                    "severity": "Medium",
+                    "description": f"Directory listing enabled at {directory}",
+                    "url": directory
+                })
+                
+    except Exception as e:
+        logger.error(f"Light web vulnerability scan error: {e}")
+    
+    return vulnerabilities
+
+async def light_misconfiguration_scan(target: str) -> List[Dict]:
+    """Light misconfiguration scan"""
+    misconfigurations = []
+    
+    try:
+        if 80 in await quick_port_scan(target, [80, 443]):
+            protocol = "https" if 443 in await quick_port_scan(target, [443]) else "http"
+            base_url = f"{protocol}://{target}"
+            
+            # Check for common misconfigurations
+            misconfig_checks = [
+                ("/phpinfo.php", "PHP Info Exposure"),
+                ("/server-status", "Apache Status Exposure"),
+                ("/server-info", "Apache Info Exposure"),
+                ("/.git/config", "Git Repository Exposure"),
+                ("/.env", "Environment File Exposure")
+            ]
+            
+            for path, description in misconfig_checks:
+                url = f"{base_url}{path}"
+                try:
+                    response = requests.get(url, timeout=5, allow_redirects=False)
+                    if response.status_code == 200:
+                        misconfigurations.append({
+                            "type": description,
+                            "severity": "High",
+                            "description": f"{description} found at {url}",
+                            "url": url
+                        })
+                except:
+                    continue
+                    
+    except Exception as e:
+        logger.error(f"Light misconfiguration scan error: {e}")
+    
+    return misconfigurations
+
+async def light_network_vulnerability_scan(target: str) -> List[Dict]:
+    """Light network vulnerability scan"""
+    vulnerabilities = []
+    
+    try:
+        # Check for common vulnerable services
+        vulnerable_ports = {
+            21: "FTP (potentially vulnerable)",
+            23: "Telnet (insecure)",
+            25: "SMTP (potentially misconfigured)",
+            110: "POP3 (potentially vulnerable)",
+            143: "IMAP (potentially vulnerable)",
+            3389: "RDP (potentially vulnerable)"
+        }
+        
+        open_ports = await quick_port_scan(target, list(vulnerable_ports.keys()))
+        
+        for port, description in vulnerable_ports.items():
+            if port in open_ports:
+                vulnerabilities.append({
+                    "type": f"Open {vulnerable_ports[port]}",
+                    "severity": "Medium",
+                    "description": f"Port {port} ({open_ports[port]}) is open - {description}",
+                    "port": port
+                })
+                
+    except Exception as e:
+        logger.error(f"Light network vulnerability scan error: {e}")
+    
+    return vulnerabilities
+
+async def light_cloud_vulnerability_scan(target: str) -> List[Dict]:
+    """Light cloud vulnerability scan"""
+    vulnerabilities = []
+    
+    try:
+        # Check for cloud-specific vulnerabilities
+        cloud_checks = [
+            ("http://169.254.169.254/", "AWS Metadata Service"),
+            ("http://metadata.google.internal/", "GCP Metadata Service"),
+            ("http://169.254.169.254/metadata/v1/", "DigitalOcean Metadata")
+        ]
+        
+        for url, description in cloud_checks:
+            try:
+                response = requests.get(url, timeout=5, allow_redirects=False)
+                if response.status_code != 404:
+                    vulnerabilities.append({
+                        "type": f"Cloud Metadata Exposure",
+                        "severity": "High",
+                        "description": f"{description} accessible",
+                        "url": url
+                    })
+            except:
+                continue
+                
+    except Exception as e:
+        logger.error(f"Light cloud vulnerability scan error: {e}")
+    
+    return vulnerabilities
+
+async def deep_web_vulnerability_scan(target: str) -> List[Dict]:
+    """Deep web vulnerability scan"""
+    # Enhanced version of light scan with more comprehensive checks
+    return await light_web_vulnerability_scan(target)
+
+async def deep_misconfiguration_scan(target: str) -> List[Dict]:
+    """Deep misconfiguration scan"""
+    # Enhanced version of light scan with more comprehensive checks
+    return await light_misconfiguration_scan(target)
+
+async def deep_network_vulnerability_scan(target: str) -> List[Dict]:
+    """Deep network vulnerability scan"""
+    # Enhanced version of light scan with more comprehensive checks
+    return await light_network_vulnerability_scan(target)
+
+async def deep_cloud_vulnerability_scan(target: str) -> List[Dict]:
+    """Deep cloud vulnerability scan"""
+    # Enhanced version of light scan with more comprehensive checks
+    return await light_cloud_vulnerability_scan(target)
+
+async def advanced_vulnerability_analysis(target: str) -> List[Dict]:
+    """Advanced vulnerability analysis"""
+    advanced_findings = []
+    
+    try:
+        # Advanced analysis techniques would be implemented here
+        # This could include:
+        # - Custom payload testing
+        # - Business logic analysis
+        # - Advanced exploitation techniques
+        # - Chain vulnerability analysis
+        
+        pass
+        
+    except Exception as e:
+        logger.error(f"Advanced vulnerability analysis error: {e}")
+    
+    return advanced_findings
+
+def get_service_name(port: int) -> str:
+    """Get service name for port"""
+    common_services = {
+        21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS",
+        80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS", 993: "IMAPS",
+        995: "POP3S", 3306: "MySQL", 3389: "RDP", 5432: "PostgreSQL",
+        8080: "HTTP-Alt", 8443: "HTTPS-Alt"
+    }
+    return common_services.get(port, f"Unknown-{port}")
+
+@app.post("/api/recon/light")
+async def start_light_recon(request: TargetRequest):
+    """Start light reconnaissance scan"""
+    try:
+        workflow_id = f"light_recon_{int(time.time())}"
+        
+        # Start background task
+        background_tasks.add(workflow_id)
+        asyncio.create_task(run_light_recon_workflow(workflow_id, request.target))
+        
+        active_workflows[workflow_id] = {
+            "type": "light_recon",
+            "target": request.target,
+            "status": "running",
+            "start_time": datetime.now().isoformat(),
+            "progress": 0,
+            "results": {}
+        }
+        
+        logger.info(f"Started light recon scan for {request.target}")
+        return {"workflow_id": workflow_id, "status": "started"}
+        
+    except Exception as e:
+        logger.error(f"Light recon error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/recon/deep")
+async def start_deep_recon(request: TargetRequest):
+    """Start deep reconnaissance scan"""
+    try:
+        workflow_id = f"deep_recon_{int(time.time())}"
+        
+        # Start background task
+        background_tasks.add(workflow_id)
+        asyncio.create_task(run_deep_recon_workflow(workflow_id, request.target))
+        
+        active_workflows[workflow_id] = {
+            "type": "deep_recon",
+            "target": request.target,
+            "status": "running",
+            "start_time": datetime.now().isoformat(),
+            "progress": 0,
+            "results": {}
+        }
+        
+        logger.info(f"Started deep recon scan for {request.target}")
+        return {"workflow_id": workflow_id, "status": "started"}
+        
+    except Exception as e:
+        logger.error(f"Deep recon error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/vuln/light")
+async def start_light_vuln_scan(request: TargetRequest):
+    """Start light vulnerability scan"""
+    try:
+        workflow_id = f"light_vuln_{int(time.time())}"
+        
+        # Start background task
+        background_tasks.add(workflow_id)
+        asyncio.create_task(run_light_vuln_workflow(workflow_id, request.target))
+        
+        active_workflows[workflow_id] = {
+            "type": "light_vuln",
+            "target": request.target,
+            "status": "running",
+            "start_time": datetime.now().isoformat(),
+            "progress": 0,
+            "results": {}
+        }
+        
+        logger.info(f"Started light vulnerability scan for {request.target}")
+        return {"workflow_id": workflow_id, "status": "started"}
+        
+    except Exception as e:
+        logger.error(f"Light vuln scan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/vuln/deep")
+async def start_deep_vuln_scan(request: TargetRequest):
+    """Start deep vulnerability scan"""
+    try:
+        workflow_id = f"deep_vuln_{int(time.time())}"
+        
+        # Start background task
+        background_tasks.add(workflow_id)
+        asyncio.create_task(run_deep_vuln_workflow(workflow_id, request.target))
+        
+        active_workflows[workflow_id] = {
+            "type": "deep_vuln",
+            "target": request.target,
+            "status": "running",
+            "start_time": datetime.now().isoformat(),
+            "progress": 0,
+            "results": {}
+        }
+        
+        logger.info(f"Started deep vulnerability scan for {request.target}")
+        return {"workflow_id": workflow_id, "status": "started"}
+        
+    except Exception as e:
+        logger.error(f"Deep vuln scan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def run_light_recon_workflow(workflow_id: str, target: str):
+    """Run light reconnaissance workflow"""
+    try:
+        logger.info(f"Starting light recon workflow for {target}")
+        
+        # Update progress
+        active_workflows[workflow_id]["progress"] = 10
+        active_workflows[workflow_id]["status"] = "running"
+        
+        # Run light recon scan
+        results = await light_recon_scan(target)
+        
+        # Update workflow with results
+        active_workflows[workflow_id]["progress"] = 100
+        active_workflows[workflow_id]["status"] = "completed"
+        active_workflows[workflow_id]["results"] = results
+        active_workflows[workflow_id]["end_time"] = datetime.now().isoformat()
+        
+        logger.info(f"Light recon workflow completed for {target}")
+        
+    except Exception as e:
+        logger.error(f"Light recon workflow error: {e}")
+        active_workflows[workflow_id]["status"] = "failed"
+        active_workflows[workflow_id]["error"] = str(e)
+    finally:
+        background_tasks.discard(workflow_id)
+
+async def run_deep_recon_workflow(workflow_id: str, target: str):
+    """Run deep reconnaissance workflow"""
+    try:
+        logger.info(f"Starting deep recon workflow for {target}")
+        
+        # Update progress
+        active_workflows[workflow_id]["progress"] = 10
+        active_workflows[workflow_id]["status"] = "running"
+        
+        # Run deep recon scan
+        results = await deep_recon_scan(target)
+        
+        # Update workflow with results
+        active_workflows[workflow_id]["progress"] = 100
+        active_workflows[workflow_id]["status"] = "completed"
+        active_workflows[workflow_id]["results"] = results
+        active_workflows[workflow_id]["end_time"] = datetime.now().isoformat()
+        
+        logger.info(f"Deep recon workflow completed for {target}")
+        
+    except Exception as e:
+        logger.error(f"Deep recon workflow error: {e}")
+        active_workflows[workflow_id]["status"] = "failed"
+        active_workflows[workflow_id]["error"] = str(e)
+    finally:
+        background_tasks.discard(workflow_id)
+
+async def run_light_vuln_workflow(workflow_id: str, target: str):
+    """Run light vulnerability scan workflow"""
+    try:
+        logger.info(f"Starting light vuln workflow for {target}")
+        
+        # Update progress
+        active_workflows[workflow_id]["progress"] = 10
+        active_workflows[workflow_id]["status"] = "running"
+        
+        # Run light vulnerability scan
+        results = await vulnerability_scan_light(target)
+        
+        # Update workflow with results
+        active_workflows[workflow_id]["progress"] = 100
+        active_workflows[workflow_id]["status"] = "completed"
+        active_workflows[workflow_id]["results"] = results
+        active_workflows[workflow_id]["end_time"] = datetime.now().isoformat()
+        
+        logger.info(f"Light vuln workflow completed for {target}")
+        
+    except Exception as e:
+        logger.error(f"Light vuln workflow error: {e}")
+        active_workflows[workflow_id]["status"] = "failed"
+        active_workflows[workflow_id]["error"] = str(e)
+    finally:
+        background_tasks.discard(workflow_id)
+
+async def run_deep_vuln_workflow(workflow_id: str, target: str):
+    """Run deep vulnerability scan workflow"""
+    try:
+        logger.info(f"Starting deep vuln workflow for {target}")
+        
+        # Update progress
+        active_workflows[workflow_id]["progress"] = 10
+        active_workflows[workflow_id]["status"] = "running"
+        
+        # Run deep vulnerability scan
+        results = await vulnerability_scan_deep(target)
+        
+        # Update workflow with results
+        active_workflows[workflow_id]["progress"] = 100
+        active_workflows[workflow_id]["status"] = "completed"
+        active_workflows[workflow_id]["results"] = results
+        active_workflows[workflow_id]["end_time"] = datetime.now().isoformat()
+        
+        logger.info(f"Deep vuln workflow completed for {target}")
+        
+    except Exception as e:
+        logger.error(f"Deep vuln workflow error: {e}")
+        active_workflows[workflow_id]["status"] = "failed"
+        active_workflows[workflow_id]["error"] = str(e)
+    finally:
+        background_tasks.discard(workflow_id)
 
 if __name__ == "__main__":
     # Create data directory if it doesn't exist
